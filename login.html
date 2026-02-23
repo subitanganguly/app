@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login | Barman Construction</title>
+  <link rel="icon" type="image/png" href="img/tab-logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="style/style.css" rel="stylesheet">
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="js/firebaseconfig.js"></script>
+
+  <style>
+    /* glass card style - reused for both panels */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    /* fixed width login card - like a classic form card */
+    .login-card-fixed {
+      width: 100%;
+      max-width: 380px;          /* fixed size feel */
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* typing animation container */
+    #welcome-message {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 600;
+      line-height: 1.3;
+      /* Clean text shadow only — no colours */
+      text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    /* simple white text for the typed part, shadow inherited from parent */
+ #typed-text {
+  background: linear-gradient(245deg, #00f2ff, #ff00c8, #007bff);
+  background-size: 100% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+ 
+}
+
+    /* custom "I" cursor – thicker, with a slight glow */
+    .typed-cursor {
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      color: rgb(0, 11, 105); /* reddish to stand out */
+      font-weight: 100;        /* bold I */
+      margin-left: 6px;
+      opacity: 1;
+      animation: blink 0.9s infinite;
+      text-shadow: 0 0 12px rgb(0, 255, 234); /* glow */
+      display: inline-block;
+      transform: scaleX(1.2);  /* make the I a bit wider */
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* error alert style */
+    .error-alert {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border-radius: 8px;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .error-alert i {
+      margin-right: 10px;
+      font-size: 18px;
+    }
+
+    /* container adjustments */
+    .login-container {
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .row-custom {
+      width: 100%;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* right panel text extras */
+    .sub-welcome {
+      font-size: 1.2rem;
+      color: rgba(0, 94, 5, 0.9);
+      margin-top: 1rem;
+      font-weight: 300;
+      letter-spacing: 1px;
+    }
+
+    /* horizontal rule styling (light, decorative) */
+    .hr-light {
+      border: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 8, 122, 0.938), transparent);
+      margin: 1.5rem 0;
+      opacity: 0.8;
+    }
+
+    /* small text decoration */
+    .small-text {
+      font-size: 0.9rem;
+      color: rgb(1, 0, 65);
+      letter-spacing: 0.5px;
+    }
+
+    .small-text i {
+      margin-right: 6px;
+      color: rgba(51, 0, 0, 0.9);
+    }
+
+    /* logo spacing */
+    .logo-login {
+      max-width: 200px;
+      border-radius: 5px;
+    }
+
+
+  /* Glass Footer */
+.footer-glass {
+  background: rgba(51, 49, 49, 0.521);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Footer Title */
+.footer-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+/* Footer Text */
+.footer-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Divider */
+.footer-divider {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,255,0.5), transparent);
+  margin: 1.5rem 0;
+}
+
+/* Developer Name Gradient */
+.dev-name {
+  background: linear-gradient(90deg, #00095c, #ff00c8, #007bff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+}
+
+/* Bottom Copyright */
+.footer-copy {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Keep footer bottom */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-container {
+  flex: 1;
+}
+
+
+
+
+
+/* Vertical divider between login & welcome */
+.row-custom::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 0, 242, 0.7),
+    transparent
+  );
+}
+
+/* Hide divider on mobile */
+@media (max-width: 768px) {
+  .row-custom::after {
+    display: none;
+  }
+}
+
+
+
+
+
+
+
+
+.wrap {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  min-width: 290px;
+  min-height: 40px;
+  display: inline-flex;
+  font-family: 'Nunito', sans-serif;
+  font-size: 22px;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 1.3px;
+  font-weight: 700;
+  color: #005212;
+  background: #003631;
+background: linear-gradient(90deg, rgba(129,230,217,1) 0%, rgba(79,209,197,1) 100%);
+  border: none;
+  border-radius: 1000px;
+  box-shadow: 12px 12px 24px rgba(79,209,197,.64);
+  transition: all 0.3s ease-in-out 0s;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  padding: 8px;
+  }
+
+
+
+
+
+.button:hover::before, 
+.button:focus::before {
+  opacity: 1;
+}
+
+.button::after {
+  content: '';
+  width: 30px; height: 30px;
+  border-radius: 100%;
+  border: 6px solid #00FFCB;
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: ring 1.5s infinite;
+}
+
+
+@keyframes ring {
+  0% {
+    width: 30px;
+    height: 30px;
+    opacity: 1;
+  }
+  100% {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+  }
+}
+  </style>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+
+<body>
+
+<div class="container-fluid login-container">
+  <div class="row row-custom g-4 align-items-center justify-content-center">
+    <!-- LEFT COLUMN: LOGIN FORM (fixed width card inside col) -->
+    <div class="col-md-6 col-lg-5 d-flex justify-content-center">
+      <div class="card p-5 login-card-fixed">
+        <div class="wave">
+              <svg viewBox="0 0 500 100" preserveAspectRatio="none">
+                <path d="M0.00,49.98 C150.00,150.00 349.85,-50.00 500.00,49.98 L500.00,150.00 L0.00,150.00 Z"></path>
+              </svg>
+            </div>
+        <center>
+          <img class="mb-4 mt-2 logo-login" src="img/logo.png" alt="Barman Construction">
+        </center>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+          <input type="email" id="email" class="form-control mb-3 " placeholder="Email" required>
+          <input type="password" id="password" class="form-control mb-3" placeholder="Password" required>
+
+          <!-- Remember Me -->
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="rememberMe">
+            <label class="form-check-label dev-name" for="rememberMe">
+              Remember Me
+            </label>
+          </div>
+
+          <div id="loginBtn" class="wrap" onclick="login()">
+          <button class="button">
+            <span id="btnText">Login</span>
+            <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+          </button>
+          </div>
+
+
+
+          <!-- Error Message -->
+          <div id="error" class="mt-3"></div>
+        </div>
+
+        <!-- Access Denied Message -->
+        <div id="accessDeniedMessage" class="d-none text-center">
+          <div class="error-alert mb-4">
+            <i class="bi bi-shield-exclamation"></i>
+            <div>
+              <h5 class="mb-1">Access Restricted</h5>
+              <p class="mb-0" id="deniedReason">You are temporarily unable to login.</p>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Please contact your administrator for assistance.
+          </div>
+
+          <button class="btn btn-outline-secondary w-100 mt-3" onclick="showLoginForm()">
+            <i class="bi bi-arrow-left me-2"></i>Back to Login
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: WELCOME TYPING ANIMATION with HR and decorated text -->
+    <div class="col-md-6 col-lg-5">
+      <div class="p-4 text-center text-md-start">
+        <div class="wave">
+              <svg viewBox="0 0 500 150" preserveAspectRatio="none">
+                <path d="M0.00,49.98 C150.00,150.00 349.85,-50.00 500.00,49.98 L500.00,150.00 L0.00,150.00 Z"></path>
+              </svg>
+            </div>
+        <!-- Welcome message container: only text shadow, no extra colours -->
+        <div id="welcome-message">
+          <span id="typed-text"></span>
+        </div>
+        <div class="sub-welcome">
+          <i class="bi bi-shield-check me-2"></i>Secure access for team members
+        </div>
+        
+        <!-- decorative hr (light) -->
+        <hr class="hr-light">
+
+
+
+        <!-- decorated small text with icon -->
+        <p class="small-text mb-0">
+          <i class="bi bi-building"></i> Barman Construction · Est. 1995
+        </p>
+        <p class="small-text mt-2">
+          <i class="bi bi-bricks"></i> Built on integrity and craftsmanship
+        </p>
+
+        <!-- additional subtle text decoration -->
+        <div class="d-flex justify-content-center justify-content-md-start gap-3 mt-3 small-text">
+          <span><i class="bi bi-check-circle-fill text-success me-1"></i> secure</span>
+          <span><i class="bi bi-check-circle-fill text-success me-1"></i> reliable</span>
+          <span><i class="bi bi-check-circle-fill text-success me-1"></i> trusted</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<!-- Footer -->
+<footer class="footer-glass py-2 d-none">
+  <div class="container">
+    <div class="row text-center text-md-start">
+
+      <!-- Company Info -->
+      <div class="col-md-6 mb-3 mb-md-0">
+        <h6 class="footer-title">
+          <i class="bi bi-building"></i> Barman Construction
+        </h6>
+        <p class="footer-text mb-1">
+          <i class="bi bi-geo-alt-fill"></i> 123 Main Road, West Bengal, India
+        </p>
+        <p class="footer-text mb-0">
+          <i class="bi bi-telephone-fill"></i> +91 98765 43210
+        </p>
+      </div>
+
+      <!-- Developer Info -->
+      <div class="col-md-6">
+        <h6 class="footer-title">
+          <i class="bi bi-code-slash"></i> Developed By
+        </h6>
+        <p class="footer-text mb-1">
+          <span class="dev-name">Subitan Ganguly</span>
+        </p>
+        <p class="footer-text mb-1">
+          <i class="bi bi-geo-alt-fill"></i> Alipurduar, West Bengal
+        </p>
+        <p class="footer-text mb-0">
+          <i class="bi bi-envelope-fill"></i> test@email.com | 
+          <i class="bi bi-telephone-fill"></i> +91 9832280847
+        </p>
+      </div>
+
+    </div>
+
+    <hr class="footer-divider">
+
+    <div class="text-center small footer-copy">
+      © 2026 Barman Construction. All Rights Reserved.
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- simple typing animation script (no colours, only plain text) -->
+<script>
+  (function() {
+    // Typing animation config
+    const phrases = [
+      "Welcome to Barman Construction 🏗️",
+      "Build with trust 🔨",
+      "Your vision, our foundation 🏢",
+      "Crafting excellence since 1995 🏆"
+    ];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let currentText = '';
+    const typedElement = document.getElementById('typed-text');
+
+    function typeEffect() {
+      const fullText = phrases[phraseIndex];
+
+      if (isDeleting) {
+        // removing characters
+        currentText = fullText.substring(0, charIndex - 1);
+        charIndex--;
+      } else {
+        // adding characters
+        currentText = fullText.substring(0, charIndex + 1);
+        charIndex++;
+      }
+
+      typedElement.textContent = currentText;   // plain text – no colours
+
+      if (!isDeleting && charIndex === fullText.length) {
+        // pause at end, then start deleting
+        isDeleting = true;
+        setTimeout(typeEffect, 2000); // wait 2 sec
+        return;
+      }
+
+      if (isDeleting && charIndex === 0) {
+        // move to next phrase
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        setTimeout(typeEffect, 400);
+        return;
+      }
+
+      // speed: typing faster (80ms) / deleting slightly faster (50ms)
+      const speed = isDeleting ? 50 : 80;
+      setTimeout(typeEffect, speed);
+    }
+
+    // start animation when page loads
+    window.addEventListener('load', function() {
+      // small delay for smooth start
+      setTimeout(typeEffect, 300);
+    });
+  })();
+</script>
+
+<!-- Add the custom I cursor dynamically (ensures it's present) -->
+<script>
+  (function addCursor() {
+    window.addEventListener('load', function() {
+      const welcomeDiv = document.getElementById('welcome-message');
+      if (!document.querySelector('.typed-cursor')) {
+        const cursorSpan = document.createElement('span');
+        cursorSpan.className = 'typed-cursor';
+        cursorSpan.innerHTML = 'I';  // capital I as cursor
+        welcomeDiv.appendChild(cursorSpan);
+      }
+    });
+  })();
+</script>
+
+<!-- Firebase login logic (unchanged) -->
+<script>
+  // Auto-fill if saved
+  window.onload = function () {
+    const savedEmail = localStorage.getItem("remember_email");
+    const savedPassword = localStorage.getItem("remember_password");
+
+    if (savedEmail && savedPassword) {
+      document.getElementById("email").value = savedEmail;
+      document.getElementById("password").value = savedPassword;
+      document.getElementById("rememberMe").checked = true;
+    }
+  };
+
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const remember = document.getElementById("rememberMe").checked;
+
+    const btn = document.getElementById("loginBtn");
+    const spinner = document.getElementById("btnSpinner");
+    const text = document.getElementById("btnText");
+    const error = document.getElementById("error");
+
+    // Clear previous errors
+    error.innerHTML = "";
+    spinner.classList.remove("d-none");
+    text.innerText = "";
+    btn.disabled = true;
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(result => {
+        const user = result.user;
+        const uid = user.uid;
+
+        const userRef = firebase.database().ref("users/" + uid);
+
+        return userRef.once("value").then(snapshot => {
+          // Case 1: User doesn't exist in Realtime Database
+          if (!snapshot.exists()) {
+            throw new Error("user_not_found_in_db");
+          }
+
+          const userData = snapshot.val();
+          
+          // Case 2: User exists but status is not "active"
+          if (userData.status !== "active") {
+            throw new Error("user_not_active");
+          }
+
+          // User exists and is active - proceed with login
+          
+          // 💾 SAVE ADMIN SESSION
+          if (userData.role === "admin") {
+            localStorage.setItem("adminEmail", email);
+            localStorage.setItem("adminPassword", password);
+          }
+
+          // 💾 REMEMBER ME
+          if (remember) {
+            localStorage.setItem("remember_email", email);
+            localStorage.setItem("remember_password", password);
+          } else {
+            localStorage.removeItem("remember_email");
+            localStorage.removeItem("remember_password");
+          }
+
+          // ✅ REDIRECT
+          window.location.href = "index.html";
+        });
+      })
+      .catch(err => {
+        // Reset login button
+        spinner.classList.add("d-none");
+        text.innerText = "Login";
+        btn.disabled = false;
+
+        // Handle specific error cases
+        if (err.message === "user_not_found_in_db") {
+          showAccessDenied("Your account is not registered in the system.");
+        } 
+        else if (err.message === "user_not_active") {
+          showAccessDenied("Your account is currently inactive.");
+        }
+        else {
+          // Firebase authentication errors
+          error.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              ${err.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+        }
+      });
+  }
+
+  function showAccessDenied(reason) {
+    // Hide login form
+    document.getElementById("loginForm").classList.add("d-none");
+    
+    // Set denial reason
+    document.getElementById("deniedReason").textContent = reason;
+    
+    // Show access denied message
+    document.getElementById("accessDeniedMessage").classList.remove("d-none");
+  }
+
+  function showLoginForm() {
+    // Hide access denied message
+    document.getElementById("accessDeniedMessage").classList.add("d-none");
+    
+    // Clear form
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("error").innerHTML = "";
+    
+    // Show login form
+    document.getElementById("loginForm").classList.remove("d-none");
+  }
+
+  // Optional: Clear error when user starts typing
+  document.getElementById("email").addEventListener("input", function() {
+    document.getElementById("error").innerHTML = "";
+  });
+  
+  document.getElementById("password").addEventListener("input", function() {
+    document.getElementById("error").innerHTML = "";
+  });
+</script>
+
+</body>
+</html>

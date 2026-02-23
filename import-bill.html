@@ -1,0 +1,1509 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Import Bills - Barman Construction</title>
+  <link rel="icon" type="image/png" href="img/tab-logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="style/style.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="js/firebaseconfig.js"></script>
+  <script src="js/all.js"></script>
+  <style>
+    .upload-area {
+      border: 3px dashed #6c757d;
+      border-radius: 1rem;
+      padding: 3rem;
+      text-align: center;
+      background-color: #f8f9fa;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .upload-area:hover {
+      border-color: #0d6efd;
+      background-color: #e7f1ff;
+    }
+    
+    .upload-area.dragover {
+      border-color: #198754;
+      background-color: #d1e7dd;
+    }
+    
+    .upload-area i {
+      font-size: 4rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    .bill-card {
+      transition: all 0.3s ease;
+      border-left: 4px solid #6c757d;
+      font-size: 9px;
+      opacity: 0.9;
+    }
+    
+    .bill-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      opacity: 1;
+    }
+    
+    .bill-card.tax-invoice { border-left-color: #28a745; }
+    .bill-card.delivery-challan { border-left-color: #ffc107; }
+    .bill-card.quotation { border-left-color: #17a2b8; }
+    .bill-card.proforma-invoice { border-left-color: #6f42c1; }
+    .bill-card.purchase-invoice { border-left-color: #fd1414; }
+    .bill-card.cash-memo { border-left-color: #1afa34; }
+    
+    .import-summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+    
+    .json-preview {
+      max-height: 400px;
+      overflow-y: auto;
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+    
+    .filter-badge {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .filter-badge:hover {
+      transform: scale(1.05);
+    }
+    
+    .filter-badge.active {
+      background-color: #0d6efd !important;
+      color: white !important;
+    }
+    
+    .document-badge {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+    }
+    
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+    
+    /* Hide upload section after file is uploaded */
+    .upload-section-hidden {
+      display: none !important;
+    }
+    
+    .status-badge {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .upload-area {
+        padding: 2rem;
+      }
+      .upload-area i {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar will load here -->
+<div id="nav-placeholder"></div>
+
+<!-- Main Content -->
+<div class="content p-3">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-1">
+        <i class="fas fa-file-import me-2 text-primary"></i>Import Bills
+      </h4>
+      <p class="text-muted mb-0">Import archived bills from JSON export file</p>
+    </div>
+    <div>
+      <a href="display-bill-archive.html" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Archive
+      </a>
+    </div>
+  </div>
+
+  <!-- Step 1: Upload File -->
+  <div class="row mb-4" id="step1Container">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">
+            <span class="badge bg-light text-primary me-2">1</span>
+            Upload JSON Export File
+          </h5>
+        </div>
+        <div class="card-body">
+          <div id="uploadArea" class="upload-area">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h4>Drag & Drop JSON File Here</h4>
+            <p class="text-muted mb-3">or click to browse</p>
+            <input type="file" id="fileInput" accept=".json,application/json" style="display: none;">
+            <button type="button" id="browseBtn" class="btn btn-primary">
+              <i class="fas fa-folder-open me-1"></i> Browse Files
+            </button>
+            <p class="mt-3 mb-0 small text-muted">
+              Supported format: JSON files exported from Archive page
+            </p>
+          </div>
+          
+          <div id="fileInfo" class="mt-3 d-none">
+            <div class="alert alert-info d-flex justify-content-between align-items-center">
+              <div>
+                <i class="fas fa-file-alt me-2"></i>
+                <strong id="fileName"></strong>
+                <span id="fileSize" class="ms-2 text-muted"></span>
+              </div>
+              <button type="button" id="changeFileBtn" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-sync-alt me-1"></i> Change File
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Import Summary & Preview -->
+  <div class="row mb-4 d-none" id="step2Container">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0">
+            <span class="badge bg-light text-success me-2">2</span>
+            Import Summary & Preview
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Import Summary Cards -->
+          <div class="row mb-4" id="importStats">
+            <!-- Stats will be loaded dynamically -->
+          </div>
+          
+          <!-- Duplicate Warning -->
+          <div id="duplicateWarning" class="alert alert-warning d-none mb-4">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Duplicate Documents Detected:</strong>
+            <span id="duplicateCount"></span> document(s) already exist in the database and will be skipped.
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" id="cancelImportBtn" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> Cancel
+            </button>
+            <button type="button" id="previewBillsBtn" class="btn btn-info text-white">
+              <i class="fas fa-eye me-1"></i> Preview Bills
+            </button>
+            <button type="button" id="importBillsBtn" class="btn btn-success">
+              <i class="fas fa-file-import me-1"></i> Import Bills
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Bills Preview -->
+  <div class="row d-none" id="step3Container">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <span class="badge bg-light text-info me-2">3</span>
+            Preview Bills <span id="previewCount" class="badge bg-light text-info ms-2"></span>
+          </h5>
+          <div class="d-flex gap-2">
+            <!-- Filter Buttons -->
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-light filter-btn active" data-filter="all">
+                <i class="fas fa-list me-1"></i>All
+              </button>
+              <button type="button" class="btn btn-light filter-btn" data-filter="tax-invoice">
+                <i class="fas fa-file-invoice me-1"></i>Tax Invoice
+              </button>
+              <button type="button" class="btn btn-light filter-btn" data-filter="delivery-challan">
+                <i class="fas fa-truck me-1"></i>Delivery
+              </button>
+              <button type="button" class="btn btn-light filter-btn" data-filter="quotation">
+                <i class="fas fa-file-alt me-1"></i>Quotation
+              </button>
+            </div>
+            
+            <!-- View Toggle -->
+            <div class="btn-group btn-group-sm">
+              <button type="button" id="gridViewBtn" class="btn btn-light active">
+                <i class="fas fa-th-large"></i>
+              </button>
+              <button type="button" id="listViewBtn" class="btn btn-light">
+                <i class="fas fa-list"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Search and Filter -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" id="previewSearch" class="form-control" placeholder="Search by client name or invoice number...">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <select id="previewTypeFilter" class="form-select">
+                <option value="all">All Document Types</option>
+                <option value="tax-invoice">Tax Invoice</option>
+                <option value="delivery-challan">Delivery Challan</option>
+                <option value="quotation">Quotation</option>
+                <option value="proforma-invoice">Proforma Invoice</option>
+                <option value="purchase-invoice">Purchase Invoice</option>
+                <option value="cash-memo">Cash Memo</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Loading Spinner -->
+          <div id="previewLoading" class="loading-spinner d-none">
+            <div class="spinner-border text-info" role="status">
+              <span class="visually-hidden">Loading preview...</span>
+            </div>
+          </div>
+          
+          <!-- Bills Grid/List View -->
+          <div id="billsPreviewContainer">
+            <div id="billsGrid" class="row g-3"></div>
+            <div id="billsList" class="d-none"></div>
+          </div>
+          
+          <!-- Empty State -->
+          <div id="previewEmptyState" class="text-center py-5 d-none">
+            <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No bills to preview</h5>
+            <p class="text-muted">All documents in this file already exist in the database</p>
+          </div>
+          
+          <!-- Pagination -->
+          <nav id="previewPagination" class="mt-4 d-none">
+            <ul class="pagination justify-content-center">
+              <!-- Pagination will be loaded here -->
+            </ul>
+          </nav>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span id="selectedCount" class="text-muted">
+                <i class="fas fa-check-circle me-1"></i>
+                <span id="selectedBillsCount">0</span> of <span id="totalBillsCount">0</span> bills selected
+              </span>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" id="selectAllBtn" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-check-double me-1"></i> Select All
+              </button>
+              <button type="button" id="deselectAllBtn" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times me-1"></i> Deselect All
+              </button>
+              <button type="button" id="importSelectedBtn" class="btn btn-success btn-sm">
+                <i class="fas fa-file-import me-1"></i> Import Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JSON Preview Modal -->
+<div class="modal fade" id="jsonPreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-code me-2"></i>Raw JSON Preview
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <pre id="rawJsonPreview" class="json-preview mb-0"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" id="copyJsonBtn" class="btn btn-primary">
+          <i class="fas fa-copy me-1"></i> Copy JSON
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bill Details Modal -->
+<div class="modal fade" id="billDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-file-invoice me-2"></i>Bill Details
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="billDetailsContent">
+        <!-- Bill details will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Progress Modal -->
+<div class="modal fade" id="importProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-file-import me-2"></i>Importing Bills
+        </h5>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Importing...</span>
+          </div>
+        </div>
+        <p id="importProgressText" class="text-center mb-2">Preparing to import bills...</p>
+        <div class="progress mb-3">
+          <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+               role="progressbar" style="width: 0%">0%</div>
+        </div>
+        <p id="importDetailText" class="text-muted text-center small mb-0">
+          Processing 0 of 0 bills
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status Message -->
+<div id="statusMessage" class="alert alert-dismissible fade" role="alert" 
+     style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: none;">
+  <span id="statusText"></span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<script>
+  // Firebase initialization
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  // Global variables
+  let importedData = null;
+  let importedBills = [];
+  let uniqueBills = []; // Bills that don't exist in database
+  let duplicateBills = []; // Bills that already exist
+  let filteredBills = [];
+  let selectedBills = new Set();
+  let currentPreviewPage = 1;
+  let currentViewMode = 'grid';
+  let currentFilter = 'all';
+  let searchTerm = '';
+  let typeFilter = 'all';
+  const itemsPerPage = 12;
+
+  // Document type labels and colors
+  const documentTypeLabels = {
+    'tax-invoice': { label: 'Tax Invoice', class: 'tax-invoice', badge: 'success', icon: 'fa-file-invoice' },
+    'delivery-challan': { label: 'Delivery Challan', class: 'delivery-challan', badge: 'warning', icon: 'fa-truck' },
+    'quotation': { label: 'Quotation', class: 'quotation', badge: 'info', icon: 'fa-file-alt' },
+    'proforma-invoice': { label: 'Proforma Invoice', class: 'proforma-invoice', badge: 'primary', icon: 'fa-file-invoice-dollar' },
+    'purchase-invoice': { label: 'Purchase Invoice', class: 'purchase-invoice', badge: 'danger', icon: 'fa-shopping-cart' },
+    'cash-memo': { label: 'Cash Memo', class: 'cash-memo', badge: 'success', icon: 'fa-money-bill' }
+  };
+
+  // Check authentication
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+    }
+  });
+
+  // Show status message
+  function showStatus(message, type = 'success') {
+    const statusEl = document.getElementById('statusMessage');
+    const statusText = document.getElementById('statusText');
+    
+    statusText.textContent = message;
+    statusEl.className = `alert alert-${type} alert-dismissible fade show`;
+    statusEl.style.display = 'block';
+    
+    setTimeout(() => {
+      statusEl.style.display = 'none';
+    }, 5000);
+  }
+
+  // Format currency
+  function formatCurrency(amount) {
+    if (typeof amount !== 'number') amount = parseFloat(amount) || 0;
+    return '₹' + amount.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Format date
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+      if (typeof dateString === 'number') {
+        return new Date(dateString).toLocaleDateString('en-GB');
+      }
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-GB');
+      }
+      return dateString;
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  // Format file size
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // ============ FILE UPLOAD HANDLING ============
+
+  // Handle file selection
+  function handleFileSelect(file) {
+    if (!file) return;
+    
+    // Check file type
+    if (!file.name.endsWith('.json')) {
+      showStatus('Please select a valid JSON file', 'danger');
+      return;
+    }
+    
+    // Update file info
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = `(${formatFileSize(file.size)})`;
+    document.getElementById('fileInfo').classList.remove('d-none');
+    
+    // Hide the upload section
+    document.getElementById('step1Container').classList.add('upload-section-hidden');
+    
+    // Read file
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const jsonData = JSON.parse(e.target.result);
+        processImportedData(jsonData);
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+        showStatus('Invalid JSON file: ' + error.message, 'danger');
+        // Show upload section again if error
+        document.getElementById('step1Container').classList.remove('upload-section-hidden');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Check if bill exists in Firebase
+  async function checkBillExists(bill) {
+    try {
+      // Check by ID if available
+      if (bill.id) {
+        const snapshot = await firebase.database().ref(`bill/${bill.id}`).once('value');
+        if (snapshot.exists()) return true;
+      }
+      
+      // Check by invoice number
+      if (bill.invoiceNo) {
+        const snapshot = await firebase.database().ref('bill')
+          .orderByChild('invoiceNo')
+          .equalTo(bill.invoiceNo)
+          .once('value');
+        if (snapshot.exists()) return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking bill existence:', error);
+      return false;
+    }
+  }
+
+  // Process imported data and check for duplicates
+  async function processImportedData(data) {
+    try {
+      // Show loading
+      showStatus('Checking for duplicate documents...', 'info');
+      
+      // Parse the imported data
+      if (data.bills && Array.isArray(data.bills)) {
+        importedBills = data.bills;
+      } else if (Array.isArray(data)) {
+        importedBills = data;
+      } else {
+        importedBills = [data];
+      }
+      
+      // Ensure all bills have isArchived flag
+      importedBills = importedBills.map(bill => {
+        if (bill.isArchived === undefined) {
+          bill.isArchived = true;
+        }
+        return bill;
+      });
+      
+      // Check each bill against database
+      uniqueBills = [];
+      duplicateBills = [];
+      
+      for (const bill of importedBills) {
+        const exists = await checkBillExists(bill);
+        if (exists) {
+          duplicateBills.push(bill);
+        } else {
+          uniqueBills.push(bill);
+        }
+      }
+      
+      // Update importedBills to only include unique bills
+      importedBills = [...uniqueBills];
+      
+      if (importedBills.length === 0) {
+        showStatus('All documents in this file already exist in the database', 'warning');
+        document.getElementById('step2Container').classList.add('d-none');
+        document.getElementById('step3Container').classList.add('d-none');
+        return;
+      }
+      
+      // Show duplicate warning if any
+      if (duplicateBills.length > 0) {
+        document.getElementById('duplicateCount').textContent = duplicateBills.length;
+        document.getElementById('duplicateWarning').classList.remove('d-none');
+      }
+      
+      // Show step 2
+      document.getElementById('step2Container').classList.remove('d-none');
+      
+      // Update import summary
+      updateImportSummary();
+      
+      showStatus(`Successfully loaded ${importedBills.length} new bills (skipped ${duplicateBills.length} duplicates)`, 'success');
+      
+    } catch (error) {
+      console.error('Error processing data:', error);
+      showStatus('Error processing imported data: ' + error.message, 'danger');
+      // Show upload section again if error
+      document.getElementById('step1Container').classList.remove('upload-section-hidden');
+    }
+  }
+
+  // Update import summary statistics
+  function updateImportSummary() {
+    const statsHtml = document.getElementById('importStats');
+    
+    // Calculate statistics
+    const totalBills = importedBills.length;
+    const totalAmount = importedBills.reduce((sum, bill) => sum + (parseFloat(bill.grandTotal) || 0), 0);
+    const skippedCount = duplicateBills.length;
+    
+    // Count by document type
+    const typeCount = {};
+    importedBills.forEach(bill => {
+      const type = bill.documentType || 'unknown';
+      typeCount[type] = (typeCount[type] || 0) + 1;
+    });
+    
+    // Get date range
+    let oldestDate = Infinity;
+    let newestDate = -Infinity;
+    importedBills.forEach(bill => {
+      const date = bill.createdAt || bill.updatedAt || bill.invoiceDate || 0;
+      const timestamp = typeof date === 'number' ? date : new Date(date).getTime();
+      if (timestamp && !isNaN(timestamp)) {
+        oldestDate = Math.min(oldestDate, timestamp);
+        newestDate = Math.max(newestDate, timestamp);
+      }
+    });
+    
+    const oldestDateStr = oldestDate !== Infinity ? formatDate(oldestDate) : 'N/A';
+    const newestDateStr = newestDate !== -Infinity ? formatDate(newestDate) : 'N/A';
+    
+    // Generate type badges
+    let typeBadges = '';
+    Object.entries(typeCount).forEach(([type, count]) => {
+      const label = documentTypeLabels[type]?.label || type;
+      const badgeClass = documentTypeLabels[type]?.badge || 'secondary';
+      typeBadges += `<span class="badge bg-${badgeClass} me-1">${label}: ${count}</span>`;
+    });
+    
+    statsHtml.innerHTML = `
+      <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white h-100">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-uppercase opacity-75">New Bills</small>
+                <div class="fs-3 fw-bold">${totalBills}</div>
+              </div>
+              <i class="fas fa-file-alt fs-1 opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white h-100">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-uppercase opacity-75">Total Amount</small>
+                <div class="fs-5 fw-bold">${formatCurrency(totalAmount)}</div>
+              </div>
+              <i class="fas fa-rupee-sign fs-1 opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white h-100">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-uppercase opacity-75">Date Range</small>
+                <div class="small fw-bold">${oldestDateStr}</div>
+                <div class="small fw-bold">${newestDateStr}</div>
+              </div>
+              <i class="fas fa-calendar-alt fs-1 opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-3">
+        <div class="card bg-secondary text-white h-100">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-uppercase opacity-75">Skipped</small>
+                <div class="fs-3 fw-bold">${skippedCount}</div>
+                <small>duplicates</small>
+              </div>
+              <i class="fas fa-ban fs-1 opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============ BILLS PREVIEW ============
+
+  // Filter and display bills
+  function filterAndDisplayBills() {
+    // Apply filters
+    filteredBills = importedBills.filter(bill => {
+      // Type filter
+      if (typeFilter !== 'all' && bill.documentType !== typeFilter) {
+        return false;
+      }
+      
+      // Search filter
+      if (searchTerm) {
+        const clientName = (bill.clientName || '').toLowerCase();
+        const invoiceNo = (bill.invoiceNo || '').toLowerCase();
+        if (!clientName.includes(searchTerm.toLowerCase()) && 
+            !invoiceNo.includes(searchTerm.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Custom filter from buttons
+      if (currentFilter !== 'all' && bill.documentType !== currentFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    // Update counts
+    document.getElementById('totalBillsCount').textContent = filteredBills.length;
+    document.getElementById('selectedBillsCount').textContent = selectedBills.size;
+    document.getElementById('previewCount').textContent = `${filteredBills.length} bills`;
+    
+    // Show step 3
+    document.getElementById('step3Container').classList.remove('d-none');
+    
+    // Display bills
+    displayBills();
+  }
+
+  // Display bills in current view mode
+  function displayBills() {
+    const billsGrid = document.getElementById('billsGrid');
+    const billsList = document.getElementById('billsList');
+    const previewEmptyState = document.getElementById('previewEmptyState');
+    const previewPagination = document.getElementById('previewPagination');
+    
+    if (filteredBills.length === 0) {
+      billsGrid.innerHTML = '';
+      billsList.innerHTML = '';
+      previewEmptyState.classList.remove('d-none');
+      previewPagination.classList.add('d-none');
+      return;
+    }
+    
+    previewEmptyState.classList.add('d-none');
+    
+    // Pagination
+    const totalPages = Math.ceil(filteredBills.length / itemsPerPage);
+    const startIndex = (currentPreviewPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageBills = filteredBills.slice(startIndex, endIndex);
+    
+    if (currentViewMode === 'grid') {
+      billsGrid.classList.remove('d-none');
+      billsList.classList.add('d-none');
+      billsGrid.innerHTML = renderGridView(pageBills);
+    } else {
+      billsGrid.classList.add('d-none');
+      billsList.classList.remove('d-none');
+      billsList.innerHTML = renderListView(pageBills);
+    }
+    
+    // Setup pagination
+    if (totalPages > 1) {
+      setupPagination(totalPages);
+      previewPagination.classList.remove('d-none');
+    } else {
+      previewPagination.classList.add('d-none');
+    }
+    
+    // Add event listeners to bill cards
+    addBillEventListeners();
+  }
+
+  // Render grid view
+  function renderGridView(bills) {
+    let html = '';
+    bills.forEach(bill => {
+      const docType = documentTypeLabels[bill.documentType] || 
+                     { label: bill.documentType || 'Document', class: '', badge: 'secondary', icon: 'fa-file' };
+      const isSelected = selectedBills.has(bill.id || bill.invoiceNo);
+      
+      html += `
+        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+          <div class="card bill-card ${docType.class} h-100 ${isSelected ? 'border border-success border-3' : ''}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="badge bg-${docType.badge} document-badge">
+                  <i class="fas ${docType.icon} me-1"></i>${docType.label}
+                </span>
+                <div class="form-check">
+                  <input class="form-check-input bill-select" type="checkbox" 
+                         data-bill-id="${bill.id || bill.invoiceNo}" ${isSelected ? 'checked' : ''}>
+                </div>
+              </div>
+
+              <h6 class="card-title text-truncate mt-2" title="${bill.clientName || 'No client name'}">
+                ${bill.clientName || 'No client name'}
+              </h6>
+              
+              <div class="small">
+                <div class="text-truncate">
+                  <i class="fas fa-hashtag me-1 text-muted"></i>
+                  ${bill.invoiceNo || 'N/A'}
+                </div>
+                <div class="text-truncate">
+                  <i class="fas fa-calendar me-1 text-muted"></i>
+                  ${formatDate(bill.invoiceDate || bill.createdAt)}
+                </div>
+                ${bill.grandTotal ? `
+                  <div class="fw-bold text-primary mt-2">
+                    ${formatCurrency(bill.grandTotal)}
+                  </div>
+                ` : ''}
+              </div>
+              
+              <div class="mt-2 d-flex gap-1 flex-wrap">
+                <button class="btn btn-sm btn-outline-info view-details-btn" 
+                        data-bill-id="${bill.id || bill.invoiceNo}">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary view-json-btn" 
+                        data-bill-id="${bill.id || bill.invoiceNo}">
+                  <i class="fas fa-code"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    return html;
+  }
+
+  // Render list view
+  function renderListView(bills) {
+    let html = '<div class="table-responsive"><table class="table table-hover">';
+    html += `
+      <thead class="table-light">
+        <tr>
+          <th width="40"><input type="checkbox" id="listSelectAll"></th>
+          <th>Document Type</th>
+          <th>Invoice No</th>
+          <th>Client Name</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    
+    bills.forEach(bill => {
+      const docType = documentTypeLabels[bill.documentType] || 
+                     { label: bill.documentType || 'Document', badge: 'secondary', icon: 'fa-file' };
+      const isSelected = selectedBills.has(bill.id || bill.invoiceNo);
+      
+      html += `
+        <tr class="${isSelected ? 'table-success' : ''}">
+          <td>
+            <input type="checkbox" class="bill-select" data-bill-id="${bill.id || bill.invoiceNo}" ${isSelected ? 'checked' : ''}>
+          </td>
+          <td>
+            <span class="badge bg-${docType.badge}">
+              <i class="fas ${docType.icon} me-1"></i>${docType.label}
+            </span>
+          </td>
+          <td>${bill.invoiceNo || 'N/A'}</td>
+          <td>${bill.clientName || 'N/A'}</td>
+          <td>${formatDate(bill.invoiceDate || bill.createdAt)}</td>
+          <td class="fw-bold">${formatCurrency(bill.grandTotal || 0)}</td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-info view-details-btn" data-bill-id="${bill.id || bill.invoiceNo}">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-outline-secondary view-json-btn" data-bill-id="${bill.id || bill.invoiceNo}">
+                <i class="fas fa-code"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  // Setup pagination
+  function setupPagination(totalPages) {
+    const pagination = document.querySelector('#previewPagination ul');
+    let html = '';
+    
+    html += `
+      <li class="page-item ${currentPreviewPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${currentPreviewPage - 1}">Previous</a>
+      </li>
+    `;
+    
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPreviewPage - 2 && i <= currentPreviewPage + 2)) {
+        html += `
+          <li class="page-item ${i === currentPreviewPage ? 'active' : ''}">
+            <a class="page-link" href="#" data-page="${i}">${i}</a>
+          </li>
+        `;
+      } else if (i === currentPreviewPage - 3 || i === currentPreviewPage + 3) {
+        html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+      }
+    }
+    
+    html += `
+      <li class="page-item ${currentPreviewPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${currentPreviewPage + 1}">Next</a>
+      </li>
+    `;
+    
+    pagination.innerHTML = html;
+    
+    // Add event listeners
+    pagination.querySelectorAll('.page-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const page = parseInt(this.dataset.page);
+        if (!isNaN(page)) {
+          currentPreviewPage = page;
+          displayBills();
+        }
+      });
+    });
+  }
+
+  // Add event listeners to bill cards
+  function addBillEventListeners() {
+    // Checkbox selection
+    document.querySelectorAll('.bill-select').forEach(checkbox => {
+      checkbox.addEventListener('change', function(e) {
+        e.stopPropagation();
+        const billId = this.dataset.billId;
+        if (this.checked) {
+          selectedBills.add(billId);
+        } else {
+          selectedBills.delete(billId);
+        }
+        document.getElementById('selectedBillsCount').textContent = selectedBills.size;
+        
+        // Update card border
+        const card = this.closest('.bill-card, tr');
+        if (card) {
+          if (this.checked) {
+            card.classList.add('border', 'border-success', 'border-3');
+            if (card.tagName === 'TR') {
+              card.classList.add('table-success');
+            }
+          } else {
+            card.classList.remove('border', 'border-success', 'border-3');
+            if (card.tagName === 'TR') {
+              card.classList.remove('table-success');
+            }
+          }
+        }
+      });
+    });
+    
+    // View details button
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const billId = this.dataset.billId;
+        const bill = importedBills.find(b => (b.id || b.invoiceNo) === billId);
+        if (bill) {
+          showBillDetails(bill);
+        }
+      });
+    });
+    
+    // View JSON button
+    document.querySelectorAll('.view-json-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const billId = this.dataset.billId;
+        const bill = importedBills.find(b => (b.id || b.invoiceNo) === billId);
+        if (bill) {
+          showBillJSON(bill);
+        }
+      });
+    });
+    
+    // List view select all
+    const listSelectAll = document.getElementById('listSelectAll');
+    if (listSelectAll) {
+      listSelectAll.addEventListener('change', function() {
+        document.querySelectorAll('.bill-select').forEach(cb => {
+          cb.checked = this.checked;
+          cb.dispatchEvent(new Event('change'));
+        });
+      });
+    }
+  }
+
+  // Show bill details in modal
+  function showBillDetails(bill) {
+    const content = document.getElementById('billDetailsContent');
+    
+    let itemsHtml = '';
+    if (bill.items && bill.items.length > 0) {
+      itemsHtml = `
+        <div class="mt-3">
+          <h6 class="fw-bold">Items</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Item</th>
+                  <th>HSN/SAC</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${bill.items.map(item => `
+                  <tr>
+                    <td>${item.name || item.itemName || ''}</td>
+                    <td>${item.hsn || item.hsnSac || ''}</td>
+                    <td>${item.quantity || 0}</td>
+                    <td>${item.unit || ''}</td>
+                    <td>${formatCurrency(item.price || 0)}</td>
+                    <td>${formatCurrency(item.amount || 0)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+    
+    content.innerHTML = `
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="fw-bold border-bottom pb-2">Document Information</h6>
+          <table class="table table-sm">
+            <tr>
+              <th width="40%">Document Type:</th>
+              <td>${documentTypeLabels[bill.documentType]?.label || bill.documentType || 'N/A'}</td>
+            </tr>
+            <tr>
+              <th>Invoice No:</th>
+              <td>${bill.invoiceNo || 'N/A'}</td>
+            </tr>
+            <tr>
+              <th>Invoice Date:</th>
+              <td>${formatDate(bill.invoiceDate)}</td>
+            </tr>
+            <tr>
+              <th>Place of Supply:</th>
+              <td>${bill.placeOfSupply || 'N/A'}</td>
+            </tr>
+            <tr>
+              <th>Status:</th>
+              <td>
+                <span class="badge bg-secondary">Archived</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="col-md-6">
+          <h6 class="fw-bold border-bottom pb-2">Client Information</h6>
+          <table class="table table-sm">
+            <tr>
+              <th width="40%">Client Name:</th>
+              <td>${bill.clientName || 'N/A'}</td>
+            </tr>
+            <tr>
+              <th>GSTIN:</th>
+              <td>${bill.clientGST || 'N/A'}</td>
+            </tr>
+            <tr>
+              <th>Address:</th>
+              <td>${bill.clientAddress || 'N/A'}</td>
+            </tr>
+            <tr>
+              <th>State:</th>
+              <td>${bill.clientState || 'N/A'}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      ${itemsHtml}
+      
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <h6 class="fw-bold border-bottom pb-2">Financial Summary</h6>
+          <table class="table table-sm">
+            <tr>
+              <th>Subtotal:</th>
+              <td class="text-end">${formatCurrency(bill.subtotal || 0)}</td>
+            </tr>
+            ${bill.discountPercent ? `
+              <tr>
+                <th>Discount (${bill.discountPercent}%):</th>
+                <td class="text-end">-${formatCurrency(bill.discountAmount || 0)}</td>
+              </tr>
+              <tr>
+                <th>After Discount:</th>
+                <td class="text-end">${formatCurrency(bill.totalAfterDiscount || 0)}</td>
+              </tr>
+            ` : ''}
+            ${bill.taxAmount ? `
+              <tr>
+                <th>Tax (${bill.taxRate || 0}%):</th>
+                <td class="text-end">${formatCurrency(bill.taxAmount || 0)}</td>
+              </tr>
+            ` : ''}
+            <tr class="fw-bold">
+              <th>Grand Total:</th>
+              <td class="text-end text-primary">${formatCurrency(bill.grandTotal || 0)}</td>
+            </tr>
+            ${bill.paymentStatus ? `
+              <tr>
+                <th>Payment Status:</th>
+                <td class="text-end">
+                  <span class="badge bg-${bill.paymentStatus === 'Paid' ? 'success' : 'danger'}">
+                    ${bill.paymentStatus}
+                  </span>
+                </td>
+              </tr>
+            ` : ''}
+          </table>
+        </div>
+        
+        <div class="col-md-6">
+          <h6 class="fw-bold border-bottom pb-2">Additional Information</h6>
+          <table class="table table-sm">
+            ${bill.transportName ? `
+              <tr>
+                <th>Transport:</th>
+                <td>${bill.transportName}</td>
+              </tr>
+            ` : ''}
+            ${bill.vehicleNumber ? `
+              <tr>
+                <th>Vehicle No:</th>
+                <td>${bill.vehicleNumber}</td>
+              </tr>
+            ` : ''}
+            ${bill.deliveryDate ? `
+              <tr>
+                <th>Delivery Date:</th>
+                <td>${formatDate(bill.deliveryDate)}</td>
+              </tr>
+            ` : ''}
+            ${bill.field5 ? `
+              <tr>
+                <th>Additional Info:</th>
+                <td>${bill.field5}</td>
+              </tr>
+            ` : ''}
+          </table>
+        </div>
+      </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('billDetailsModal'));
+    modal.show();
+  }
+
+  // Show bill JSON in modal
+  function showBillJSON(bill) {
+    document.getElementById('rawJsonPreview').textContent = JSON.stringify(bill, null, 2);
+    const modal = new bootstrap.Modal(document.getElementById('jsonPreviewModal'));
+    modal.show();
+  }
+
+  // ============ IMPORT FUNCTIONALITY ============
+
+  // Import selected bills to Firebase
+  async function importSelectedBills() {
+    if (selectedBills.size === 0) {
+      showStatus('Please select at least one bill to import', 'warning');
+      return;
+    }
+
+    // Get bills to import
+    const billsToImport = importedBills.filter(bill => 
+      selectedBills.has(bill.id || bill.invoiceNo)
+    );
+
+    // Confirmation dialog
+    const confirmMessage = `Are you sure you want to import ${billsToImport.length} bill(s)?\n\n` +
+      `These documents will be imported as archived.\n` +
+      `This action cannot be undone. Continue?`;
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    // Show progress modal
+    const progressModal = new bootstrap.Modal(document.getElementById('importProgressModal'));
+    progressModal.show();
+
+    const progressBar = document.getElementById('importProgressBar');
+    const progressText = document.getElementById('importProgressText');
+    const detailText = document.getElementById('importDetailText');
+
+    try {
+      const user = firebase.auth().currentUser;
+      if (!user) throw new Error('User not authenticated');
+
+      const total = billsToImport.length;
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (let i = 0; i < billsToImport.length; i++) {
+        const bill = billsToImport[i];
+        
+        // Update progress
+        const progress = Math.round(((i + 1) / total) * 100);
+        progressBar.style.width = `${progress}%`;
+        progressBar.textContent = `${progress}%`;
+        progressText.textContent = `Importing bill ${i + 1} of ${total}...`;
+        detailText.textContent = `Processing: ${bill.invoiceNo || bill.clientName || 'Unknown'}`;
+
+        try {
+          // Prepare bill data for import
+          const billData = { ...bill };
+          
+          // Remove metadata that shouldn't be stored
+          delete billData.id;
+          delete billData.createdAtISO;
+          delete billData.updatedAtISO;
+          delete billData.createdAtDate;
+          delete billData.updatedAtDate;
+          
+          // Set import metadata
+          billData.importedAt = firebase.database.ServerValue.TIMESTAMP;
+          billData.importedBy = user.uid;
+          billData.importedByEmail = user.email;
+          
+          // Ensure isArchived is true
+          billData.isArchived = true;
+          
+          // Set timestamps if not present
+          if (!billData.createdAt) {
+            billData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+          }
+          billData.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+          
+          // Save to Firebase (let Firebase generate new ID)
+          const billRef = firebase.database().ref('bill').push();
+          await billRef.set(billData);
+          
+          successCount++;
+          
+        } catch (error) {
+          console.error('Error importing bill:', error);
+          errorCount++;
+        }
+      }
+
+      // Hide progress modal
+      progressModal.hide();
+
+      // Show result
+      const resultMessage = `Import completed:\n` +
+        `✅ Successfully imported: ${successCount}\n` +
+        `❌ Errors: ${errorCount}`;
+      
+      showStatus(resultMessage, errorCount > 0 ? 'warning' : 'success');
+      
+      // Remove successfully imported bills from the list
+      if (successCount > 0) {
+        const importedIds = new Set(billsToImport.map(bill => bill.id || bill.invoiceNo));
+        importedBills = importedBills.filter(bill => !importedIds.has(bill.id || bill.invoiceNo));
+        selectedBills.clear();
+        
+        if (importedBills.length === 0) {
+          // All bills imported, show success and reset
+          showStatus('All selected bills have been successfully imported!', 'success');
+          setTimeout(() => {
+            location.reload();
+          }, 2000);
+        } else {
+          // Refresh preview
+          filterAndDisplayBills();
+          document.getElementById('selectedBillsCount').textContent = '0';
+        }
+      }
+
+    } catch (error) {
+      console.error('Error during import:', error);
+      progressModal.hide();
+      showStatus('Import failed: ' + error.message, 'danger');
+    }
+  }
+
+  // ============ EVENT LISTENERS ============
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Upload area click
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const browseBtn = document.getElementById('browseBtn');
+    
+    uploadArea.addEventListener('click', function() {
+      fileInput.click();
+    });
+    
+    uploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+      
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect(file);
+      }
+    });
+    
+    browseBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function(e) {
+      if (this.files.length > 0) {
+        handleFileSelect(this.files[0]);
+      }
+    });
+    
+    // Change file button
+    document.getElementById('changeFileBtn').addEventListener('click', function() {
+      // Show upload section again
+      document.getElementById('step1Container').classList.remove('upload-section-hidden');
+      document.getElementById('fileInfo').classList.add('d-none');
+      document.getElementById('step2Container').classList.add('d-none');
+      document.getElementById('step3Container').classList.add('d-none');
+      document.getElementById('duplicateWarning').classList.add('d-none');
+      fileInput.value = '';
+      importedData = null;
+      importedBills = [];
+      uniqueBills = [];
+      duplicateBills = [];
+      selectedBills.clear();
+    });
+    
+    // Cancel import
+    document.getElementById('cancelImportBtn').addEventListener('click', function() {
+      if (confirm('Cancel import and go back to file upload?')) {
+        // Show upload section again
+        document.getElementById('step1Container').classList.remove('upload-section-hidden');
+        document.getElementById('fileInfo').classList.add('d-none');
+        document.getElementById('step2Container').classList.add('d-none');
+        document.getElementById('step3Container').classList.add('d-none');
+        document.getElementById('duplicateWarning').classList.add('d-none');
+        fileInput.value = '';
+        importedData = null;
+        importedBills = [];
+        uniqueBills = [];
+        duplicateBills = [];
+        selectedBills.clear();
+      }
+    });
+    
+    // Preview bills button
+    document.getElementById('previewBillsBtn').addEventListener('click', function() {
+      filterAndDisplayBills();
+    });
+    
+    // Import bills button (import all)
+    document.getElementById('importBillsBtn').addEventListener('click', function() {
+      selectedBills = new Set(importedBills.map(bill => bill.id || bill.invoiceNo));
+      document.getElementById('selectedBillsCount').textContent = selectedBills.size;
+      importSelectedBills();
+    });
+    
+    // Import selected button
+    document.getElementById('importSelectedBtn').addEventListener('click', importSelectedBills);
+    
+    // Select all / deselect all
+    document.getElementById('selectAllBtn').addEventListener('click', function() {
+      filteredBills.forEach(bill => selectedBills.add(bill.id || bill.invoiceNo));
+      document.getElementById('selectedBillsCount').textContent = selectedBills.size;
+      displayBills();
+    });
+    
+    document.getElementById('deselectAllBtn').addEventListener('click', function() {
+      selectedBills.clear();
+      document.getElementById('selectedBillsCount').textContent = '0';
+      displayBills();
+    });
+    
+    // View toggle
+    document.getElementById('gridViewBtn').addEventListener('click', function() {
+      currentViewMode = 'grid';
+      this.classList.add('active');
+      document.getElementById('listViewBtn').classList.remove('active');
+      displayBills();
+    });
+    
+    document.getElementById('listViewBtn').addEventListener('click', function() {
+      currentViewMode = 'list';
+      this.classList.add('active');
+      document.getElementById('gridViewBtn').classList.remove('active');
+      displayBills();
+    });
+    
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        currentPreviewPage = 1;
+        filterAndDisplayBills();
+      });
+    });
+    
+    // Search input
+    document.getElementById('previewSearch').addEventListener('input', function(e) {
+      searchTerm = e.target.value;
+      currentPreviewPage = 1;
+      filterAndDisplayBills();
+    });
+    
+    // Type filter dropdown
+    document.getElementById('previewTypeFilter').addEventListener('change', function(e) {
+      typeFilter = e.target.value;
+      currentPreviewPage = 1;
+      filterAndDisplayBills();
+    });
+    
+    // Copy JSON button
+    document.getElementById('copyJsonBtn').addEventListener('click', function() {
+      const jsonText = document.getElementById('rawJsonPreview').textContent;
+      navigator.clipboard.writeText(jsonText).then(() => {
+        showStatus('JSON copied to clipboard', 'success');
+      }).catch(() => {
+        showStatus('Failed to copy JSON', 'danger');
+      });
+    });
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
