@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barman Construction | Help</title>
+  <link rel="icon" type="image/png" href="img/tab-logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="style/style.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+     <script src="js/firebaseconfig.js"></script>
+    <script src="js/all.js"></script>
+<style>
+  /* Slightly larger video cards */
+  .video-card {
+    transition: transform 0.2s ease-in-out;
+  }
+  .video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+  /* Custom filter dropdown styling */
+  .filter-select {
+    max-width: 300px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<!-- Navbar will load here -->
+<div id="nav-placeholder"></div>
+
+<!-- Main Content -->
+<div class="content p-3">
+  
+</div>
+
+<script>
+  // ==========================
+  // Help Videos Data
+  // ==========================
+  const helpVideos = [
+    {
+      title: "How to Use Measurement Sheet ?",
+      type: "Measurement Sheet",
+      link: "https://youtu.be/J0fnfWukJ-4",
+      videoId: "J0fnfWukJ-4"
+    }
+    
+  ];
+
+  // ==========================
+  // Get unique video types for filter
+  // ==========================
+  const videoTypes = ['All Types', ...new Set(helpVideos.map(video => video.type))];
+
+  // ==========================
+  // Function to extract YouTube Video ID
+  // ==========================
+  function getYouTubeVideoId(url) {
+    const patterns = [
+      /youtu\.be\/([^?]+)/,
+      /youtube\.com\/watch\?v=([^&]+)/,
+      /youtube\.com\/embed\/([^?]+)/
+    ];
+    
+    for (let pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  }
+
+  // ==========================
+  // Function to display videos based on filter
+  // ==========================
+  function displayVideos(filterType = 'All Types') {
+    const content = document.querySelector(".content");
+    
+    // Filter videos
+    const filteredVideos = filterType === 'All Types' 
+      ? helpVideos 
+      : helpVideos.filter(video => video.type === filterType);
+
+    let html = `
+      <div class="container-fluid mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0">
+            <i class="bi bi-play-circle-fill text-danger"></i> Help Videos
+          </h4>
+          
+          <!-- Filter Dropdown -->
+          <div class="filter-select">
+            <select class="form-select" id="videoTypeFilter" onchange="filterVideos(this.value)">
+              ${videoTypes.map(type => `
+                <option value="${type}" ${type === filterType ? 'selected' : ''}>
+                  ${type}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+        </div>`;
+
+    // Add videos or no results message
+    if (filteredVideos.length === 0) {
+      html += `
+        <div class="alert alert-info text-center py-4">
+          <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+          No videos found for this type.
+        </div>`;
+    } else {
+      html += `<div class="row g-4">`;
+      
+      filteredVideos.forEach((video, index) => {
+        const videoId = video.videoId || getYouTubeVideoId(video.link);
+        
+        html += `
+          <div class="col-xl-6 col-lg-6 col-md-12">
+            <div class="card shadow-sm h-100 video-card">
+              <div class="ratio ratio-16x9">
+                <iframe 
+                  src="https://www.youtube.com/embed/${videoId}" 
+                  title="${video.title}"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <div class="card-body">
+                <h6 class="fw-bold">${video.title}</h6>
+                <p class="text-muted small mb-3">
+                  <i class="bi bi-tag"></i> ${video.type}
+                </p>
+                <div class="d-flex gap-2">
+                  <a href="${video.link}" target="_blank" class="btn btn-sm btn-outline-danger flex-grow-1">
+                    <i class="bi bi-youtube"></i> Watch on YouTube
+                  </a>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="expandVideo('${videoId}', '${video.title.replace(/'/g, "\\'")}', '${video.type}')">
+                    <i class="bi bi-arrows-fullscreen"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      
+      html += `</div>`; // Close the row
+    }
+
+    html += `
+      </div> <!-- Close container-fluid -->
+      
+      <!-- Modal for Expanded Video -->
+      <div class="modal fade" id="videoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="videoModalTitle"></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+              <div class="ratio ratio-16x9">
+                <iframe id="modalVideoFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <span class="text-muted" id="videoModalType"></span>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = html;
+  }
+
+  // ==========================
+  // Filter function
+  // ==========================
+  function filterVideos(type) {
+    displayVideos(type);
+  }
+
+  // ==========================
+  // Function to expand video in modal
+  // ==========================
+  function expandVideo(videoId, title, type) {
+    const modalTitle = document.getElementById('videoModalTitle');
+    const modalType = document.getElementById('videoModalType');
+    const modalFrame = document.getElementById('modalVideoFrame');
+    
+    modalTitle.textContent = title;
+    modalType.textContent = type;
+    modalFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('videoModal'));
+    modal.show();
+    
+    // Clear src when modal is hidden to stop video
+    document.getElementById('videoModal').addEventListener('hidden.bs.modal', function () {
+      modalFrame.src = '';
+    });
+  }
+
+  // ==========================
+  // Initialize display
+  // ==========================
+  document.addEventListener("DOMContentLoaded", function () {
+    displayVideos('All Types');
+  });
+</script>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

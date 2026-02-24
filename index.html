@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Barman Construction</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
   <link rel="icon" type="image/png" href="img/tab-logo.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -72,7 +74,6 @@
     Nice day at work
   </small>
 </div>
-
     <h4 class="text-nowrap top-h d-none">
         <span class="d-none d-lg-inline"><i class="bi bi-buildings"></i> Projects Management</span>
         </h4>
@@ -80,7 +81,6 @@
       <i class="fas fa-plus"></i> <span class="d-none d-lg-inline">Create Project</span>
     </button>
   </div>
-
 
   
   <!-- Projects Container -->
@@ -977,6 +977,13 @@ function formatDate(dateString) {
         return dateString;
     }
 }
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js")
+   .then(() => console.log("Service Worker Registered"));
+  }
 </script>
 
 <!-- Bootstrap JS Bundle -->
