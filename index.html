@@ -6,7 +6,6 @@
   <title>Barman Construction</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d6efd">
-  <link rel="icon" type="image/png" href="img/tab-logo.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -74,6 +73,7 @@
     Nice day at work
   </small>
 </div>
+
     <h4 class="text-nowrap top-h d-none">
         <span class="d-none d-lg-inline"><i class="bi bi-buildings"></i> Projects Management</span>
         </h4>
@@ -81,6 +81,7 @@
       <i class="fas fa-plus"></i> <span class="d-none d-lg-inline">Create Project</span>
     </button>
   </div>
+
 
   
   <!-- Projects Container -->
@@ -287,9 +288,9 @@
               </svg>
             </div>
               <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="fw-bold text-primary text-truncate ">
+              <h4 class="fw-bold text-primary text-truncate">
                <i class="bi bi-buildings"></i> ${escapeHtml(project.projectName || 'Unnamed Project')}
-                </h5>
+                </h4>
                </div>
             <div class="card-body">
              
@@ -342,80 +343,100 @@
   }
 
   // Load attendance data and update the card
-  async function loadAndUpdateAttendance(projectId, date, cardElement) {
+// Load attendance data and update the card
+async function loadAndUpdateAttendance(projectId, date, cardElement) {
     try {
-      // Load employees count for this project
-      const employeesSnapshot = await database.ref(`employees/${projectId}`).once('value');
-      const employees = employeesSnapshot.val();
-      const totalEmployees = employees ? Object.keys(employees).length : 0;
-      
-      // Load today's attendance
-      const attendanceSnapshot = await database.ref(`projects/${projectId}/attendance/${date}`).once('value');
-      const attendanceData = attendanceSnapshot.val();
-      
-      // Count attendance status
-      let presentCount = 0;
-      let absentCount = 0;
-      let halfdayCount = 0;
-      let markedCount = 0;
-      
-      if (attendanceData) {
-        Object.values(attendanceData).forEach(record => {
-          if (record.status === 'present') presentCount++;
-          else if (record.status === 'absent') absentCount++;
-          else if (record.status === 'halfday') halfdayCount++;
-        });
-        markedCount = presentCount + absentCount + halfdayCount;
-      }
-      
-      // Update the card with attendance data
-      const attendanceHtml = generateAttendanceHtml(
-        totalEmployees, 
-        presentCount, 
-        absentCount, 
-        halfdayCount, 
-        markedCount
-      );
-      
-      const cardBody = cardElement.querySelector('.card-body');
-      const existingAttendanceDiv = cardBody.querySelector('.mt-1');
-      if (existingAttendanceDiv) {
-        existingAttendanceDiv.outerHTML = attendanceHtml;
-      }
-      
+        // Load employees count for this project
+        const employeesSnapshot = await database.ref(`employees/${projectId}`).once('value');
+        const employees = employeesSnapshot.val();
+        const totalEmployees = employees ? Object.keys(employees).length : 0;
+        
+        // Load today's attendance
+        const attendanceSnapshot = await database.ref(`projects/${projectId}/attendance/${date}`).once('value');
+        const attendanceData = attendanceSnapshot.val();
+        
+        // Count attendance status (including overtime)
+        let presentCount = 0;
+        let absentCount = 0;
+        let halfdayCount = 0;
+        let presentWithOTCount = 0;
+        let markedCount = 0;
+        
+        if (attendanceData) {
+            Object.values(attendanceData).forEach(record => {
+                const status = record.status || '';
+                
+                // Check if status starts with 'present' (includes 'present' and 'present+full/half/quarter')
+                if (status === 'present') {
+                    presentCount++;
+                    markedCount++; // THIS WAS MISSING
+                } else if (status && status.startsWith('present+')) {
+                    presentWithOTCount++;
+                    markedCount++; // THIS WAS MISSING
+                } else if (status === 'absent') {
+                    absentCount++;
+                    markedCount++;
+                } else if (status === 'halfday') {
+                    halfdayCount++;
+                    markedCount++;
+                }
+            });
+        }
+        
+        console.log(`Project ${projectId}: Total: ${totalEmployees}, Marked: ${markedCount}, Present: ${presentCount}, Present+OT: ${presentWithOTCount}, Absent: ${absentCount}, Half: ${halfdayCount}`);
+        
+        // Update the card with attendance data including OT
+        const attendanceHtml = generateAttendanceHtml(
+            totalEmployees, 
+            presentCount,
+            presentWithOTCount,
+            absentCount, 
+            halfdayCount, 
+            markedCount
+        );
+        
+        const cardBody = cardElement.querySelector('.card-body');
+        const existingAttendanceDiv = cardBody.querySelector('.mt-1');
+        if (existingAttendanceDiv) {
+            existingAttendanceDiv.outerHTML = attendanceHtml;
+        }
+        
     } catch (error) {
-      console.error(`Error in loadAndUpdateAttendance for ${projectId}:`, error);
-      // Show error state
-      const cardBody = cardElement.querySelector('.card-body');
-      const existingAttendanceDiv = cardBody.querySelector('.mt-1');
-      if (existingAttendanceDiv) {
-        existingAttendanceDiv.outerHTML = `
-          <div class="mt-1">
-            <small class="text-muted">Today's Attendance</small>
-            <div class="text-danger">
-              <small><i class="fas fa-exclamation-circle"></i> Error loading attendance</small>
-            </div>
-          </div>
-        `;
-      }
+        console.error(`Error in loadAndUpdateAttendance for ${projectId}:`, error);
+        // Show error state
+        const cardBody = cardElement.querySelector('.card-body');
+        const existingAttendanceDiv = cardBody.querySelector('.mt-1');
+        if (existingAttendanceDiv) {
+            existingAttendanceDiv.outerHTML = `
+                <div class="mt-1">
+                    <small class="text-muted">Today's Attendance</small>
+                    <div class="text-danger">
+                        <small><i class="fas fa-exclamation-circle"></i> Error loading attendance</small>
+                    </div>
+                </div>
+            `;
+        }
     }
-  }
+}
 
   // Generate attendance HTML for the chart
-  function generateAttendanceHtml(totalEmployees, presentCount, absentCount, halfdayCount, markedCount) {
+// Generate attendance HTML for the chart (with overtime)
+function generateAttendanceHtml(totalEmployees, presentCount, presentWithOTCount, absentCount, halfdayCount, markedCount) {
     if (totalEmployees === 0) {
-      return `
-        <div class="mt-1">
-          <small class="text-muted">Today's Attendance</small>
-          <div class="text-muted">
-            <small><i class="fas fa-info-circle"></i> No employees in project</small>
-          </div>
-        </div>
-      `;
+        return `
+            <div class="mt-1">
+                <small class="text-muted">Today's Attendance</small>
+                <div class="text-muted">
+                    <small><i class="fas fa-info-circle"></i> No employees in project</small>
+                </div>
+            </div>
+        `;
     }
     
+    const totalPresent = presentCount + presentWithOTCount;
+    
     // Calculate percentages for the chart
-    const presentPercent = totalEmployees > 0 ? (presentCount / totalEmployees) * 100 : 0;
+    const presentPercent = totalEmployees > 0 ? (totalPresent / totalEmployees) * 100 : 0;
     const absentPercent = totalEmployees > 0 ? (absentCount / totalEmployees) * 100 : 0;
     const halfdayPercent = totalEmployees > 0 ? (halfdayCount / totalEmployees) * 100 : 0;
     const unmarkedPercent = totalEmployees > 0 ? ((totalEmployees - markedCount) / totalEmployees) * 100 : 0;
@@ -424,63 +445,69 @@
     let chartHtml = '';
     
     if (markedCount > 0) {
-      chartHtml = `
-        <div class="progress mt-1" style="height: 20px;" title="Present: ${presentCount}, Absent: ${absentCount}, Half Day: ${halfdayCount}, Not Marked: ${totalEmployees - markedCount}">
-          ${presentCount > 0 ? `<div class="progress-bar bg-success" style="width: ${presentPercent}%"></div>` : ''}
-          ${absentCount > 0 ? `<div class="progress-bar bg-danger" style="width: ${absentPercent}%"></div>` : ''}
-          ${halfdayCount > 0 ? `<div class="progress-bar bg-warning" style="width: ${halfdayPercent}%"></div>` : ''}
-          ${markedCount < totalEmployees ? `<div class="progress-bar bg-light" style="width: ${unmarkedPercent}%"></div>` : ''}
-        </div>
-      `;
+        chartHtml = `
+            <div class="progress mt-1" style="height: 20px;" title="Present: ${totalPresent} (OT: ${presentWithOTCount}), Absent: ${absentCount}, Half Day: ${halfdayCount}, Not Marked: ${totalEmployees - markedCount}">
+                ${totalPresent > 0 ? `<div class="progress-bar bg-success" style="width: ${presentPercent}%"></div>` : ''}
+                ${absentCount > 0 ? `<div class="progress-bar bg-danger" style="width: ${absentPercent}%"></div>` : ''}
+                ${halfdayCount > 0 ? `<div class="progress-bar bg-warning" style="width: ${halfdayPercent}%"></div>` : ''}
+                ${markedCount < totalEmployees ? `<div class="progress-bar bg-light" style="width: ${unmarkedPercent}%"></div>` : ''}
+            </div>
+        `;
     }
     
-    // Create legend
-    const legendHtml = markedCount > 0 ? `
-      <div class="d-flex justify-content-between mt-1">
-        ${presentCount > 0 ? `<div class="d-flex align-items-center"><span class="badge bg-success me-1">${presentCount}</span><small>Present</small></div>` : ''}
-        ${absentCount > 0 ? `<div class="d-flex align-items-center"><span class="badge bg-danger me-1">${absentCount}</span><small>Absent</small></div>` : ''}
-        ${halfdayCount > 0 ? `<div class="d-flex align-items-center"><span class="badge bg-warning me-1">${halfdayCount}</span><small>Half Day</small></div>` : ''}
-        ${markedCount < totalEmployees ? `<div class="d-flex align-items-center"><span class="badge bg-light text-dark me-1">${totalEmployees - markedCount}</span><small>Not Marked</small></div>` : ''}
-      </div>
-    ` : '';
+    // Create legend with overtime info
+    const legendHtml = `
+        <div class="d-flex justify-content-between mt-1 flex-wrap">
+            ${totalPresent > 0 ? `<div class="d-flex align-items-center"><span class="badge bg-success me-1">${totalPresent}</span><small>Present ${presentWithOTCount > 0 ? `(${presentWithOTCount} OT)` : ''}</small></div>` : ''}
+            ${absentCount > 0 ? `<div class="d-flex align-items-center"><span class="badge bg-danger me-1">${absentCount}</span><small>Absent</small></div>` : ''}
+            ${halfdayCount > 0 ? `<div class="d-flex align-items-center"><span class="badge bg-warning me-1">${halfdayCount}</span><small>Half Day</small></div>` : ''}
+            ${markedCount < totalEmployees ? `<div class="d-flex align-items-center"><span class="badge bg-light text-dark me-1">${totalEmployees - markedCount}</span><small>Not Marked</small></div>` : ''}
+        </div>
+    `;
     
     // Create stats text
     let statsText = '';
     if (markedCount === 0) {
-      statsText = `<small class="text-muted"><i class="fas fa-clock"></i> Not marked yet</small>`;
+        statsText = `<small class="text-muted"><i class="fas fa-clock"></i> Not marked yet</small>`;
     } else if (markedCount === totalEmployees) {
-      statsText = `<small class="text-success"><i class="fas fa-check-circle"></i> All ${markedCount} employees marked</small>`;
+        statsText = `<small class="text-success"><i class="fas fa-check-circle"></i> All ${markedCount} employees marked</small>`;
     } else {
-      statsText = `<small class="text-warning"><i class="fas fa-exclamation-circle"></i> ${markedCount}/${totalEmployees} marked</small>`;
+        statsText = `<small class="text-warning"><i class="fas fa-exclamation-circle"></i> ${markedCount}/${totalEmployees} marked</small>`;
+    }
+    
+    // Add overtime badge if present
+    let otBadge = '';
+    if (presentWithOTCount > 0) {
+        otBadge = `<span class="badge bg-info ms-1">OT: ${presentWithOTCount}</span>`;
     }
     
     // Create percentage badge
     let percentageBadge = '';
     if (markedCount > 0) {
-      const percentage = Math.round((markedCount / totalEmployees) * 100);
-      let badgeClass = 'bg-secondary';
-      if (percentage === 100) badgeClass = 'bg-success';
-      else if (percentage >= 75) badgeClass = 'bg-primary';
-      else if (percentage >= 50) badgeClass = 'bg-warning';
-      else badgeClass = 'bg-danger';
-      
-      percentageBadge = `<span class="badge ${badgeClass}">${percentage}%</span>`;
+        const percentage = Math.round((markedCount / totalEmployees) * 100);
+        let badgeClass = 'bg-secondary';
+        if (percentage === 100) badgeClass = 'bg-success';
+        else if (percentage >= 75) badgeClass = 'bg-primary';
+        else if (percentage >= 50) badgeClass = 'bg-warning';
+        else badgeClass = 'bg-danger';
+        
+        percentageBadge = `<span class="badge ${badgeClass}">${percentage}%</span>`;
     }
     
     return `
-      <div class="mt-1">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <small class="text-muted">Today's Attendance</small>
-          ${percentageBadge}
-        </div>
-        ${chartHtml}
-        ${legendHtml}
         <div class="mt-1">
-          ${statsText}
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted">Today's Attendance ${otBadge}</small>
+                ${percentageBadge}
+            </div>
+            ${chartHtml}
+            ${legendHtml}
+            <div class="mt-1">
+                ${statsText}
+            </div>
         </div>
-      </div>
     `;
-  }
+}
 
   // Show message when no projects
   function showNoProjectsMessage(message) {
@@ -978,14 +1005,12 @@ function formatDate(dateString) {
     }
 }
 </script>
-
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js")
    .then(() => console.log("Service Worker Registered"));
   }
 </script>
-
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>

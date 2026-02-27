@@ -31,6 +31,32 @@
     </div>
 </div>
 
+<!-- Overtime Modal -->
+<div class="modal fade" id="overtimeModal" tabindex="-1" aria-labelledby="overtimeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="overtimeModalLabel">Select Overtime</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Select overtime duration for <span id="overtimeEmployeeName"></span></p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-lg" onclick="setOvertime('full')">
+                        <i class="fas fa-clock me-2"></i>Full Day
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-lg" onclick="setOvertime('half')">
+                        <i class="fas fa-clock me-2"></i>Half Day
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-lg" onclick="setOvertime('quarter')">
+                        <i class="fas fa-clock me-2"></i>Quarter Day
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Navbar will load here -->
 <div id="nav-placeholder"></div>
 
@@ -47,7 +73,7 @@
         </div>
 
 <!-- Attendance Stats -->
-<div class="row mb-2 g-1" id="attendanceStats">  <!-- g-1 = small gap -->
+<div class="row mb-2 g-1" id="attendanceStats">
 
   <div class="col-3">
     <div class="card border-start border-primary border-2 h-100">
@@ -90,8 +116,6 @@
   </div>
 
 </div>
-
-
 
         <!-- Filters Section -->
         <div class="fix-card mb-2 p-3">
@@ -157,8 +181,6 @@
     </div>
 </div>
 
-
-
 <script>
     // Initialize Firebase
     if (!firebase.apps.length) {
@@ -176,6 +198,10 @@
     let currentDate = new Date().toISOString().split('T')[0];
     let isSaving = false;
     let statusFilter = '';
+    
+    // Overtime modal variables
+    let currentOvertimeEmployeeId = null;
+    let currentOvertimeEmployeeName = '';
 
     // Check authentication
     auth.onAuthStateChanged(async (user) => {
@@ -433,98 +459,279 @@
             const presentClass = currentStatus === 'present' ? 'btn-success' : 'btn-outline-success';
             const absentClass = currentStatus === 'absent' ? 'btn-danger' : 'btn-outline-danger';
             const halfdayClass = currentStatus === 'halfday' ? 'btn-warning' : 'btn-outline-warning';
+            
+            // Check if present and has overtime
+            const hasOvertime = currentStatus.startsWith('present');
+            const overtimeType = hasOvertime && currentStatus.includes('+') ? currentStatus.split('+')[1] : '';
 
             html += `
                 <div class="card mb-2 mt-2">
-             
 
-  <!-- Card Header -->
-  <div class="card-header py-2">
-    <h6 class="text-success fw-bold">
-      <i class="bi bi-person-circle me-1"></i>${escapeHtml(employee.employeeName || 'Unnamed')}
-    </h6>
-  </div>
+                    <!-- Card Header -->
+                    <div class="card-header py-2">
+                        <h6 class="text-success fw-bold">
+                            <i class="bi bi-person-circle me-1"></i>${escapeHtml(employee.employeeName || 'Unnamed')}
+                        </h6>
+                    </div>
 
-  <!-- Card Body -->
-  <div class="card-body py-2">
-    <div class="row align-items-center">
+                    <!-- Card Body -->
+                    <div class="card-body py-2">
+                        <div class="row align-items-center">
 
-      <!-- Employee Info -->
-      <div class="col-md-4 mb-2 mb-md-0">
-        <div class="d-flex gap-2">
-          <span class="badge bg-secondary">
-            <i class="fas fa-briefcase me-1"></i>
-            ${escapeHtml(employee.designation || 'N/A')}
-          </span>
-          <span class="badge bg-info">
-            ${getTypeText(employee.employeeType)}
-          </span>
-        </div>
+                            <!-- Employee Info -->
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-briefcase me-1"></i>
+                                        ${escapeHtml(employee.designation || 'N/A')}
+                                    </span>
+                                    <span class="badge bg-info">
+                                        ${getTypeText(employee.employeeType)}
+                                    </span>
+                                    ${overtimeType ? `
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-clock me-1"></i>
+                                            OT: ${overtimeType}
+                                        </span>
+                                    ` : ''}
+                                </div>
 
-        ${employeeAttendance.remarks ? `
-          <p class="mb-0 mt-1">
-            <small class="text-muted">
-              Remarks: ${escapeHtml(employeeAttendance.remarks)}
-            </small>
-          </p>
-        ` : ''}
+                                ${employeeAttendance.remarks ? `
+                                    <p class="mb-0 mt-1">
+                                        <small class="text-muted">
+                                            Remarks: ${escapeHtml(employeeAttendance.remarks)}
+                                        </small>
+                                    </p>
+                                ` : ''}
 
-        ${employeeAttendance.markedAt ? `
-          <p class="mb-0">
-            <small class="text-muted">
-              Marked: ${formatTime(employeeAttendance.markedAt)}
-            </small>
-          </p>
-        ` : ''}
-      </div>
+                                ${employeeAttendance.markedAt ? `
+                                    <p class="mb-0">
+                                        <small class="text-muted">
+                                            Marked: ${formatTime(employeeAttendance.markedAt)}
+                                        </small>
+                                    </p>
+                                ` : ''}
+                            </div>
 
-      <!-- Action Buttons -->
-      <div class="col-md-8 text-md-end">
-        <div class="d-flex justify-content-md-end gap-2 flex-wrap">
+                            <!-- Action Buttons -->
+                            <div class="col-md-8 text-md-end">
+                                <div class="d-flex justify-content-md-end gap-2 flex-wrap">
 
-            <button type="button"
-            class="btn ${presentClass} btn-sm rounded-pill px-3"
-            onclick="markAttendance('${employee.id}', 'present')"
-            ${isSaving ? 'disabled' : ''}>
-            <i class="fas fa-check me-0"></i> Present
-            </button>
+                                    <button type="button"
+                                        class="btn ${presentClass} btn-sm rounded-pill px-3"
+                                        onclick="markAttendance('${employee.id}', 'present')"
+                                        ${isSaving ? 'disabled' : ''}>
+                                        <i class="fas fa-check me-0"></i> Present
+                                    </button>
 
-            <button type="button"
-            class="btn ${absentClass} btn-sm rounded-pill px-3"
-            onclick="markAttendance('${employee.id}', 'absent')"
-            ${isSaving ? 'disabled' : ''}>
-            <i class="fas fa-times me-1"></i> Absent
-            </button>
+                                    <button type="button"
+                                        class="btn ${absentClass} btn-sm rounded-pill px-3"
+                                        onclick="markAttendance('${employee.id}', 'absent')"
+                                        ${isSaving ? 'disabled' : ''}>
+                                        <i class="fas fa-times me-1"></i> Absent
+                                    </button>
 
-            <button type="button"
-            class="btn ${halfdayClass} btn-sm rounded-pill px-3"
-            onclick="markAttendance('${employee.id}', 'halfday')"
-            ${isSaving ? 'disabled' : ''}>
-            <i class="fas fa-adjust me-1"></i> Half
-            </button>
+                                    <button type="button"
+                                        class="btn ${halfdayClass} btn-sm rounded-pill px-3"
+                                        onclick="markAttendance('${employee.id}', 'halfday')"
+                                        ${isSaving ? 'disabled' : ''}>
+                                        <i class="fas fa-adjust me-1"></i> Half
+                                    </button>
 
-        </div>
-      </div>
+                                    ${currentStatus === 'present' ? `
+                                        <button type="button"
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-3"
+                                            onclick="showOvertimeModal('${employee.id}', '${escapeHtml(employee.employeeName || 'Unnamed')}')"
+                                            ${isSaving ? 'disabled' : ''}>
+                                            <i class="fas fa-clock me-1"></i> Overtime
+                                        </button>
+                                    ` : ''}
+                                    
+                                    ${overtimeType ? `
+                                        <button type="button"
+                                            class="btn btn-outline-danger btn-sm rounded-pill px-3"
+                                            onclick="removeOvertime('${employee.id}')"
+                                            ${isSaving ? 'disabled' : ''}>
+                                            <i class="fas fa-times me-1"></i> Remove OT
+                                        </button>
+                                    ` : ''}
 
-    </div>
-  </div>
+                                </div>
+                            </div>
 
-  <!-- Card Footer -->
-  <div class="card-footer py-1">
-    <small class="text-muted">
-      Status:
-      <span class="badge bg-${getStatusColor(currentStatus)}">
-        ${getStatusText(currentStatus)}
-      </span>
-    </small>
-  </div>
+                        </div>
+                    </div>
 
-</div>
+                    <!-- Card Footer -->
+                    <div class="card-footer py-1">
+                        <small class="text-muted">
+                            Status:
+                            <span class="badge bg-${getStatusColor(currentStatus)}">
+                                ${getStatusText(currentStatus)}
+                            </span>
+                        </small>
+                    </div>
 
+                </div>
             `;
         });
 
         employeesList.innerHTML = html;
+    }
+
+    // Show overtime modal
+    function showOvertimeModal(employeeId, employeeName) {
+        currentOvertimeEmployeeId = employeeId;
+        currentOvertimeEmployeeName = employeeName;
+        document.getElementById('overtimeEmployeeName').textContent = employeeName;
+        
+        const modal = new bootstrap.Modal(document.getElementById('overtimeModal'));
+        modal.show();
+    }
+
+    // Set overtime for employee
+    async function setOvertime(type) {
+        if (!currentOvertimeEmployeeId) return;
+        
+        try {
+            showSavingIndicator();
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('overtimeModal'));
+            modal.hide();
+            
+            const employeeId = currentOvertimeEmployeeId;
+            const currentRecord = attendanceData[employeeId] || {};
+            
+            // Create new status with overtime
+            const newStatus = `present+${type}`;
+            
+            const attendanceRecord = {
+                ...currentRecord,
+                status: newStatus,
+                overtime: type,
+                overtimeMarkedAt: new Date().toISOString(),
+                overtimeMarkedBy: currentUser.uid
+            };
+
+            attendanceData[employeeId] = attendanceRecord;
+            
+            await database.ref(`projects/${selectedProjectId}/attendance/${currentDate}/${employeeId}`).set(attendanceRecord);
+            await updateAttendanceSummary();
+
+            displayEmployees();
+            updateStats();
+            hideSavingIndicator();
+
+            showNotification(`Overtime (${type}) added for ${currentOvertimeEmployeeName}`, 'success');
+            
+            currentOvertimeEmployeeId = null;
+            currentOvertimeEmployeeName = '';
+            
+        } catch (error) {
+            console.error("Error adding overtime:", error);
+            hideSavingIndicator();
+            alert(`Error adding overtime: ${error.message}`);
+        }
+    }
+
+    // Remove overtime from employee
+    async function removeOvertime(employeeId) {
+        if (!confirm('Are you sure you want to remove overtime?')) {
+            return;
+        }
+        
+        try {
+            showSavingIndicator();
+            
+            const currentRecord = attendanceData[employeeId] || {};
+            
+            // Remove overtime but keep present status
+            const attendanceRecord = {
+                ...currentRecord,
+                status: 'present',
+                overtime: null,
+                overtimeMarkedAt: null,
+                overtimeMarkedBy: null
+            };
+
+            // Remove overtime properties
+            delete attendanceRecord.overtime;
+            delete attendanceRecord.overtimeMarkedAt;
+            delete attendanceRecord.overtimeMarkedBy;
+
+            attendanceData[employeeId] = attendanceRecord;
+            
+            await database.ref(`projects/${selectedProjectId}/attendance/${currentDate}/${employeeId}`).set(attendanceRecord);
+            await updateAttendanceSummary();
+
+            displayEmployees();
+            updateStats();
+            hideSavingIndicator();
+
+            showNotification('Overtime removed', 'success');
+            
+        } catch (error) {
+            console.error("Error removing overtime:", error);
+            hideSavingIndicator();
+            alert(`Error removing overtime: ${error.message}`);
+        }
+    }
+
+    // Mark attendance for an employee
+    async function markAttendance(employeeId, status) {
+        if (isSaving) {
+            alert('Please wait while previous attendance is being saved...');
+            return;
+        }
+
+        try {
+            showSavingIndicator();
+
+            const employee = employees.find(e => e.id === employeeId);
+            
+            // If marking as present, check if we need to preserve overtime
+            const currentRecord = attendanceData[employeeId] || {};
+            let newStatus = status;
+            
+            // If marking as present and there was overtime before, preserve it
+            if (status === 'present' && currentRecord.overtime) {
+                newStatus = `present+${currentRecord.overtime}`;
+            }
+
+            const attendanceRecord = {
+                status: newStatus
+            };
+            
+            // Preserve overtime if it exists
+            if (currentRecord.overtime && status === 'present') {
+                attendanceRecord.overtime = currentRecord.overtime;
+                attendanceRecord.overtimeMarkedAt = currentRecord.overtimeMarkedAt;
+                attendanceRecord.overtimeMarkedBy = currentRecord.overtimeMarkedBy;
+            }
+            
+            // Clear overtime if status is not present
+            if (status !== 'present') {
+                attendanceRecord.overtime = null;
+                attendanceRecord.overtimeMarkedAt = null;
+                attendanceRecord.overtimeMarkedBy = null;
+            }
+
+            attendanceData[employeeId] = attendanceRecord;
+            
+            await database.ref(`projects/${selectedProjectId}/attendance/${currentDate}/${employeeId}`).set(attendanceRecord);
+            await updateAttendanceSummary();
+
+            displayEmployees();
+            updateStats();
+            hideSavingIndicator();
+
+            showNotification(`${employee?.employeeName || 'Employee'} marked as ${status}`, 'success');
+
+        } catch (error) {
+            console.error("Error saving attendance:", error);
+            hideSavingIndicator();
+            alert(`Error saving attendance: ${error.message}`);
+        }
     }
 
     // Mark all employees with a status
@@ -544,12 +751,6 @@
             for (const employee of employees) {
                 const attendanceRecord = {
                     status: status
-                    // remarks: status === 'present' ? '' : 'Marked all as ' + status,
-                    //employeeName: employee.employeeName || 'Unknown'
-                    // designation: employee.designation || '',
-                    // employeeType: employee.employeeType || '',
-                    // markedBy: currentUser.uid,
-                    // markedAt: new Date().toISOString()
                 };
 
                 attendanceData[employee.id] = attendanceRecord;
@@ -571,99 +772,17 @@
         }
     }
 
-
-    // Mark attendance for an employee
-async function markAttendance(employeeId, status) {
-    if (isSaving) {
-        alert('Please wait while previous attendance is being saved...');
-        return;
-    }
-
-    try {
-        showSavingIndicator();
-
-        const attendanceRecord = {
-            status: status
-        };
-
-        // Save only status
-        await database
-            .ref(`projects/${selectedProjectId}/attendance/${currentDate}/${employeeId}`)
-            .set(attendanceRecord);
-
-        attendanceData[employeeId] = attendanceRecord;
-
-        await updateAttendanceSummary();
-
-        displayEmployees();
-        updateStats();
-        hideSavingIndicator();
-
-        showNotification(`Attendance marked as ${status}`, 'success');
-
-    } catch (error) {
-        console.error("Error saving attendance:", error);
-        hideSavingIndicator();
-        alert(`Error saving attendance: ${error.message}`);
-    }
-}
-
-
-    // // Mark attendance for an employee
-    // async function markAttendance(employeeId, status) {
-    //     if (isSaving) {
-    //         alert('Please wait while previous attendance is being saved...');
-    //         return;
-    //     }
-
-    //     try {
-    //         showSavingIndicator();
-
-    //         // const employee = employees.find(e => e.id === employeeId);
-    //         // let remarks = '';
-            
-    //         // if (status === 'absent' || status === 'halfday') {
-    //         //     remarks = prompt(`Enter remarks for ${employee?.employeeName || 'employee'} (${status === 'absent' ? 'Absent' : 'Half Day'}):`, '');
-    //         //     if (remarks === null) {
-    //         //         hideSavingIndicator();
-    //         //         return;
-    //         //     }
-    //         // }
-
-    //         const attendanceRecord = {
-    //             status: status,
-    //             // remarks: remarks.trim(),
-    //             // employeeName: employee?.employeeName || 'Unknown',
-    //             // designation: employee?.designation || '',
-    //             // employeeType: employee?.employeeType || '',
-    //             // markedBy: currentUser.uid,
-    //             // markedAt: new Date().toISOString()
-    //         };
-
-    //         attendanceData[employeeId] = attendanceRecord;
-    //         await database.ref(`projects/${selectedProjectId}/attendance/${currentDate}/${employeeId}`).set(attendanceRecord);
-    //         await updateAttendanceSummary();
-
-    //         displayEmployees();
-    //         updateStats();
-    //         hideSavingIndicator();
-
-    //         showNotification(`${employee?.employeeName || 'Employee'} marked as ${status}`, 'success');
-
-    //     } catch (error) {
-    //         console.error("Error saving attendance:", error);
-    //         hideSavingIndicator();
-    //         alert(`Error saving attendance: ${error.message}`);
-    //     }
-    // }
-
     // Update attendance summary (store only current date)
     async function updateAttendanceSummary() {
         try {
-            const presentCount = Object.values(attendanceData).filter(a => a.status === 'present').length;
+            // Count based on base status (without overtime)
+            const presentCount = Object.values(attendanceData).filter(a => a.status && a.status.startsWith('present')).length;
             const absentCount = Object.values(attendanceData).filter(a => a.status === 'absent').length;
             const halfdayCount = Object.values(attendanceData).filter(a => a.status === 'halfday').length;
             const notMarkedCount = employees.length - (presentCount + absentCount + halfdayCount);
+            
+            // Count overtime
+            const overtimeCount = Object.values(attendanceData).filter(a => a.overtime).length;
 
             const summaryData = {
                 totalEmployees: employees.length,
@@ -671,6 +790,7 @@ async function markAttendance(employeeId, status) {
                 absent: absentCount,
                 halfday: halfdayCount,
                 notMarked: notMarkedCount,
+                overtime: overtimeCount,
                 markedBy: currentUser.uid,
                 markedAt: new Date().toISOString(),
                 projectName: allProjects.find(p => p.id === selectedProjectId)?.name || 'Unknown Project',
@@ -688,7 +808,7 @@ async function markAttendance(employeeId, status) {
 
     // Update statistics
     function updateStats() {
-        const present = Object.values(attendanceData).filter(a => a.status === 'present').length;
+        const present = Object.values(attendanceData).filter(a => a.status && a.status.startsWith('present')).length;
         const absent = Object.values(attendanceData).filter(a => a.status === 'absent').length;
         const halfday = Object.values(attendanceData).filter(a => a.status === 'halfday').length;
 
@@ -748,23 +868,24 @@ async function markAttendance(employeeId, status) {
     }
 
     function getStatusText(status) {
-        const statuses = {
-            present: 'Present',
-            absent: 'Absent',
-            halfday: 'Half Day',
-            notmarked: 'Not Marked'
-        };
-        return statuses[status] || status;
+        if (!status) return 'Not Marked';
+        if (status === 'present') return 'Present';
+        if (status === 'absent') return 'Absent';
+        if (status === 'halfday') return 'Half Day';
+        if (status.startsWith('present+')) {
+            const overtime = status.split('+')[1];
+            return `Present + OT (${overtime})`;
+        }
+        return status;
     }
 
     function getStatusColor(status) {
-        const colors = {
-            present: 'success',
-            absent: 'danger',
-            halfday: 'warning',
-            notmarked: 'secondary'
-        };
-        return colors[status] || 'secondary';
+        if (!status) return 'secondary';
+        if (status === 'present') return 'success';
+        if (status === 'absent') return 'danger';
+        if (status === 'halfday') return 'warning';
+        if (status.startsWith('present+')) return 'primary';
+        return 'secondary';
     }
 
     function formatCurrency(amount) {
@@ -788,6 +909,7 @@ async function markAttendance(employeeId, status) {
     }
 
     function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;

@@ -17,8 +17,76 @@
 <!-- Navbar will load here -->
 <div id="nav-placeholder"></div>
 
-
-
+<!-- Overtime Settings Modal -->
+<div class="modal fade" id="overtimeSettingsModal" tabindex="-1" aria-labelledby="overtimeSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="overtimeSettingsModalLabel">Overtime Payment Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Overtime Payment Rate</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="overtimeRateType" id="rateTypePercentage" value="percentage" checked>
+                        <label class="form-check-label" for="rateTypePercentage">
+                            Percentage of Daily Wage
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="overtimeRateType" id="rateTypeFixed" value="fixed">
+                        <label class="form-check-label" for="rateTypeFixed">
+                            Fixed Amount
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="percentageSettings">
+                    <div class="mb-3">
+                        <label class="form-label">Full Overtime (% of daily wage)</label>
+                        <input type="number" class="form-control" id="fullOTPercentage" value="100" min="0" max="500">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Half Overtime (% of daily wage)</label>
+                        <input type="number" class="form-control" id="halfOTPercentage" value="50" min="0" max="500">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quarter Overtime (% of daily wage)</label>
+                        <input type="number" class="form-control" id="quarterOTPercentage" value="25" min="0" max="500">
+                    </div>
+                </div>
+                
+                <div id="fixedSettings" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">Full Overtime (Fixed Amount ₹)</label>
+                        <input type="number" class="form-control" id="fullOTFixed" value="500" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Half Overtime (Fixed Amount ₹)</label>
+                        <input type="number" class="form-control" id="halfOTFixed" value="250" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quarter Overtime (Fixed Amount ₹)</label>
+                        <input type="number" class="form-control" id="quarterOTFixed" value="125" min="0">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Default Overtime Calculation</label>
+                    <select class="form-select" id="defaultOTCalculation">
+                        <option value="include">Include in daily payment</option>
+                        <option value="separate">Show as separate line item</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveOvertimeSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Main Content -->
 <div class="content p-1">
@@ -73,8 +141,11 @@
                         <button class="btn btn-primary me-2" onclick="loadAttendanceData()">
                             <i class="fas fa-search"></i> Load
                         </button>
-                        <button class="btn btn-success" onclick="calculatePayment()" id="calculateBtn" disabled>
+                        <button class="btn btn-success me-2" onclick="calculatePayment()" id="calculateBtn" disabled>
                             <i class="fas fa-calculator"></i> Calculate
+                        </button>
+                        <button class="btn btn-info me-2" onclick="showOvertimeSettings()" id="otSettingsBtn">
+                            <i class="fas fa-clock"></i> OT Settings
                         </button>
                         <button class="btn btn-danger ms-2 d-none" onclick="downloadPDF()" id="pdfBtn" disabled>
                             <i class="fas fa-file-pdf"></i> Generate Report
@@ -82,81 +153,117 @@
                         <button class="btn btn-warning ms-2" onclick="addExpenseManually()" id="addExpenseBtn" disabled>
                             <i class="fas fa-plus-circle"></i> Add Expense
                         </button>
-
                     </div>
                 </div>
             
-                
                 <!-- Settings Section -->
-                 <div class="card-footer">
-                <div class="row mt-1">
-                    <div class="col-md-12">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="halfDayAsFullDay" onchange="toggleHalfDayCalculation()">
-                            <label class="form-check-label" for="halfDayAsFullDay">
-                                Count Half Days as Full Days in Payment Calculation
-                            </label>
-                            <small class="form-text text-muted d-block">
-                                When enabled, half days will be counted as 1 full day instead of 0.5 days
-                            </small>
-                        </div>
-                        <div class="form-check form-switch mt-2 d-none">
-                            <input class="form-check-input" type="checkbox" id="autoMarkUnmarked" checked onchange="toggleAutoMark()">
-                            <label class="form-check-label" for="autoMarkUnmarked">
-                                Automatically count unmarked days as Absent
-                            </label>
-                            <small class="form-text text-muted d-block">
-                                Days without attendance marked will be calculated as Absent (0 days)
-                            </small>
+                <div class="card-footer">
+                    <div class="row mt-1">
+                        <div class="col-md-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="halfDayAsFullDay" onchange="toggleHalfDayCalculation()">
+                                <label class="form-check-label" for="halfDayAsFullDay">
+                                    Count Half Days as Full Days in Payment Calculation
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    When enabled, half days will be counted as 1 full day instead of 0.5 days
+                                </small>
+                            </div>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="includeOvertime" checked onchange="toggleOvertimeInclusion()">
+                                <label class="form-check-label" for="includeOvertime">
+                                    Include Overtime in Payment Calculation
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    When enabled, overtime hours will be added to employee payments
+                                </small>
+                            </div>
+                            <div class="form-check form-switch mt-2 d-none">
+                                <input class="form-check-input" type="checkbox" id="autoMarkUnmarked" checked onchange="toggleAutoMark()">
+                                <label class="form-check-label" for="autoMarkUnmarked">
+                                    Automatically count unmarked days as Absent
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    Days without attendance marked will be calculated as Absent (0 days)
+                                </small>
+                            </div>
                         </div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
 
         <!-- Summary Cards -->
-     <div class="row mb-2 d-none" id="summaryCards">
+        <div class="row mb-2 d-none" id="summaryCards">
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-primary border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Total Employees</h6>
+                        <h6 id="totalEmployeesCount" class="fw-bold mb-0">0</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-success border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Present Days</h6>
+                        <h6 id="totalPresentDays" class="fw-bold mb-0">0</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-danger border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Absent Days</h6>
+                        <h6 id="totalAbsentDays" class="fw-bold mb-0">0</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-warning border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Total Payment</h6>
+                        <h6 id="totalPaymentAmount" class="fw-bold mb-0">₹0</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <div class="col-6 col-md-3 mb-1">
-    <div class="card border-start border-primary border-2 h-100">
-      <div class="card-body text-center text-md-start p-2 p-md-3">
-        <h6 class="card-title small mb-1">Total Employees</h6>
-        <h6 id="totalEmployeesCount" class="fw-bold mb-0">0</h6>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-6 col-md-3 mb-1">
-    <div class="card border-start border-success border-2 h-100">
-      <div class="card-body text-center text-md-start p-2 p-md-3">
-        <h6 class="card-title small mb-1">Present Days</h6>
-        <h6 id="totalPresentDays" class="fw-bold mb-0">0</h6>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-6 col-md-3 mb-1">
-    <div class="card border-start border-danger border-2 h-100">
-      <div class="card-body text-center text-md-start p-2 p-md-3">
-        <h6 class="card-title small mb-1">Absent Days</h6>
-        <h6 id="totalAbsentDays" class="fw-bold mb-0">0</h6>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-6 col-md-3 mb-1">
-    <div class="card border-start border-warning border-2 h-100">
-      <div class="card-body text-center text-md-start p-2 p-md-3">
-        <h6 class="card-title small mb-1">Total Payment</h6>
-        <h6 id="totalPaymentAmount" class="fw-bold mb-0">₹0</h6>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-
+        <!-- Overtime Summary Cards -->
+        <div class="row mb-2 d-none" id="otSummaryCards">
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-info border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Full OT Count</h6>
+                        <h6 id="fullOTCount" class="fw-bold mb-0">0</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-info border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Half OT Count</h6>
+                        <h6 id="halfOTCount" class="fw-bold mb-0">0</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-info border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Quarter OT Count</h6>
+                        <h6 id="quarterOTCount" class="fw-bold mb-0">0</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-1">
+                <div class="card border-start border-primary border-2 h-100">
+                    <div class="card-body text-center text-md-start p-2 p-md-3">
+                        <h6 class="card-title small mb-1">Total OT Amount</h6>
+                        <h6 id="totalOTAmount" class="fw-bold mb-0">₹0</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Payment Table -->
         <div class="">
@@ -180,8 +287,10 @@
                                 <th>Designation</th>
                                 <th>Salary/Day</th>
                                 <!-- Date columns will be inserted here -->
-                                <th class="text-center">Total Days</th>
-                                <th class="text-end">Payment (₹)</th>
+                                <th class="text-center">Present Days</th>
+                                <th class="text-center">OT Count</th>
+                                <th class="text-end">OT Amount (₹)</th>
+                                <th class="text-end">Total Payment (₹)</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -195,14 +304,14 @@
                 </div>
             </div>
             <div class="loader text-center d-none mt-4 mb-4" id="loaderOverlay">
-            <section class="loader">
-            <div class="slider" style="--i:0"></div>
-            <div class="slider" style="--i:1"></div>
-            <div class="slider" style="--i:2"></div>
-            <div class="slider" style="--i:3"></div>
-            <div class="slider" style="--i:4"></div>
-            </section>
-        </div>
+                <section class="loader">
+                    <div class="slider" style="--i:0"></div>
+                    <div class="slider" style="--i:1"></div>
+                    <div class="slider" style="--i:2"></div>
+                    <div class="slider" style="--i:3"></div>
+                    <div class="slider" style="--i:4"></div>
+                </section>
+            </div>
         </div>
 
     </div>
@@ -237,6 +346,23 @@
     let paymentData = {};
     let halfDayAsFullDay = false;
     let autoMarkUnmarked = true;
+    let includeOvertime = true;
+    
+    // Overtime settings
+    let overtimeSettings = {
+        rateType: 'percentage', // 'percentage' or 'fixed'
+        percentage: {
+            full: 100,
+            half: 50,
+            quarter: 25
+        },
+        fixed: {
+            full: 500,
+            half: 250,
+            quarter: 125
+        },
+        calculationMethod: 'include' // 'include' or 'separate'
+    };
 
     // Check authentication
     auth.onAuthStateChanged(async (user) => {
@@ -255,6 +381,9 @@
             const userSnapshot = await database.ref(`users/${currentUser.uid}`).once('value');
             const userData = userSnapshot.val();
             currentUserRole = userData?.role || 'user';
+
+            // Load overtime settings from localStorage
+            loadOvertimeSettings();
 
             // Set default dates (last 7 days)
             const today = new Date();
@@ -276,13 +405,109 @@
         }
     }
 
+    // Load overtime settings from localStorage
+    function loadOvertimeSettings() {
+        const saved = localStorage.getItem('overtimeSettings');
+        if (saved) {
+            try {
+                overtimeSettings = JSON.parse(saved);
+            } catch (e) {
+                console.error("Error loading overtime settings:", e);
+            }
+        }
+    }
+
+    // Save overtime settings to localStorage
+    function saveOvertimeSettingsToStorage() {
+        localStorage.setItem('overtimeSettings', JSON.stringify(overtimeSettings));
+    }
+
+    // Show overtime settings modal
+    function showOvertimeSettings() {
+        // Set current values in modal
+        document.querySelector(`input[name="overtimeRateType"][value="${overtimeSettings.rateType}"]`).checked = true;
+        
+        document.getElementById('fullOTPercentage').value = overtimeSettings.percentage.full;
+        document.getElementById('halfOTPercentage').value = overtimeSettings.percentage.half;
+        document.getElementById('quarterOTPercentage').value = overtimeSettings.percentage.quarter;
+        
+        document.getElementById('fullOTFixed').value = overtimeSettings.fixed.full;
+        document.getElementById('halfOTFixed').value = overtimeSettings.fixed.half;
+        document.getElementById('quarterOTFixed').value = overtimeSettings.fixed.quarter;
+        
+        document.getElementById('defaultOTCalculation').value = overtimeSettings.calculationMethod;
+        
+        // Show/hide appropriate settings
+        toggleRateTypeSettings();
+        
+        const modal = new bootstrap.Modal(document.getElementById('overtimeSettingsModal'));
+        modal.show();
+    }
+
+    // Toggle rate type settings
+    function toggleRateTypeSettings() {
+        const rateType = document.querySelector('input[name="overtimeRateType"]:checked').value;
+        if (rateType === 'percentage') {
+            document.getElementById('percentageSettings').style.display = 'block';
+            document.getElementById('fixedSettings').style.display = 'none';
+        } else {
+            document.getElementById('percentageSettings').style.display = 'none';
+            document.getElementById('fixedSettings').style.display = 'block';
+        }
+    }
+
+    // Save overtime settings
+    function saveOvertimeSettings() {
+        overtimeSettings.rateType = document.querySelector('input[name="overtimeRateType"]:checked').value;
+        
+        overtimeSettings.percentage = {
+            full: parseFloat(document.getElementById('fullOTPercentage').value) || 100,
+            half: parseFloat(document.getElementById('halfOTPercentage').value) || 50,
+            quarter: parseFloat(document.getElementById('quarterOTPercentage').value) || 25
+        };
+        
+        overtimeSettings.fixed = {
+            full: parseFloat(document.getElementById('fullOTFixed').value) || 500,
+            half: parseFloat(document.getElementById('halfOTFixed').value) || 250,
+            quarter: parseFloat(document.getElementById('quarterOTFixed').value) || 125
+        };
+        
+        overtimeSettings.calculationMethod = document.getElementById('defaultOTCalculation').value;
+        
+        saveOvertimeSettingsToStorage();
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('overtimeSettingsModal'));
+        modal.hide();
+        
+        // Recalculate if data is loaded
+        if (employees.length > 0) {
+            updateAllEmployeeTotals();
+            showNotification('Overtime settings updated', 'success');
+        }
+    }
+
+    // Setup event listeners for rate type toggle
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'overtimeRateType') {
+            toggleRateTypeSettings();
+        }
+    });
+
+    // Toggle overtime inclusion
+    function toggleOvertimeInclusion() {
+        includeOvertime = document.getElementById('includeOvertime').checked;
+        if (employees.length > 0) {
+            updateAllEmployeeTotals();
+        }
+    }
+
     // Load projects
     async function loadProjects() {
         try {
             const projectSelect = document.getElementById('projectSelect');
             
             if (currentUserRole === 'admin') {
-                // Admin can see all projects
                 const snapshot = await database.ref('projects').once('value');
                 const allProjectsData = snapshot.val();
                 
@@ -296,7 +521,6 @@
                     });
                 }
             } else {
-                // User can only see assigned projects
                 const userSnapshot = await database.ref(`users/${currentUser.uid}`).once('value');
                 const userData = userSnapshot.val();
                 const userProjects = userData?.projects || {};
@@ -318,7 +542,6 @@
                 }
             }
 
-            // Populate project dropdown
             projectSelect.innerHTML = '<option value="">Select Project</option>';
             allProjects.forEach(project => {
                 const option = document.createElement('option');
@@ -334,7 +557,6 @@
 
     // Setup event listeners
     function setupEventListeners() {
-        // Project select change
         document.getElementById('projectSelect').addEventListener('change', async function(e) {
             selectedProjectId = e.target.value;
             if (selectedProjectId) {
@@ -344,7 +566,6 @@
             }
         });
 
-        // Employee type change
         document.getElementById('employeeTypeSelect').addEventListener('change', function(e) {
             selectedEmployeeType = e.target.value;
         });
@@ -358,7 +579,6 @@
             
             if (!selectedProjectId) return;
             
-            // Load employees to get unique designations
             const snapshot = await database.ref(`employees/${selectedProjectId}`).once('value');
             const employeesData = snapshot.val();
             
@@ -371,7 +591,6 @@
                 }
             });
             
-            // Add designations to select
             designations.forEach(designation => {
                 const option = document.createElement('option');
                 option.value = designation;
@@ -384,25 +603,21 @@
         }
     }
 
-    // Clear designations
     function clearDesignations() {
         const designationSelect = document.getElementById('designationSelect');
         designationSelect.innerHTML = '<option value="">All Designations</option>';
     }
 
-    // Show loader
     function showLoader() {
         document.getElementById('loaderOverlay').classList.remove('d-none');
         document.getElementById('loaderOverlay').classList.add('d-flex');
     }
 
-    // Hide loader
     function hideLoader() {
         document.getElementById('loaderOverlay').classList.remove('d-flex');
         document.getElementById('loaderOverlay').classList.add('d-none');
     }
 
-    // Toggle half day calculation
     function toggleHalfDayCalculation() {
         halfDayAsFullDay = document.getElementById('halfDayAsFullDay').checked;
         if (employees.length > 0) {
@@ -410,7 +625,6 @@
         }
     }
 
-    // Toggle auto mark unmarked
     function toggleAutoMark() {
         autoMarkUnmarked = document.getElementById('autoMarkUnmarked').checked;
         if (employees.length > 0) {
@@ -421,7 +635,6 @@
     // Load attendance data
     async function loadAttendanceData() {
         try {
-            // Validate inputs
             selectedProjectId = document.getElementById('projectSelect').value;
             selectedEmployeeType = document.getElementById('employeeTypeSelect').value;
             fromDate = document.getElementById('fromDate').value;
@@ -447,27 +660,19 @@
                 return;
             }
             
-            // Show loader
             showLoader();
             
-            // Generate date range
             dateRange = generateDateRange(fromDate, toDate);
             
-            // Load employees for the selected project and type
             await loadEmployees();
-            
-            // Load attendance data for each date
             await loadAttendanceForDateRange();
             
-            // Display data in table
             displayPaymentTable();
             
-            // Enable calculate button
             document.getElementById('calculateBtn').disabled = false;
             document.getElementById('pdfBtn').disabled = false;
             document.getElementById('pdfBtn2').disabled = false;
             
-            // Hide loader
             hideLoader();
             
         } catch (error) {
@@ -477,7 +682,6 @@
         }
     }
 
-    // Generate date range
     function generateDateRange(fromDate, toDate) {
         const dates = [];
         const currentDate = new Date(fromDate);
@@ -491,7 +695,6 @@
         return dates;
     }
 
-    // Load employees
     async function loadEmployees() {
         try {
             const snapshot = await database.ref(`employees/${selectedProjectId}`).once('value');
@@ -502,10 +705,8 @@
                 Object.keys(employeesData).forEach(employeeId => {
                     const employee = employeesData[employeeId];
                     
-                    // Filter by employee type
                     if (employee.employeeType === selectedEmployeeType) {
                         
-                        // Filter by designation if selected
                         const selectedDesignation = document.getElementById('designationSelect').value;
                         if (!selectedDesignation || employee.designation === selectedDesignation) {
                             
@@ -524,12 +725,10 @@
         }
     }
 
-    // Load attendance for date range
     async function loadAttendanceForDateRange() {
         try {
             attendanceData = {};
             
-            // Load attendance for each date
             for (const date of dateRange) {
                 const snapshot = await database.ref(`projects/${selectedProjectId}/attendance/${date}`).once('value');
                 const dateAttendance = snapshot.val();
@@ -552,10 +751,8 @@
         const tableBody = document.getElementById('paymentTableBody');
         const tableHead = document.querySelector('#paymentTable thead tr');
         
-        // Clear existing data
         tableBody.innerHTML = '';
         
-        // Add date columns to header
         const dateColumns = dateRange.map(date => {
             const day = new Date(date).getDate();
             const month = new Date(date).toLocaleString('default', { month: 'short' });
@@ -568,47 +765,58 @@
             `;
         }).join('');
         
-        // Insert date columns after first three columns
         const headerCells = tableHead.querySelectorAll('th');
-        const afterSalaryCell = headerCells[2]; // Salary/Day column
+        const afterSalaryCell = headerCells[2];
         
-        // Remove existing date columns
-        //const existingDateColumns = tableHead.querySelectorAll('.text-center');
         const existingDateColumns = tableHead.querySelectorAll('.date-col');
-        existingDateColumns.forEach(col => {
-            if (col !== afterSalaryCell) col.remove();
-        });
+        existingDateColumns.forEach(col => col.remove());
         
-        // Insert new date columns
         afterSalaryCell.insertAdjacentHTML('afterend', dateColumns);
         
-        // Add rows for each employee
         employees.forEach(employee => {
             const row = createEmployeeRow(employee);
             tableBody.innerHTML += row;
         });
         
-        // Show summary cards
         document.getElementById('summaryCards').classList.remove('d-none');
+        document.getElementById('otSummaryCards').classList.remove('d-none');
         updateAllEmployeeTotals();
     }
 
-    // Create employee row with attendance text display
+    // Calculate overtime amount for an employee
+    function calculateOvertimeAmount(employee, overtimeType) {
+        if (!includeOvertime) return 0;
+        
+        const salary = employee.salaryAmount || 0;
+        
+        if (overtimeSettings.rateType === 'percentage') {
+            const percentage = overtimeSettings.percentage[overtimeType] || 0;
+            return (salary * percentage) / 100;
+        } else {
+            return overtimeSettings.fixed[overtimeType] || 0;
+        }
+    }
+
+    // Create employee row with overtime
     function createEmployeeRow(employee) {
         const salary = employee.salaryAmount || 0;
         
-        // Create date columns with attendance text
         const dateColumns = dateRange.map(date => {
             const attendance = attendanceData[date]?.[employee.id];
             const currentStatus = attendance?.status || '';
             
-            // Determine text and color based on status
             let statusText = '';
             let statusClass = '';
+            let otIcon = '';
             
             if (currentStatus === 'present') {
                 statusText = 'P';
                 statusClass = 'text-success fw-bold';
+            } else if (currentStatus.startsWith('present+')) {
+                const overtime = currentStatus.split('+')[1];
+                statusText = 'P';
+                statusClass = 'text-primary fw-bold';
+                otIcon = `<span class="badge bg-info ms-1">${overtime}</span>`;
             } else if (currentStatus === 'halfday') {
                 statusText = 'H';
                 statusClass = 'text-warning fw-bold';
@@ -623,14 +831,13 @@
             return `
                 <td class="text-center">
                     <span class="${statusClass}" style="font-size: 0.9rem;">${statusText}</span>
+                    ${otIcon}
                 </td>
             `;
         }).join('');
         
-        // Calculate initial totals
         const totals = calculateEmployeeTotals(employee.id);
         
-        // Generate row
         return `
             <tr data-employee-id="${employee.id}">
                 <td>${escapeHtml(employee.employeeName || 'Unnamed')}</td>
@@ -638,7 +845,13 @@
                 <td class="text-end">₹${formatCurrency(salary)}</td>
                 ${dateColumns}
                 <td class="text-center">
-                    <span id="totalDays_${employee.id}">${totals.totalDays.toFixed(1)}</span>
+                    <span id="presentDays_${employee.id}">${totals.presentDays.toFixed(1)}</span>
+                </td>
+                <td class="text-center">
+                    <span id="otCount_${employee.id}">${totals.otCount}</span>
+                </td>
+                <td class="text-end">
+                    <span class="text-info">₹<span id="otAmount_${employee.id}">${formatCurrency(totals.otAmount)}</span></span>
                 </td>
                 <td class="text-end">
                     <span class="fw-bold text-success">₹<span id="paymentAmount_${employee.id}">${formatCurrency(totals.payment)}</span></span>
@@ -652,50 +865,78 @@
         `;
     }
 
-    // Calculate employee totals
+    // Calculate employee totals including overtime
     function calculateEmployeeTotals(employeeId) {
         let totalDays = 0;
         let presentDays = 0;
         let absentDays = 0;
         let halfDays = 0;
+        let otCount = 0;
+        let otAmount = 0;
+        let otDetails = {
+            full: 0,
+            half: 0,
+            quarter: 0
+        };
         
         const employee = employees.find(e => e.id === employeeId);
         const salary = employee?.salaryAmount || 0;
         
-        // Count attendance statuses for each date
         dateRange.forEach(date => {
             const attendance = attendanceData[date]?.[employeeId];
             if (attendance) {
                 if (attendance.status === 'present') {
                     totalDays += 1;
                     presentDays += 1;
+                } else if (attendance.status.startsWith('present+')) {
+                    const overtime = attendance.status.split('+')[1];
+                    totalDays += 1;
+                    presentDays += 1;
+                    
+                    // Count overtime
+                    if (overtime === 'full') {
+                        otDetails.full += 1;
+                        otCount += 1;
+                        otAmount += calculateOvertimeAmount(employee, 'full');
+                    } else if (overtime === 'half') {
+                        otDetails.half += 1;
+                        otCount += 1;
+                        otAmount += calculateOvertimeAmount(employee, 'half');
+                    } else if (overtime === 'quarter') {
+                        otDetails.quarter += 1;
+                        otCount += 1;
+                        otAmount += calculateOvertimeAmount(employee, 'quarter');
+                    }
                 } else if (attendance.status === 'halfday') {
                     if (halfDayAsFullDay) {
-                        totalDays += 1; // Count as full day
+                        totalDays += 1;
                     } else {
-                        totalDays += 0.5; // Count as half day
+                        totalDays += 0.5;
                     }
                     halfDays += 1;
                 } else if (attendance.status === 'absent') {
                     absentDays += 1;
                 }
             } else {
-                // Unmarked days - count as absent if autoMarkUnmarked is true
                 if (autoMarkUnmarked) {
                     absentDays += 1;
                 }
             }
         });
         
-        // Calculate payment
-        const payment = totalDays * salary;
+        const basePayment = totalDays * salary;
+        const totalPayment = basePayment + otAmount;
         
         return {
             totalDays: totalDays,
             presentDays: presentDays,
             absentDays: absentDays,
             halfDays: halfDays,
-            payment: payment
+            otCount: otCount,
+            otAmount: otAmount,
+            otDetails: otDetails,
+            payment: totalPayment,
+            basePayment: basePayment
         };
     }
 
@@ -703,13 +944,13 @@
     function updateEmployeeTotals(employeeId) {
         const totals = calculateEmployeeTotals(employeeId);
         
-        // Update display
-        document.getElementById(`totalDays_${employeeId}`).textContent = totals.totalDays.toFixed(1);
+        document.getElementById(`presentDays_${employeeId}`).textContent = totals.presentDays.toFixed(1);
+        document.getElementById(`otCount_${employeeId}`).textContent = totals.otCount;
+        document.getElementById(`otAmount_${employeeId}`).textContent = formatCurrency(totals.otAmount);
         document.getElementById(`paymentAmount_${employeeId}`).textContent = formatCurrency(totals.payment);
         
-        // Update status
         const statusBadge = document.getElementById(`status_${employeeId}`);
-        if (totals.totalDays > 0) {
+        if (totals.presentDays > 0 || totals.otCount > 0) {
             statusBadge.className = 'badge bg-warning';
             statusBadge.textContent = 'Pending';
         } else {
@@ -717,35 +958,45 @@
             statusBadge.textContent = 'Not Calculated';
         }
         
-        // Update summary
         updateSummaryCards();
     }
 
-    // Update all employee totals
     function updateAllEmployeeTotals() {
         employees.forEach(employee => {
             updateEmployeeTotals(employee.id);
         });
     }
 
-    // Update summary cards
     function updateSummaryCards() {
         let totalEmployees = employees.length;
         let totalPresentDays = 0;
         let totalAbsentDays = 0;
         let totalPayment = 0;
+        let totalOTAmount = 0;
+        let fullOTCount = 0;
+        let halfOTCount = 0;
+        let quarterOTCount = 0;
         
         employees.forEach(employee => {
             const totals = calculateEmployeeTotals(employee.id);
-            totalPresentDays += totals.totalDays;
+            totalPresentDays += totals.presentDays;
             totalAbsentDays += totals.absentDays;
             totalPayment += totals.payment;
+            totalOTAmount += totals.otAmount;
+            fullOTCount += totals.otDetails.full;
+            halfOTCount += totals.otDetails.half;
+            quarterOTCount += totals.otDetails.quarter;
         });
         
         document.getElementById('totalEmployeesCount').textContent = totalEmployees;
         document.getElementById('totalPresentDays').textContent = totalPresentDays.toFixed(1);
         document.getElementById('totalAbsentDays').textContent = totalAbsentDays;
         document.getElementById('totalPaymentAmount').textContent = '₹' + formatCurrency(totalPayment);
+        
+        document.getElementById('fullOTCount').textContent = fullOTCount;
+        document.getElementById('halfOTCount').textContent = halfOTCount;
+        document.getElementById('quarterOTCount').textContent = quarterOTCount;
+        document.getElementById('totalOTAmount').textContent = '₹' + formatCurrency(totalOTAmount);
     }
 
     // Calculate payment for all employees
@@ -756,9 +1007,8 @@
             employees.forEach(employee => {
                 const totals = calculateEmployeeTotals(employee.id);
                 
-                // Mark as calculated even if totalDays is 0 (for absent employees)
                 const statusBadge = document.getElementById(`status_${employee.id}`);
-                if (totals.totalDays > 0) {
+                if (totals.presentDays > 0 || totals.otCount > 0) {
                     statusBadge.className = 'badge bg-success';
                     statusBadge.textContent = 'Calculated';
                 } else if (totals.absentDays > 0) {
@@ -770,7 +1020,6 @@
                     allCalculated = false;
                 }
                 
-                // Store payment data
                 paymentData[employee.id] = {
                     employeeName: employee.employeeName,
                     designation: employee.designation,
@@ -779,19 +1028,19 @@
                     presentDays: totals.presentDays,
                     halfDays: totals.halfDays,
                     absentDays: totals.absentDays,
+                    otCount: totals.otCount,
+                    otAmount: totals.otAmount,
+                    otDetails: totals.otDetails,
                     payment: totals.payment,
                     calculationDate: new Date().toISOString()
                 };
             });
             
-            // Enable export button
             document.getElementById('exportBtn').disabled = false;
             document.getElementById('pdfBtn').disabled = false;
             document.getElementById('pdfBtn2').disabled = false;
             document.getElementById('addExpenseBtn').disabled = false;
-
             
-            // Show success message
             showNotification('Payment calculation completed successfully!', 'success');
             
         } catch (error) {
@@ -800,7 +1049,7 @@
         }
     }
 
-// Download PDF with specific format
+    // Download PDF with overtime details
 // Download PDF with specific format
 function downloadPDF() {
     if (employees.length === 0) {
@@ -833,15 +1082,20 @@ function downloadPDF() {
 
 function generatePDF(logoBase64) {
     try {
+
         const projectName = allProjects.find(p => p.id === selectedProjectId)?.name || 'Project';
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
 
+        const leftMargin = 20;
+        const rightMargin = 20;
+
         // ================= LOGO =================
-        doc.addImage(logoBase64, 'PNG', 20, 10, 40, 15);
+        doc.addImage(logoBase64, 'PNG', leftMargin, 10, 40, 15);
 
         // ================= HEADER =================
         doc.setFont('helvetica', 'bold');
@@ -850,258 +1104,274 @@ function generatePDF(logoBase64) {
 
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
-        doc.text(
-            'Employee Payment Report',
-            pageWidth / 2,
-            22,
-            { align: 'center' }
-        );
+        doc.text('Employee Payment Report', pageWidth / 2, 22, { align: 'center' });
 
-        // ================= INFO =================
+        // ================= INFO SECTION =================
         const startY = 35;
+
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Project: ${projectName}`, 20, startY);
+
+        doc.text(`Project: ${projectName}`, leftMargin, startY);
         doc.text(
             `Period: ${formatDate(fromDate)} to ${formatDate(toDate)}`,
-            20,
+            leftMargin,
             startY + 6
         );
-        
-        // Calculate total days in period
-        const totalDaysInPeriod = dateRange.length;
-        
+
         doc.text(
             `Employee Type: ${
-                selectedEmployeeType === 'daily' ? 'Daily Worker' : 'Contract Basis'
+                selectedEmployeeType === 'daily'
+                    ? 'Daily Worker'
+                    : 'Contract Basis'
             }`,
-            20,
+            leftMargin,
             startY + 12
         );
+
         doc.text(
             `Generated On: ${new Date().toLocaleDateString()}`,
-            pageWidth - 20,
+            pageWidth - rightMargin,
             startY + 12,
             { align: 'right' }
         );
 
+        // Header Line (Same Alignment as Table)
+        doc.line(leftMargin, startY + 15, pageWidth - rightMargin, startY + 15);
 
-        doc.line(20, startY + 14, pageWidth - 20, startY + 14);
+        // ================= TABLE DATA =================
 
-        // ================= TABLE =================
         let totalPayment = 0;
         let totalDaysWorked = 0;
+        let totalOTAmount = 0;
+        let totalOTCount = 0;
+
+        const totalDaysInPeriod = dateRange.length;
 
         const tableData = employees.map(emp => {
+
             const totals = calculateEmployeeTotals(emp.id);
+
             totalPayment += totals.payment;
             totalDaysWorked += totals.totalDays;
+            totalOTAmount += totals.otAmount;
+            totalOTCount += totals.otCount;
 
             return [
                 emp.employeeName || 'Unnamed',
                 `Rs. ${formatCurrency(emp.salaryAmount || 0)}`,
-                totalDaysInPeriod.toString(),  // Total days in period
-                totals.totalDays.toFixed(1),   // Days worked (including half days)
+                totalDaysInPeriod.toString(),
+                totals.totalDays.toFixed(1),
+                totals.otCount.toString(),
+                `Rs. ${formatCurrency(totals.otAmount)}`,
                 `Rs. ${formatCurrency(totals.payment)}`,
-                '' // Signature column (empty)
+                ''
             ];
         });
 
+        // TOTAL ROW
+        tableData.push([
+            { content: 'TOTAL', styles: { fontStyle: 'bold' } },
+            '',
+            '',
+            { content: totalDaysWorked.toFixed(1), styles: { fontStyle: 'bold' } },
+            { content: totalOTCount.toString(), styles: { fontStyle: 'bold' } },
+            { content: `Rs. ${formatCurrency(totalOTAmount)}`, styles: { fontStyle: 'bold' } },
+            { content: `Rs. ${formatCurrency(totalPayment)}`, styles: { fontStyle: 'bold' } },
+            ''
+        ]);
 
-    tableData.push([
-    { content: 'TOTAL', styles: { fontStyle: 'bold' } },
-    '',
-    '',
-    { content: totalDaysWorked.toFixed(1), styles: { fontStyle: 'bold' } },
-    { content: `Rs. ${formatCurrency(totalPayment)}`, styles: { fontStyle: 'bold' } },
-    '' // Signature
-]);
-
+        // ================= TABLE =================
 
         doc.autoTable({
-    startY: startY + 20,
-    head: [[
-        'Employee Name',
-        'Salary/Day',
-        'Total Days',
-        'Present Days',
-        'Payment',
-        'Signature'
-    ]],
-    body: tableData,
-    theme: 'grid',
-    margin: { left: 20, right: 20 },
+            startY: startY + 20,
 
-    styles: {
-        fontSize: 11,
-        lineWidth: 0.3,
-        lineColor: [0, 0, 0],
-        textColor: 0
-    },
+            head: [[
+                'Employee Name',
+                'Salary/Day',
+                'Total Days',
+                'Present Days',
+                'OT Count',
+                'OT Amount',
+                'Total Payment',
+                'Signature'
+            ]],
 
-    headStyles: {
-        fillColor: [255, 255, 255],
-        textColor: 0,
-        fontStyle: 'bold',
-        lineWidth: 0.3,
-        lineColor: [0, 0, 0]
-    },
+            body: tableData,
+            theme: 'grid',
 
-    // 👇 CENTER ALIGN THESE COLUMNS
-    // columnStyles: {
-    //     2: { halign: 'center' }, // Total Days
-    //     3: { halign: 'center' }  // Present Days
-    // },
+            margin: { left: leftMargin, right: rightMargin },
+            tableWidth: 'auto',
 
-    columnStyles: {
-    2: { halign: 'center' }, // Total Days
-    3: { halign: 'center' }, // Present Days
-    5: { halign: 'center' }  // Signature
-},
+            styles: {
+                fontSize: 9,
+                lineWidth: 0.3,
+                lineColor: [0, 0, 0],
+                textColor: 0,
+                cellPadding: 2
+            },
 
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: 0,
+                fontStyle: 'bold'
+            },
 
-    // didDrawPage: () => {
-    //     doc.setFontSize(8);
-    //     doc.text(
-    //         `Page ${doc.internal.getNumberOfPages()}`,
-    //         pageWidth / 2,
-    //         pageHeight - 10,
-    //         { align: 'center' }
-    //     );
-    // }
-    didDrawPage: () => {
+            columnStyles: {
+                1: { halign: 'right' },
+                2: { halign: 'center' },
+                3: { halign: 'center' },
+                4: { halign: 'center' },
+                5: { halign: 'right' },
+                6: { halign: 'right' },
+                7: { halign: 'center' }
+            },
 
-    // Footer Line
-    doc.setDrawColor(0);
-    doc.line(20, pageHeight - 18, pageWidth - 20, pageHeight - 18);
+            didDrawPage: function () {
 
-    // Software Name
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text(
-        'Generated by Barman Construction Software',
-        pageWidth / 2,
-        pageHeight - 14,
-        { align: 'center' }
-    );
+                // Footer Line
+                doc.line(
+                    leftMargin,
+                    pageHeight - 18,
+                    pageWidth - rightMargin,
+                    pageHeight - 18
+                );
 
-    // Page Number
-    doc.text(
-        `Page ${doc.internal.getNumberOfPages()}`,
-        pageWidth / 2,
-        pageHeight - 8,
-        { align: 'center' }
-    );
-}
+                // Footer Text
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(
+                    'Generated by Barman Construction Software',
+                    pageWidth / 2,
+                    pageHeight - 14,
+                    { align: 'center' }
+                );
 
-});
+                doc.text(
+                    `Page ${doc.internal.getNumberOfPages()}`,
+                    pageWidth / 2,
+                    pageHeight - 8,
+                    { align: 'center' }
+                );
+            }
+        });
 
+        // ================= NOTES SECTION =================
 
-        // ================= FOOTER NOTES =================
         const finalY = doc.lastAutoTable.finalY + 10;
-        
-                // Add notes below the table
+
         doc.setFontSize(9);
 
-        // 1️⃣ Total Employees (TOP)
         doc.setFont('helvetica', 'bold');
         doc.text(
             `* Total Employees: ${employees.length} Employees in the selected period`,
-            20,
+            leftMargin,
             finalY
         );
 
-        // 2️⃣ Present Days note
         doc.setFont('helvetica', 'normal');
-        doc.text(
-            `* Present Days column shows actual days worked (half days count as ${halfDayAsFullDay ? '1.0' : '0.5'} days)`,
-            20,
-            finalY + 5
-        );
 
-        // 3️⃣ Total Days note (BOTTOM)
+        let presentDaysNote =
+            `* Present Days: actual days worked (half days count as ${
+                halfDayAsFullDay ? '1.0' : '0.5'
+            } days)`;
+
+        if (totalOTCount > 0) {
+            presentDaysNote +=
+                ` | Overtime: Full ${
+                    overtimeSettings.rateType === 'percentage'
+                        ? overtimeSettings.percentage.full + '%'
+                        : '₹' + overtimeSettings.fixed.full
+                }, Half ${
+                    overtimeSettings.rateType === 'percentage'
+                        ? overtimeSettings.percentage.half + '%'
+                        : '₹' + overtimeSettings.fixed.half
+                }, Quarter ${
+                    overtimeSettings.rateType === 'percentage'
+                        ? overtimeSettings.percentage.quarter + '%'
+                        : '₹' + overtimeSettings.fixed.quarter
+                }`;
+        }
+
+        doc.text(presentDaysNote, leftMargin, finalY + 5);
+
         doc.text(
             `* Total Days: ${totalDaysInPeriod} working days in the selected period`,
-            20,
+            leftMargin,
             finalY + 10
         );
 
-
-      
         // ================= SAVE =================
+
         doc.save(
             `Payment_Report_${projectName}_${fromDate}_to_${toDate}.pdf`
         );
+
     } catch (err) {
         console.error(err);
         alert('PDF generation failed.');
     }
 }
+    async function saveDailyWorkerExpense(totalPayment) {
+        try {
+            if (!selectedProjectId) return;
 
+            const today = new Date().toISOString().split('T')[0];
 
-async function saveDailyWorkerExpense(totalPayment) {
-    try {
-        if (!selectedProjectId) return;
+            const expenseData = {
+                amount: totalPayment,
+                date: today,
+                remarks: `${formatDate(fromDate)} to ${formatDate(toDate)}`,
+                title: "Payments Of Daily Worker",
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.uid
+            };
 
-        const today = new Date().toISOString().split('T')[0];
+            await database
+                .ref(`projects/${selectedProjectId}/expenses`)
+                .push(expenseData);
 
-        const expenseData = {
-            amount: totalPayment,
-            date: today,
-            remarks: `${formatDate(fromDate)} to ${formatDate(toDate)}`,
-            title: "Payments Of Daily Worker",
-            createdAt: new Date().toISOString(),
-            createdBy: currentUser.uid
-        };
-
-        await database
-            .ref(`projects/${selectedProjectId}/expenses`)
-            .push(expenseData);
-
-        console.log("✅ Expense saved successfully");
-    } catch (error) {
-        console.error("❌ Error saving expense:", error);
-        alert("PDF downloaded but expense save failed!");
-    }
-}
-
-async function addExpenseManually() {
-
-    let totalPayment = 0;
-
-    employees.forEach(employee => {
-        const totals = calculateEmployeeTotals(employee.id);
-        totalPayment += totals.payment;
-    });
-
-    if (totalPayment === 0) {
-        alert("No payment amount to add.");
-        return;
+            console.log("✅ Expense saved successfully");
+        } catch (error) {
+            console.error("❌ Error saving expense:", error);
+            alert("PDF downloaded but expense save failed!");
+        }
     }
 
-    if (!confirm(`Add ₹${formatCurrency(totalPayment)} as Daily Worker Expense?`)) {
-        return;
+    async function addExpenseManually() {
+        let totalPayment = 0;
+
+        employees.forEach(employee => {
+            const totals = calculateEmployeeTotals(employee.id);
+            totalPayment += totals.payment;
+        });
+
+        if (totalPayment === 0) {
+            alert("No payment amount to add.");
+            return;
+        }
+
+        if (!confirm(`Add ₹${formatCurrency(totalPayment)} as Daily Worker Expense?`)) {
+            return;
+        }
+
+        await saveDailyWorkerExpense(totalPayment);
+        showNotification("Expense added successfully!", "success");
+        document.getElementById('addExpenseBtn').disabled = true;
     }
 
-    await saveDailyWorkerExpense(totalPayment);
-
-    showNotification("Expense added successfully!", "success");
-
-    document.getElementById('addExpenseBtn').disabled = true;
-}
-
-
-    // Export to Excel
+    // Export to Excel with overtime
     function exportToExcel() {
         try {
-            // Prepare data for export
             const exportData = [];
             
-            // Add header row
-            const headerRow = ['Employee Name', 'Designation', 'Salary/Day', ...dateRange, 'Total Days', 'Payment (₹)', 'Status'];
+            const headerRow = [
+                'Employee Name', 'Designation', 'Salary/Day', 
+                ...dateRange, 
+                'Present Days', 'OT Count', 'OT Amount (₹)', 'Total Payment (₹)', 'Status'
+            ];
             exportData.push(headerRow);
             
-            // Add employee rows
             employees.forEach(employee => {
                 const rowData = [
                     employee.employeeName || 'Unnamed',
@@ -1109,57 +1379,60 @@ async function addExpenseManually() {
                     employee.salaryAmount || 0
                 ];
                 
-                // Add attendance for each date
                 dateRange.forEach(date => {
                     const attendance = attendanceData[date]?.[employee.id];
-                    rowData.push(attendance?.status || (autoMarkUnmarked ? 'absent' : ''));
+                    let status = attendance?.status || (autoMarkUnmarked ? 'absent' : '');
+                    
+                    // Format status with overtime
+                    if (status && status.startsWith('present+')) {
+                        const ot = status.split('+')[1];
+                        status = `P+${ot}`;
+                    }
+                    rowData.push(status);
                 });
                 
-                // Add totals
                 const totals = calculateEmployeeTotals(employee.id);
-                rowData.push(totals.totalDays);
+                rowData.push(totals.presentDays.toFixed(1));
+                rowData.push(totals.otCount);
+                rowData.push(totals.otAmount);
                 rowData.push(totals.payment);
                 
-                // Add status
                 const statusBadge = document.getElementById(`status_${employee.id}`);
                 rowData.push(statusBadge?.textContent || '');
                 
                 exportData.push(rowData);
             });
             
-            // Add summary row
-            const summaryRow = ['', '', 'TOTAL:', ...Array(dateRange.length).fill(''), '', ''];
+            const summaryRow = [
+                '', '', 'TOTAL:', 
+                ...Array(dateRange.length).fill(''), 
+                '', '', '', '', ''
+            ];
             let totalPayment = 0;
+            let totalOTAmount = 0;
             employees.forEach(employee => {
                 totalPayment += calculateEmployeeTotals(employee.id).payment;
+                totalOTAmount += calculateEmployeeTotals(employee.id).otAmount;
             });
-            summaryRow[summaryRow.length - 2] = totalPayment;
+            summaryRow[summaryRow.length - 4] = totalOTAmount;
+            summaryRow[summaryRow.length - 3] = totalPayment;
             exportData.push(summaryRow);
             
-            // Create worksheet
             const ws = XLSX.utils.aoa_to_sheet(exportData);
             
-            // Set column widths
             const wscols = [
-                {wch: 20}, // Employee Name
-                {wch: 15}, // Designation
-                {wch: 12}, // Salary/Day
-                ...dateRange.map(() => ({wch: 8})), // Date columns
-                {wch: 10}, // Total Days
-                {wch: 12}, // Payment
-                {wch: 12}  // Status
+                {wch: 20}, {wch: 15}, {wch: 12},
+                ...dateRange.map(() => ({wch: 8})),
+                {wch: 12}, {wch: 8}, {wch: 12}, {wch: 12}, {wch: 12}
             ];
             ws['!cols'] = wscols;
             
-            // Create workbook
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Payment Report');
             
-            // Generate filename
             const projectName = allProjects.find(p => p.id === selectedProjectId)?.name || 'Project';
             const filename = `Payment_Report_${projectName}_${fromDate}_to_${toDate}.xlsx`;
             
-            // Export file
             XLSX.writeFile(wb, filename);
             
             showNotification('Excel file exported successfully!', 'success');
@@ -1188,14 +1461,13 @@ async function addExpenseManually() {
     }
 
     function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // Show notification
     function showNotification(message, type) {
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
         notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
@@ -1206,7 +1478,6 @@ async function addExpenseManually() {
         
         document.body.appendChild(notification);
         
-        // Auto remove after 5 seconds
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.remove();
@@ -1214,7 +1485,6 @@ async function addExpenseManually() {
         }, 5000);
     }
 
-    // Add keyboard shortcut
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 'Enter') {
             e.preventDefault();
