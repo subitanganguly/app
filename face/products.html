@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Products · THE INDIA FACE</title>
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Firebase 8 (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- login.js (config, auth, db) -->
+    <script src="js/login.js"></script>
+    <script src="js/sg.js"></script>
+    <script src="js/include.js"></script>
+    <style>
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 50px;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-radius: 0 0 40px 40px;
+            color: white;
+            box-shadow: 0 8px 30px rgba(13, 110, 253, 0.2);
+        }
+        .page-header h1 {
+            font-weight: 800;
+            font-size: 2.2rem;
+        }
+        .page-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Coming Soon Section */
+        .coming-soon-section {
+            padding: 3rem 0 4rem 0;
+        }
+        .coming-soon-card {
+            background: white;
+            border-radius: 30px;
+            padding: 4rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .coming-soon-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(13, 110, 253, 0.03), transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .coming-soon-icon {
+            font-size: 6rem;
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .coming-soon-title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #0b1e33;
+            position: relative;
+        }
+        .coming-soon-title span {
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .coming-soon-subtitle {
+            font-size: 1.2rem;
+            color: #475569;
+            max-width: 600px;
+            margin: 1rem auto 2rem auto;
+            position: relative;
+        }
+        .coming-soon-divider {
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #0d6efd, #6f42c1);
+            border-radius: 10px;
+            margin: 1.5rem auto;
+            position: relative;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 2rem auto 0 auto;
+            position: relative;
+        }
+        .feature-item {
+            padding: 1.5rem 1rem;
+            background: #f8faff;
+            border-radius: 16px;
+            transition: 0.3s ease;
+            border: 1px solid #eef2f7;
+        }
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            border-color: #0d6efd;
+        }
+        .feature-item i {
+            font-size: 2rem;
+            color: #0d6efd;
+            margin-bottom: 0.5rem;
+        }
+        .feature-item h6 {
+            font-weight: 700;
+            color: #0b1e33;
+            margin-bottom: 0.25rem;
+        }
+        .feature-item p {
+            font-size: 0.85rem;
+            color: #6c7a8d;
+            margin: 0;
+        }
+
+        /* Decorative elements */
+        .deco-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(13, 110, 253, 0.03);
+            pointer-events: none;
+        }
+        .deco-circle-1 {
+            width: 200px;
+            height: 200px;
+            top: -100px;
+            right: -100px;
+        }
+        .deco-circle-2 {
+            width: 150px;
+            height: 150px;
+            bottom: -75px;
+            left: -75px;
+            background: rgba(111, 66, 193, 0.03);
+        }
+        .deco-dots {
+            position: absolute;
+            opacity: 0.05;
+            font-size: 8rem;
+            color: #0d6efd;
+            pointer-events: none;
+        }
+        .deco-dots-1 {
+            top: 20px;
+            right: 30px;
+        }
+        .deco-dots-2 {
+            bottom: 20px;
+            left: 30px;
+            color: #6f42c1;
+        }
+
+        /* Coming Soon Image Placeholder */
+        .coming-soon-placeholder {
+            max-width: 400px;
+            margin: 0 auto 1.5rem auto;
+            position: relative;
+        }
+        .coming-soon-placeholder img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            opacity: 0.6;
+        }
+        .coming-soon-placeholder .icon-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            color: #0d6efd;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Footer */
+        footer{ background:#212529; color:#fff; } 
+        footer a{ color:#adb5bd; text-decoration:none; } 
+        footer a:hover{ color:#fff; } 
+
+        @media (max-width: 576px) {
+            .page-header h1 { font-size: 1.6rem; }
+            .coming-soon-card { padding: 2rem 1.5rem; }
+            .coming-soon-title { font-size: 2rem; }
+            .coming-soon-icon { font-size: 4rem; }
+            .feature-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+            .feature-item { padding: 1rem; }
+            .deco-dots { display: none; }
+            .coming-soon-placeholder .icon-overlay { font-size: 2.5rem; padding: 1rem; }
+        }
+        @media (max-width: 400px) {
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <div id="navbar"></div>
+
+    <!-- ================= PAGE HEADER ================= -->
+    <div class="page-header">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-box-seam fs-1"></i>
+                <div>
+                    <h1 class="mb-0">Products</h1>
+                    <p class="mb-0">Discover premium products from THE INDIA FACE</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= COMING SOON SECTION ================= -->
+    <div class="container flex-grow-1 coming-soon-section">
+        <div class="coming-soon-card">
+            <!-- Decorative elements -->
+            <div class="deco-circle deco-circle-1"></div>
+            <div class="deco-circle deco-circle-2"></div>
+            <div class="deco-dots deco-dots-1">⋯</div>
+            <div class="deco-dots deco-dots-2">⋯</div>
+
+            <div class="coming-soon-icon">
+                <i class="bi bi-rocket-takeoff"></i>
+            </div>
+
+            <h2 class="coming-soon-title">
+                Coming <span>Soon</span>
+            </h2>
+
+            <div class="coming-soon-divider"></div>
+
+            <p class="coming-soon-subtitle">
+                We're working hard to bring you an amazing collection of premium products. 
+                Stay tuned for updates!
+            </p>
+
+            <!-- Feature Grid -->
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <i class="bi bi-gem"></i>
+                    <h6>Premium Quality</h6>
+                    <p>Curated products with the highest standards</p>
+                </div>
+                <div class="feature-item">
+                    <i class="bi bi-truck"></i>
+                    <h6>Fast Delivery</h6>
+                    <p>Quick and reliable shipping worldwide</p>
+                </div>
+                <div class="feature-item">
+                    <i class="bi bi-shield-check"></i>
+                    <h6>Secure Payments</h6>
+                    <p>Safe and encrypted payment methods</p>
+                </div>
+                <div class="feature-item">
+                    <i class="bi bi-headset"></i>
+                    <h6>24/7 Support</h6>
+                    <p>Dedicated customer service team</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FOOTER ================= -->
+    <div id="footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ============================================
+        // 1. AUTH / NAVBAR SCRIPT (same as index)
+        // ============================================
+        firebase.auth().onAuthStateChanged(function(user) {
+            const signInBtn = document.getElementById("signInBtn");
+            const signUpBtn = document.getElementById("signUpBtn");
+            const userArea = document.getElementById("userArea");
+            const adminBtn = document.getElementById("adminBtn");
+
+            if (!user) {
+                signInBtn.style.display = "inline-block";
+                signUpBtn.style.display = "inline-block";
+                userArea.style.display = "none";
+                if (adminBtn) adminBtn.remove();
+                return;
+            }
+
+            const name = localStorage.getItem("name") || "User";
+            const type = localStorage.getItem("type");
+
+            signInBtn.style.display = "none";
+            signUpBtn.style.display = "none";
+            userArea.style.display = "block";
+
+            const initials = name.trim().split(" ").map(n => n.charAt(0).toUpperCase()).join("");
+            document.getElementById("userName").textContent = initials;
+
+            // Admin button
+            if (type === "admin") {
+                if (!adminBtn) {
+                    const btn = document.createElement("a");
+                    btn.id = "adminBtn";
+                    btn.href = "ad-index.html";
+                    btn.className = "btn btn-danger btn-sm me-2";
+                    btn.innerHTML = '<i class="bi bi-shield-lock"></i> Admin';
+                    document.getElementById("authArea").insertBefore(btn, userArea);
+                }
+            } else {
+                if (adminBtn) adminBtn.remove();
+            }
+        });
+    </script>
+</body>
+</html>

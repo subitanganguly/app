@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notices · THE INDIA FACE</title>
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Firebase 8 (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- login.js (config, auth, db) -->
+    <script src="js/login.js"></script>
+    <script src="js/sg.js"></script>
+    <script src="js/include.js"></script>
+    <style>
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 50px;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-radius: 0 0 40px 40px;
+            color: white;
+            box-shadow: 0 8px 30px rgba(13, 110, 253, 0.2);
+        }
+        .page-header h1 {
+            font-weight: 800;
+            font-size: 2.2rem;
+        }
+        .page-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .notice-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            transition: 0.25s ease;
+            border-left: 3px solid #0d6efd;
+            height: 100%;
+            position: relative;
+        }
+        .notice-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.07);
+        }
+        .notice-card .badge-type {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #e9edf4;
+            color: #1e293b;
+        }
+        .notice-card .badge-date {
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 500;
+        }
+        .notice-card .pdf-link {
+            color: #dc3545;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: auto;
+            cursor: pointer;
+        }
+        .notice-card .pdf-link:hover {
+            text-decoration: underline;
+        }
+        .notice-card .card-title {
+            font-weight: 700;
+            color: #0b1e33;
+            margin-top: 0.5rem;
+        }
+        .notice-card .card-text {
+            color: #475569;
+            font-size: 0.95rem;
+        }
+        .empty-state {
+            background: white;
+            border-radius: 30px;
+            padding: 4rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+        }
+        .footer-notice {
+            margin-top: auto;
+        }
+        .badge-new {
+            background: #fa0900;
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 30px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+        }
+        .search-section {
+            background: white;
+            border-radius: 60px;
+            padding: 0.2rem 0.2rem 0.2rem 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            border: 1px solid #e9edf4;
+            max-width: 1400px;
+            margin: 0 auto 1.5rem auto;
+        }
+        .search-section input {
+            border: none;
+            padding: 0.6rem 0;
+            font-size: 0.95rem;
+            outline: none;
+            background: transparent;
+            width: 100%;
+        }
+        .search-section button {
+            border-radius: 40px;
+            padding: 0.2rem 1.2rem;
+            background: #0d6efd;
+            border: none;
+            color: white;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .search-section button:hover {
+            background: #0b5ed7;
+        }
+        .pagination-wrap {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .pagination-wrap .page-btn {
+            background: white;
+            border: 1px solid #dee2e6;
+            color: #0b1e33;
+            padding: 0.3rem 0.9rem;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: 0.15s;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .pagination-wrap .page-btn.active {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        .pagination-wrap .page-btn:hover:not(.active) {
+            background: #f1f5f9;
+        }
+        /* Footer */ footer{ background:#212529; color:#fff; } 
+        footer a{ color:#adb5bd; text-decoration:none; } 
+        footer a:hover{ color:#fff; } 
+        @media (max-width: 576px) {
+            .page-header h1 { font-size: 1.6rem; }
+            .notice-card { padding: 1.2rem; }
+            .search-section { border-radius: 40px; padding: 0.3rem 0.3rem 0.3rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= NAVBAR (copied from index) ================= -->
+    <div id="navbar"></div>
+
+    <!-- ================= PAGE HEADER ================= -->
+    <div class="page-header">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-megaphone-fill fs-1"></i>
+                <div>
+                    <h1 class="mb-0">Notices</h1>
+                    <p class="mb-0">Stay updated with the latest official notices from THE INDIA FACE</p>
+                    <a href="archive.html" class="btn btn-dark btn-sm rounded-pill">
+                    <i class="bi bi-box-seam me-2"></i>
+                     Archived
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ================= NOTICES LIST ================= -->
+    <div class="container flex-grow-1">
+        <!-- Search bar -->
+        <div class="search-section d-flex align-items-center">
+            <i class="bi bi-search text-secondary me-2"></i>
+            <input type="text" id="searchInput" class="form-control-plaintext" placeholder="Search notices..." aria-label="Search">
+            <button id="searchBtn" class="btn btn-sm"><i class="bi bi-arrow-right"></i> Search</button>
+        </div>
+
+        <div id="noticesContainer">
+            <!-- Loading state -->
+            <div class="text-center py-5" id="loadingNotices">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-secondary">Loading notices...</p>
+            </div>
+        </div>
+
+        <!-- Pagination controls -->
+        <div class="pagination-wrap" id="paginationControls"></div>
+    </div>
+
+
+   <!-- ================= FOOTER ================= -->
+
+<div id="footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ============================================
+        // 1. AUTH / NAVBAR SCRIPT (same as index)
+        // ============================================
+        firebase.auth().onAuthStateChanged(function(user) {
+            const signInBtn = document.getElementById("signInBtn");
+            const signUpBtn = document.getElementById("signUpBtn");
+            const userArea = document.getElementById("userArea");
+            const adminBtn = document.getElementById("adminBtn");
+
+            if (!user) {
+                signInBtn.style.display = "inline-block";
+                signUpBtn.style.display = "inline-block";
+                userArea.style.display = "none";
+                if (adminBtn) adminBtn.remove();
+                return;
+            }
+
+            const name = localStorage.getItem("name") || "User";
+            const type = localStorage.getItem("type");
+
+            signInBtn.style.display = "none";
+            signUpBtn.style.display = "none";
+            userArea.style.display = "block";
+
+            const initials = name.trim().split(" ").map(n => n.charAt(0).toUpperCase()).join("");
+            document.getElementById("userName").textContent = initials;
+
+            // Admin button
+            if (type === "admin") {
+                if (!adminBtn) {
+                    const btn = document.createElement("a");
+                    btn.id = "adminBtn";
+                    btn.href = "ad-index.html";
+                    btn.className = "btn btn-danger btn-sm me-2";
+                    btn.innerHTML = '<i class="bi bi-shield-lock"></i> Admin';
+                    document.getElementById("authArea").insertBefore(btn, userArea);
+                }
+            } else {
+                if (adminBtn) adminBtn.remove();
+            }
+        });
+
+        // ============================================
+        // 2. PDF DOWNLOAD FUNCTION - Download actual PDF from Google Drive
+        // ============================================
+        function downloadPDF(pdfUrl, fileName) {
+            // Convert Google Drive share link to direct download link
+            let downloadUrl = pdfUrl;
+            
+            // Check if it's a Google Drive link
+            if (pdfUrl.includes('drive.google.com')) {
+                // Extract file ID from various Google Drive URL formats
+                let fileId = null;
+                
+                // Format: https://drive.google.com/file/d/FILE_ID/view
+                const fileIdMatch = pdfUrl.match(/\/file\/d\/([^\/]+)/);
+                if (fileIdMatch) {
+                    fileId = fileIdMatch[1];
+                }
+                
+                // Format: https://drive.google.com/open?id=FILE_ID
+                const openIdMatch = pdfUrl.match(/[?&]id=([^&]+)/);
+                if (openIdMatch) {
+                    fileId = openIdMatch[1];
+                }
+                
+                // Format: https://drive.google.com/uc?id=FILE_ID
+                const ucIdMatch = pdfUrl.match(/[?&]id=([^&]+)/);
+                if (ucIdMatch) {
+                    fileId = ucIdMatch[1];
+                }
+                
+                if (fileId) {
+                    downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                }
+            }
+            
+            // Create a temporary anchor element to trigger download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = fileName || 'notice.pdf';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ============================================
+        // 3. NOTICES LOGIC with SEARCH + PAGINATION (20 per page)
+        // ============================================
+        let allPosts = [];
+        let filteredPosts = [];
+        const perPage = 20;
+        let currentPage = 1;
+
+        function isNew(dateStr) {
+            if (!dateStr) return false;
+            const now = new Date();
+            const parts = dateStr.split('-'); // assuming "YYYY-MM-DD"
+            if (parts.length !== 3) return false;
+            const d = new Date(parts[0], parts[1]-1, parts[2]);
+            const diff = (now - d) / (1000 * 60 * 60 * 24);
+            return diff <= 5 && diff >= 0;
+        }
+
+        function renderNotices(page, searchTerm) {
+            const container = document.getElementById('noticesContainer');
+            const pagination = document.getElementById('paginationControls');
+
+            let data = allPosts;
+            if (searchTerm && searchTerm.trim() !== '') {
+                const term = searchTerm.trim().toLowerCase();
+                data = allPosts.filter(p => 
+                    (p.title && p.title.toLowerCase().includes(term)) ||
+                    (p.description && p.description.toLowerCase().includes(term)) ||
+                    (p.type && p.type.toLowerCase().includes(term))
+                );
+            }
+            filteredPosts = data;
+
+            const total = filteredPosts.length;
+            const totalPages = Math.ceil(total / perPage) || 1;
+            if (page > totalPages) page = totalPages;
+            if (page < 1) page = 1;
+            currentPage = page;
+
+            const start = (page - 1) * perPage;
+            const end = Math.min(start + perPage, total);
+            const pageItems = filteredPosts.slice(start, end);
+
+            if (total === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h4 class="mt-3 fw-bold">No Notices</h4>
+                        <p class="text-secondary">There are no notices matching your search.</p>
+                    </div>
+                `;
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = `<div class="row g-2">`;
+            pageItems.forEach(p => {
+                const typeLabel = p.type || 'notice';
+                const dateStr = p.date || 'No date';
+                const title = p.title || 'Untitled';
+                const desc = p.description || '';
+                const pdfUrl = p.pdfUrl || null;
+                const newBadge = isNew(dateStr) ? `<span class="badge-new">New</span>` : '';
+
+                let pdfHtml = '';
+                if (pdfUrl) {
+                    const fileName = (p.title || 'notice').replace(/\s+/g, '_') + '.pdf';
+                    pdfHtml = `<a href="#" class="pdf-link" onclick="downloadPDF('${pdfUrl}', '${fileName}'); return false;"><i class="bi bi-file-pdf me-1"></i>PDF</a>`;
+                }
+
+                html += `
+                    <div class="col-md-12 col-lg-12">
+                        <div class="notice-card d-flex flex-column">
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <span class="badge badge-type bg-primary text-white">${typeLabel}</span>
+                                <span class="badge badge-date"><i class="bi bi-calendar3 me-1"></i>${dateStr}</span>
+                                ${newBadge}
+                                ${pdfHtml}
+                            </div>
+                            <h5 class="card-title">${title}</h5>
+                            ${desc ? `<p class="card-text">${desc}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+
+            // Pagination
+            let pagHtml = '';
+            if (totalPages > 1) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pagHtml += `<button class="page-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+                }
+            }
+            pagination.innerHTML = pagHtml;
+            pagination.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const pg = parseInt(this.dataset.page);
+                    const searchVal = document.getElementById('searchInput').value;
+                    renderNotices(pg, searchVal);
+                    window.scrollTo({ top: document.getElementById('noticesContainer').offsetTop - 20, behavior: 'smooth' });
+                });
+            });
+        }
+
+        function loadNotices(searchTerm) {
+            const container = document.getElementById('noticesContainer');
+            container.innerHTML = `
+                <div class="text-center py-5" id="loadingNotices">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-secondary">Loading notices...</p>
+                </div>
+            `;
+
+            firebase.database().ref('posts')
+                .orderByChild('type')
+                .equalTo('notice')
+                .once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    if (!data) {
+                        allPosts = [];
+                        filteredPosts = [];
+                        renderNotices(1, searchTerm || '');
+                        return;
+                    }
+                    const keys = Object.keys(data);
+                    const posts = keys.map(key => ({ ...data[key], id: key }));
+                    posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                    allPosts = posts;
+                    renderNotices(1, searchTerm || '');
+                })
+                .catch(err => {
+                    console.error('Error loading notices:', err);
+                    container.innerHTML = `
+                        <div class="empty-state text-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <h4 class="mt-3">Error Loading</h4>
+                            <p>Could not fetch notices. Please refresh the page.</p>
+                        </div>
+                    `;
+                    document.getElementById('paginationControls').innerHTML = '';
+                });
+        }
+
+        // ============================================
+        // 4. SEARCH HANDLER
+        // ============================================
+        function handleSearch() {
+            const val = document.getElementById('searchInput').value;
+            loadNotices(val);
+        }
+
+        // ============================================
+        // 5. INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotices('');
+            document.getElementById('searchBtn').addEventListener('click', handleSearch);
+            document.getElementById('searchInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') handleSearch();
+            });
+        });
+
+        window.loadNotices = loadNotices;
+
+    </script>
+</body>
+</html>

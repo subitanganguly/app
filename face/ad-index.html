@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>THE INDIA FACE · Admin</title>
+  <link rel="icon" type="image/png" href="img/logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    /* Banner & core — untouched */
+    .carousel-item img{ height:600px; object-fit:cover; filter:brightness(.85); } 
+    .carousel-caption{ bottom:10%; } 
+    .carousel-caption h1{ font-size:3.5rem; font-weight:800; } 
+    .carousel-caption p{ font-size:1.2rem; }
+    footer{ background:#212529; color:#fff; } 
+    footer a{ color:#adb5bd; text-decoration:none; } 
+    footer a:hover{ color:#fff; } 
+    .social a{ font-size:22px; margin-right:15px; }
+    @media(max-width:768px){ 
+      .carousel-item img{ height:350px; } 
+      .carousel-caption{ bottom:10%; } 
+      .carousel-caption h1{ font-size:2rem; } 
+      .carousel-caption p{ font-size:1rem; } 
+    }
+    .inner-shadow{
+      box-shadow: inset 0 0px 12px rgba(0, 0, 0, 0.178);
+    }
+
+    /* loader (minimal) */
+    .loader-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+      width: 100%;
+    }
+    .spinner-grow {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .search-filter-wrap {
+      max-width: 320px;
+    }
+    @media (max-width: 576px) {
+      .search-filter-wrap {
+        max-width: 100%;
+      }
+    }
+
+    /* pagination: subtle */
+    .pagination-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .pagination-wrap .page-btn {
+      min-width: 38px;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid #dee2e6;
+      background: white;
+      border-radius: 0.375rem;
+      color: #212529;
+      font-weight: 500;
+      transition: 0.15s;
+    }
+    .pagination-wrap .page-btn.active-page {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      color: white;
+    }
+    .pagination-wrap .page-btn:hover:not(.active-page) {
+      background: #e9ecef;
+    }
+    .pagination-wrap .page-btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="pt-5">
+
+<!-- ================= NAVBAR (unchanged) ================= -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold fs-5 d-flex align-items-center" href="index.html">
+      <span class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow" style="width:40px;height:40px;">
+        <img src="img/logo.png" alt="THE INDIA FACE Logo" width="42" height="42" class="img-fluid rounded-circle">
+      </span>
+      <span>THE INDIA FACE</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbar">
+      <ul class="navbar-nav mx-auto">
+        <li class="nav-item"><a class="nav-link active fw-semibold" href="add-notice.html">Add Notice</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" href="#">Social Work</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" href="#">About Us</a></li>
+      </ul>
+      <div class="d-flex gap-2 align-items-center" id="authArea">
+        <button class="btn btn-sm btn-outline-light" id="signInBtn" onclick="openLogin();showLogin();">
+          <i class="bi bi-box-arrow-in-right"></i> Sign In
+        </button>
+        <button class="btn btn-sm btn-warning" id="signUpBtn" onclick="openLogin();showSignup();">
+          <i class="bi bi-person-plus"></i> Sign Up
+        </button>
+        <div id="userArea" style="display:none;" class="dropdown">
+          <button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i> <span id="userName">User</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="index.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ DASHBOARD ============= -->
+<div class="container-fluid py-2 mt-4">
+
+  <!-- stat cards (no change) -->
+  <div class="row g-2 mb-2">
+    <div class="col-3">
+      <div class="card inner-shadow border-0 rounded-3">
+        <div class="card-body text-center p-1">
+          <div class="small text-body-secondary fw-normal">Total</div>
+          <h6 class="mb-0 fw-bold" id="totalUsers">0</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card inner-shadow border-0 rounded-3">
+        <div class="card-body text-center p-1">
+          <div class="small text-body-secondary fw-normal">Active</div>
+          <h6 class="mb-0 fw-bold" id="activeUsers">0</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card inner-shadow border-0 rounded-3">
+        <div class="card-body text-center p-1">
+          <div class="small text-body-secondary fw-normal">Admins</div>
+          <h6 class="mb-0 fw-bold" id="adminUsers">0</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card inner-shadow border-0 rounded-3">
+        <div class="card-body text-center p-1">
+          <div class="small text-body-secondary fw-normal">Disabled</div>
+          <h6 class="mb-0 fw-bold" id="disabledUsers">0</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- charts row (no change) -->
+  <div class="row mt-1 g-3 align-items-stretch">
+    <div class="col-lg-4 d-flex">
+      <div class="card shadow border-0 rounded-4 h-100 w-100">
+        <div class="card-body">
+          <h5 class="small text-body-secondary fw-bold">User Registration</h5>
+          <canvas id="userChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-2 d-flex">
+      <div class="card shadow border-0 rounded-4 h-100 w-100">
+        <div class="card-body">
+          <h5 class="small text-body-secondary fw-bold">User Types</h5>
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- user table with search + loader + pagination (20 per view) -->
+  <div class="card shadow border-0 rounded-4 mt-4">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <h5 class="mb-0">Latest Users</h5>
+        <div class="search-filter-wrap">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control border-start-0" id="searchUserInput" placeholder="Search by name, email..." aria-label="Search users">
+          </div>
+        </div>
+      </div>
+
+      <!-- loader -->
+      <div id="loaderWrapper" class="loader-wrapper" style="display: none;">
+        <div class="spinner-grow text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- user cards grid -->
+      <div class="row g-3" id="userTable"></div>
+
+      <!-- pagination: 20 per view -->
+      <div class="pagination-wrap" id="paginationControls"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FOOTER (unchanged) ================= -->
+<footer class="pt-1 pb-3 mt-5">
+  <div class="container">
+    <hr class="border-secondary">
+    <div class="text-center text-secondary">© 2026 THE INDIAFACE. All Rights Reserved.</div>
+  </div>
+</footer>
+
+<!-- scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="js/login.js"></script>
+<script src="js/sg.js"></script>
+
+<script>
+  (function() {
+    // ---------- auth guard (unchanged) ----------
+    firebase.auth().onAuthStateChanged(function(user){
+      if(!user){
+        window.location.href = "index.html";
+        return;
+      }
+      firebase.database().ref("registration/" + user.uid).once("value").then(function(snapshot){
+        if(!snapshot.exists()){
+          firebase.auth().signOut();
+          window.location.href = "index.html";
+          return;
+        }
+        const data = snapshot.val();
+        if(data.status !== "active"){
+          alert("Your account has been disabled.");
+          firebase.auth().signOut();
+          localStorage.clear();
+          window.location.href = "index.html";
+          return;
+        }
+        if(data.type !== "admin"){
+          alert("Access Denied");
+          window.location.href = "index.html";
+          return;
+        }
+        document.getElementById("signInBtn").style.display = "none";
+        document.getElementById("signUpBtn").style.display = "none";
+        document.getElementById("userArea").style.display = "block";
+        const initials = data.name.trim().split(" ").map(n => n.charAt(0).toUpperCase()).join("");
+        document.getElementById("userName").textContent = initials;
+        loadDashboard();
+      });
+    });
+
+    // ---------- loader ----------
+    function showLoader(show) {
+      const loader = document.getElementById('loaderWrapper');
+      const table = document.getElementById('userTable');
+      if (show) {
+        loader.style.display = 'flex';
+        table.innerHTML = '';
+        document.getElementById('paginationControls').innerHTML = '';
+      } else {
+        loader.style.display = 'none';
+      }
+    }
+
+    // ---------- state ----------
+    let allUsers = [];
+    let currentPage = 1;
+    const PER_PAGE = 20;
+
+    // ---------- load dashboard ----------
+    function loadDashboard() {
+      showLoader(true);
+      firebase.database().ref("registration").once("value").then(function(snapshot){
+        let total = 0, active = 0, admin = 0, disabled = 0;
+        let monthCount = {};
+        let users = [];
+
+        snapshot.forEach(function(child){
+          const u = child.val();
+          const uid = child.key;
+          total++;
+          if(u.status === "active") active++;
+          else disabled++;
+          if(u.type === "admin") admin++;
+          if(u.createdAt){
+            const d = new Date(u.createdAt);
+            const m = d.toLocaleString("default", {month:"short"});
+            monthCount[m] = (monthCount[m]||0) + 1;
+          }
+          users.push({
+            uid: uid,
+            name: u.name || 'No name',
+            email: u.email || '',
+            mobile: u.mobile || '',
+            type: u.type || 'user',
+            status: u.status || 'disabled'
+          });
+        });
+
+        document.getElementById("totalUsers").innerHTML = total;
+        document.getElementById("activeUsers").innerHTML = active;
+        document.getElementById("adminUsers").innerHTML = admin;
+        document.getElementById("disabledUsers").innerHTML = disabled;
+
+        new Chart(document.getElementById("userChart"), {
+          type:"line",
+          data:{
+            labels:Object.keys(monthCount),
+            datasets:[{
+              label:"Users",
+              data:Object.values(monthCount),
+              fill:true,
+              tension:.4,
+              borderWidth:3
+            }]
+          }
+        });
+        new Chart(document.getElementById("typeChart"), {
+          type:"doughnut",
+          data:{
+            labels:["Users","Admins"],
+            datasets:[{ data:[total-admin, admin] }]
+          }
+        });
+
+        // store all users
+        allUsers = users;
+        window.__allUsers = users; // for search
+
+        // render first page
+        currentPage = 1;
+        renderPage(users, currentPage);
+        showLoader(false);
+      }).catch(function(err){
+        console.error(err);
+        showLoader(false);
+        alert('Error loading data: ' + err.message);
+      });
+    }
+
+    // ---------- render page (20 items) ----------
+    function renderPage(usersArray, page) {
+      const container = document.getElementById('userTable');
+      const paginationEl = document.getElementById('paginationControls');
+      if (!usersArray || usersArray.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted py-4">No users found</div>`;
+        paginationEl.innerHTML = '';
+        return;
+      }
+
+      const totalItems = usersArray.length;
+      const totalPages = Math.ceil(totalItems / PER_PAGE);
+      if (page > totalPages) page = totalPages;
+      if (page < 1) page = 1;
+      currentPage = page;
+
+      const start = (page - 1) * PER_PAGE;
+      const end = Math.min(start + PER_PAGE, totalItems);
+      const pageItems = usersArray.slice(start, end);
+
+      // build cards
+      let html = '';
+      pageItems.forEach(function(u){
+        const statusBadge = u.status === "active" ? "success" : "secondary";
+        const typeBadge = u.type === "admin" ? "danger" : "primary";
+        html += `
+          <div class="col-md-6 col-lg-4">
+            <div class="card border-0 inner-shadow rounded-4 h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h5 class="mb-1 small text-body-secondary fw-bold">${escapeHtml(u.name)}</h5>
+                    <div class="text-muted small"><i class="bi bi-envelope"></i> ${escapeHtml(u.email)}</div>
+                    <div class="text-muted small"><i class="bi bi-telephone"></i> ${escapeHtml(u.mobile)}</div>
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn btn-light btn-sm rounded-circle" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                      <li>
+                        <button class="dropdown-item" onclick="toggleUserStatus('${u.uid}','${u.status}')">
+                          <i class="bi bi-power me-2"></i> ${u.status === "active" ? "Disable User" : "Enable User"}
+                        </button>
+                      </li>
+                      <li>
+                        <button class="dropdown-item" onclick="toggleUserType('${u.uid}','${u.type}')">
+                          <i class="bi bi-person-gear me-2"></i> ${u.type === "admin" ? "Make User" : "Make Admin"}
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                  <span class="badge bg-${typeBadge}">${u.type.toUpperCase()}</span>
+                  <span class="badge bg-${statusBadge}">${u.status.toUpperCase()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      // pagination controls
+      let pagHtml = '';
+      if (totalPages > 1) {
+        pagHtml += `<button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>&larr;</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          pagHtml += `<button class="page-btn ${i===currentPage?'active-page':''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+        pagHtml += `<button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>&rarr;</button>`;
+      }
+      paginationEl.innerHTML = pagHtml;
+    }
+
+    // ---------- escape helper ----------
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---------- pagination navigation (global) ----------
+    window.goToPage = function(page) {
+      const source = window.__filteredUsers || window.__allUsers || [];
+      if (!source.length) return;
+      const totalPages = Math.ceil(source.length / PER_PAGE);
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+      currentPage = page;
+      renderPage(source, page);
+    };
+
+    // ---------- search filter (live) ----------
+    document.addEventListener('DOMContentLoaded', function(){
+      const searchInput = document.getElementById('searchUserInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+          const term = e.target.value.trim().toLowerCase();
+          const source = window.__allUsers || [];
+          let filtered;
+          if (term === '') {
+            filtered = source;
+            window.__filteredUsers = null;
+          } else {
+            filtered = source.filter(u => {
+              return (u.name && u.name.toLowerCase().includes(term)) ||
+                     (u.email && u.email.toLowerCase().includes(term)) ||
+                     (u.mobile && u.mobile.includes(term));
+            });
+            window.__filteredUsers = filtered;
+          }
+          currentPage = 1;
+          renderPage(filtered, 1);
+        });
+      }
+    });
+
+    // ---------- toggle functions (global) ----------
+    window.toggleUserStatus = function(uid, status) {
+      const newStatus = status === "active" ? "disabled" : "active";
+      firebase.database().ref("registration/" + uid).update({ status: newStatus })
+        .then(() => {
+          alert("User " + newStatus);
+          location.reload();
+        })
+        .catch(err => alert(err.message));
+    };
+
+    window.toggleUserType = function(uid, type) {
+      const newType = type === "admin" ? "user" : "admin";
+      firebase.database().ref("registration/" + uid).update({ type: newType })
+        .then(function(){
+          alert("User role updated successfully.");
+          location.reload();
+        })
+        .catch(function(error){
+          alert(error.message);
+        });
+    };
+
+    // dummy for login.js
+    window.openLogin = function(){};
+    window.showLogin = function(){};
+    window.showSignup = function(){};
+    window.logout = function(){
+      firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    };
+
+  })();
+</script>
+</body>
+</html>
