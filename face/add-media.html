@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Media · Admin</title>
+    <link rel="icon" type="image/png" href="img/logo.png" />
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+        .card-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            border: none;
+            border-radius: 28px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+            transition: 0.2s;
+            height: 100%;
+        }
+        .btn-submit {
+            border-radius: 40px;
+            padding: 0.5rem 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(145deg, #0d6efd, #0a58ca);
+            border: none;
+            box-shadow: 0 6px 14px rgba(13,110,253,0.3);
+            transition: 0.2s;
+            color: white;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(13,110,253,0.35);
+            color: white;
+        }
+        .page-header-icon {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .media-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .media-preview .preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e9edf4;
+            background: #f8faff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .media-preview .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .media-preview .preview-item .remove-preview {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #dc3545;
+            color: white;
+            border: none;
+            font-size: 0.7rem;
+            line-height: 1;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .media-preview .preview-item .file-type-badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 0.55rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+        }
+        .filter-bar {
+            background: white;
+            border-radius: 60px;
+            padding: 0.3rem 0.3rem 0.3rem 1.2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            border: 1px solid #e9edf4;
+        }
+        .post-count-badge {
+            background: #eef2f7;
+            color: #1e293b;
+            font-weight: 600;
+            border-radius: 40px;
+            padding: 0.2rem 0.9rem;
+            font-size: 0.8rem;
+        }
+        .post-list-scroll {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .post-list-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .post-list-scroll::-webkit-scrollbar-thumb {
+            background: #c1c9d6;
+            border-radius: 10px;
+        }
+        .post-list-scroll::-webkit-scrollbar-track {
+            background: #eef2f7;
+            border-radius: 10px;
+        }
+        .post-card {
+            border-left: 4px solid #6f42c1;
+            transition: 0.2s;
+            background: white;
+            padding: 0.9rem 1rem;
+            border-radius: 16px;
+            margin-bottom: 0.7rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .post-card:hover {
+            background: #f8faff;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+        }
+        .post-card .badge-type {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .media-thumbnails {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .media-thumbnails .thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #eef2f7;
+            border: 1px solid #dce2ec;
+            cursor: pointer;
+        }
+        .media-thumbnails .thumb-video {
+            position: relative;
+            display: inline-block;
+        }
+        .media-thumbnails .thumb-video .play-icon-small {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 0.7rem;
+            background: rgba(0,0,0,0.5);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .post-id-tag {
+            font-size: 0.6rem;
+            background: #eef2f7;
+            color: #475569;
+            padding: 0.1rem 0.6rem;
+            border-radius: 30px;
+            font-family: monospace;
+            letter-spacing: 0.2px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+        footer {
+            margin-top: 3rem;
+        }
+        @media (max-width: 992px) {
+            .card-glass { margin-bottom: 1.5rem; }
+        }
+        .type-disabled-input {
+            background: #eef2f7 !important;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        .progress-container {
+            margin-top: 10px;
+            display: none;
+        }
+        .progress-container.show {
+            display: block;
+        }
+        .progress {
+            height: 24px;
+            border-radius: 30px;
+            background: #e9edf4;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #0d6efd, #6f42c1);
+            transition: width 0.3s ease;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .progress-status {
+            font-size: 0.8rem;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .size-warning {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            display: none;
+        }
+        .size-warning.show {
+            display: block;
+        }
+        .youtube-link-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: #f8faff;
+            padding: 6px 10px;
+            border-radius: 30px;
+            border: 1px solid #e9edf4;
+            margin-bottom: 6px;
+        }
+        .youtube-link-item .link-text {
+            flex: 1;
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #1e293b;
+        }
+        .youtube-link-item .remove-link {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .youtube-link-item .yt-badge {
+            background: #ff0000;
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .add-link-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .add-link-row input {
+            flex: 1;
+        }
+        .thumbnail-youtube {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+        .thumbnail-youtube img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .thumbnail-youtube .play-icon-small {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 0.6rem;
+            background: rgba(255,0,0,0.8);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-3 px-md-4">
+    <div class="row g-4">
+        <!-- LEFT COLUMN: FORM -->
+        <div class="col-lg-5 col-xl-5">
+            <div class="card card-glass p-4 p-md-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="page-header-icon"><i class="bi bi-images"></i></span>
+                    <div>
+                        <h4 class="fw-bold mb-0">Add Media</h4>
+                        <p class="text-secondary small mb-0">Photos (→webp) & YouTube links</p>
+                    </div>
+                </div>
+
+                <form id="mediaForm" onsubmit="submitMedia(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-pencil-square me-1"></i> Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="mediaTitle" placeholder="e.g. Campus tour" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-calendar-event me-1"></i> Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="mediaDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-tags me-1"></i> Post Type <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control type-disabled-input" id="mediaType" value="activitie" disabled>
+                        <small class="text-muted">Type is fixed to "activitie"</small>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-cloud-upload me-1"></i> Upload Photos <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="mediaFiles" accept="image/*" multiple required>
+                        <div id="fileHelp" class="form-text">
+                            <i class="bi bi-info-circle"></i> Images → WebP (max 3MB each)
+                        </div>
+                        <div id="sizeWarning" class="size-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Some images exceed 3MB and will be compressed.
+                        </div>
+                        <div id="uploadStatus" class="mt-2 small text-muted"></div>
+                        <div id="previewContainer" class="media-preview"></div>
+                        
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress">
+                                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%;">0%</div>
+                            </div>
+                            <div class="progress-status" id="progressStatus">Preparing...</div>
+                        </div>
+                    </div>
+
+                    <!-- YouTube Links -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-youtube me-1"></i> YouTube Video Links</label>
+                        <div id="youtubeLinksContainer">
+                            <div id="youtubeLinkList"></div>
+                            <div class="add-link-row">
+                                <input type="text" class="form-control form-control-sm" id="youtubeLinkInput" placeholder="https://www.youtube.com/watch?v=...">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="addYoutubeLink()"><i class="bi bi-plus-lg"></i></button>
+                            </div>
+                        </div>
+                        <small class="text-muted">Add one or more YouTube video URLs</small>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+                        <button type="submit" class="btn btn-submit" id="submitBtn">
+                            <i class="bi bi-cloud-arrow-up me-1"></i> Publish Media
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary" onclick="resetMediaForm()">
+                            <i class="bi bi-arrow-counterclockwise"></i> Clear
+                        </button>
+                    </div>
+                    <div id="formFeedback" class="mt-3"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: PUBLISHED MEDIA POSTS -->
+        <div class="col-lg-7 col-xl-7">
+            <div class="card card-glass p-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Media Posts</h5>
+                    <span class="post-count-badge" id="postCount">0</span>
+                </div>
+
+                <div class="filter-bar d-flex align-items-center mb-3">
+                    <div class="input-group input-group-sm flex-grow-1 me-2">
+                        <span class="input-group-text bg-transparent border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search by title...">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-select form-select-sm" id="typeFilter" style="width:auto; min-width:120px;">
+                            <option value="all">All Types</option>
+                            <option value="activitie" selected>Activitie</option>
+                        </select>
+                        <button class="btn btn-outline-secondary btn-sm" id="clearFilterBtn" title="Clear filters"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                </div>
+
+                <div id="postsContainer" class="post-list-scroll">
+                    <div id="loadingPosts" class="text-center text-secondary py-4">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading media...
+                    </div>
+                </div>
+                <p class="text-center text-secondary small mt-3 mb-0">
+                    <i class="bi bi-info-circle"></i> Posts stored in <strong>"posts"</strong> node
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editPostId">
+                <div class="mb-3"><label class="form-label">Title</label><input type="text" class="form-control" id="editTitle"></div>
+                <div class="mb-3"><label class="form-label">Date</label><input type="date" class="form-control" id="editDate"></div>
+                <div class="mb-3"><label class="form-label">Type</label><input type="text" class="form-control type-disabled-input" id="editType" value="activitie" disabled></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEdit()"><i class="bi bi-check2 me-1"></i>Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container text-center text-secondary">
+        <hr class="border-secondary opacity-25">
+        <small>© 2026 THE INDIAFACE. All Rights Reserved.</small>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Firebase 8 compat -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- login.js (config, auth, db) -->
+    <script src="js/login.js"></script>
+    <script src="js/sg.js"></script>
+    <!-- browser-image-compression for images -->
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.0/dist/browser-image-compression.js"></script>
+<script>
+    (function() {
+        // Auth guard
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (!user) {
+                window.location.href = "index.html";
+                return;
+            }
+            firebase.database().ref("registration/" + user.uid).once("value").then(function(snapshot) {
+                if (!snapshot.exists()) {
+                    firebase.auth().signOut();
+                    window.location.href = "index.html";
+                    return;
+                }
+                const data = snapshot.val();
+                if (data.status !== "active" || data.type !== "admin") {
+                    alert("Access denied. Admin only.");
+                    firebase.auth().signOut();
+                    localStorage.clear();
+                    window.location.href = "index.html";
+                    return;
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('mediaDate').value = today;
+            loadMediaPosts();
+
+            document.getElementById('searchInput').addEventListener('keyup', applyFilters);
+            document.getElementById('typeFilter').addEventListener('change', applyFilters);
+            document.getElementById('clearFilterBtn').addEventListener('click', function() {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('typeFilter').value = 'activitie';
+                applyFilters();
+            });
+
+            document.getElementById('mediaFiles').addEventListener('change', function(e) {
+                previewFiles(e.target.files);
+                checkFileSizes(e.target.files);
+            });
+        });
+
+        // ========== GLOBAL STATE ==========
+        let allPosts = [];
+        let youtubeLinks = [];
+
+        // ========== YOUTUBE LINKS ==========
+        window.addYoutubeLink = function() {
+            const input = document.getElementById('youtubeLinkInput');
+            const url = input.value.trim();
+            if (!url) { alert('Please enter a YouTube URL.'); return; }
+            // Simple validation
+            if (!url.match(/youtube\.com\/watch\?v=|youtu\.be\//i)) {
+                alert('Please enter a valid YouTube URL.');
+                return;
+            }
+            youtubeLinks.push(url);
+            renderYoutubeLinks();
+            input.value = '';
+        };
+
+        function renderYoutubeLinks() {
+            const container = document.getElementById('youtubeLinkList');
+            if (youtubeLinks.length === 0) {
+                container.innerHTML = '<div class="text-muted small">No YouTube links added yet.</div>';
+                return;
+            }
+            let html = '';
+            youtubeLinks.forEach((link, index) => {
+                html += `
+                    <div class="youtube-link-item">
+                        <span class="yt-badge"><i class="bi bi-youtube"></i></span>
+                        <span class="link-text">${link}</span>
+                        <button class="remove-link" onclick="removeYoutubeLink(${index})"><i class="bi bi-x-circle-fill"></i></button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.removeYoutubeLink = function(index) {
+            youtubeLinks.splice(index, 1);
+            renderYoutubeLinks();
+        };
+
+        // ========== CHECK FILE SIZES ==========
+        function checkFileSizes(files) {
+            const warning = document.getElementById('sizeWarning');
+            let hasWarning = false;
+            for (let f of files) {
+                const sizeMB = f.size / (1024 * 1024);
+                if (f.type.startsWith('image/') && sizeMB > 3) hasWarning = true;
+            }
+            if (hasWarning) {
+                warning.classList.add('show');
+                warning.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Some images exceed 3MB and will be compressed.';
+            } else {
+                warning.classList.remove('show');
+            }
+        }
+
+        // ========== PROGRESS BAR ==========
+        function updateProgress(percent, status) {
+            const container = document.getElementById('progressContainer');
+            const bar = document.getElementById('progressBar');
+            const statusEl = document.getElementById('progressStatus');
+            
+            container.classList.add('show');
+            bar.style.width = Math.min(percent, 100) + '%';
+            bar.textContent = Math.round(Math.min(percent, 100)) + '%';
+            if (status) statusEl.textContent = status;
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').classList.remove('show');
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressBar').textContent = '0%';
+        }
+
+        // ========== PREVIEW ==========
+        function previewFiles(files) {
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '';
+            if (!files || files.length === 0) return;
+            for (let f of files) {
+                if (!f.type.startsWith('image/')) continue;
+                const item = document.createElement('div');
+                item.className = 'preview-item';
+                const url = URL.createObjectURL(f);
+                const sizeMB = (f.size / (1024 * 1024)).toFixed(1);
+                item.innerHTML = `
+                    <img src="${url}" alt="preview">
+                    <span class="file-type-badge">img ${sizeMB}MB</span>
+                `;
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-preview';
+                removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+                removeBtn.type = 'button';
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const input = document.getElementById('mediaFiles');
+                    const dt = new DataTransfer();
+                    for (let file of input.files) {
+                        if (file !== f) dt.items.add(file);
+                    }
+                    input.files = dt.files;
+                    previewFiles(input.files);
+                    checkFileSizes(input.files);
+                });
+                item.appendChild(removeBtn);
+                container.appendChild(item);
+            }
+        }
+
+        // ========== FIXED: IMAGE OPTIMIZATION TO WEBP ==========
+        async function optimizeImage(file) {
+            try {
+                // If file is already small and WebP, skip
+                if (file.size < 3 * 1024 * 1024 && file.type === 'image/webp') {
+                    return file;
+                }
+
+                // Determine compression quality
+                let quality = 0.75;
+                let maxSizeMB = 2.5;
+                let maxWidthOrHeight = 1200;
+
+                // For very large files, be more aggressive
+                if (file.size > 5 * 1024 * 1024) {
+                    quality = 0.6;
+                    maxSizeMB = 2;
+                    maxWidthOrHeight = 1024;
+                }
+
+                const options = {
+                    maxSizeMB: maxSizeMB,
+                    maxWidthOrHeight: maxWidthOrHeight,
+                    useWebWorker: true,
+                    fileType: 'image/webp',
+                    initialQuality: quality,
+                    alwaysKeepResolution: false
+                };
+
+                console.log(`Compressing ${file.name} (${(file.size/1024/1024).toFixed(2)}MB) to WebP...`);
+                
+                const compressedFile = await imageCompression(file, options);
+                
+                // Check if compression actually worked
+                if (compressedFile.size >= file.size && file.type !== 'image/webp') {
+                    // Try more aggressive compression
+                    const aggressiveOptions = {
+                        maxSizeMB: 2,
+                        maxWidthOrHeight: 800,
+                        useWebWorker: true,
+                        fileType: 'image/webp',
+                        initialQuality: 0.5,
+                        alwaysKeepResolution: false
+                    };
+                    const aggressiveCompressed = await imageCompression(file, aggressiveOptions);
+                    if (aggressiveCompressed.size < file.size) {
+                        return aggressiveCompressed;
+                    }
+                }
+
+                // Create new file with .webp extension
+                const name = file.name.replace(/\.[^.]+$/, '.webp');
+                const newFile = new File([compressedFile], name, { 
+                    type: 'image/webp',
+                    lastModified: Date.now()
+                });
+
+                console.log(`Compressed to ${(newFile.size/1024/1024).toFixed(2)}MB (${((1 - newFile.size/file.size) * 100).toFixed(1)}% reduction)`);
+                return newFile;
+
+            } catch (err) {
+                console.warn('Image optimization failed:', err);
+                // If compression fails, try to convert to WebP using canvas as fallback
+                try {
+                    return await convertToWebPFallback(file);
+                } catch (fallbackErr) {
+                    console.warn('Fallback conversion failed:', fallbackErr);
+                    return file;
+                }
+            }
+        }
+
+        // ========== FALLBACK: Convert to WebP using Canvas ==========
+        function convertToWebPFallback(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Resize if too large
+                        const maxDim = 1200;
+                        if (width > maxDim || height > maxDim) {
+                            const ratio = Math.min(maxDim / width, maxDim / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        let quality = 0.75;
+                        if (file.size > 5 * 1024 * 1024) quality = 0.5;
+                        
+                        canvas.toBlob(function(blob) {
+                            if (blob) {
+                                const name = file.name.replace(/\.[^.]+$/, '.webp');
+                                const newFile = new File([blob], name, { type: 'image/webp' });
+                                resolve(newFile);
+                            } else {
+                                reject(new Error('Canvas toBlob failed'));
+                            }
+                        }, 'image/webp', quality);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ========== UPLOAD TO GOOGLE DRIVE ==========
+        const WEBAPP = "https://script.google.com/macros/s/AKfycbzQMJv-ejVD2zHPPCcq3bTTZVLZTGSpmka8o_y3-v4h0o1q3aUF34MF6syyOvzb1A8atQ/exec";
+
+        async function uploadMediaFile(file, postId, index, totalFiles) {
+            const statusEl = document.getElementById('uploadStatus');
+            let uploadFile = file;
+            const isImage = file.type.startsWith('image/');
+            const sizeMB = file.size / (1024 * 1024);
+            
+            // Compress if image and larger than 3MB or not WebP
+            if (isImage && (sizeMB > 3 || file.type !== 'image/webp')) {
+                updateProgress(5 + (index / totalFiles) * 30, `Optimizing image ${index + 1}/${totalFiles} to WebP...`);
+                uploadFile = await optimizeImage(file);
+            } else {
+                updateProgress(5 + (index / totalFiles) * 30, `Processing ${index + 1}/${totalFiles}...`);
+            }
+            
+            // Ensure .webp extension
+            let ext = uploadFile.name.split('.').pop();
+            if (uploadFile.type === 'image/webp' && ext !== 'webp') {
+                ext = 'webp';
+            } else if (ext !== 'webp' && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
+                ext = 'webp';
+            }
+            
+            const newFileName = `${postId}_${index}.${ext}`;
+            const renamedFile = new File([uploadFile], newFileName, { type: uploadFile.type });
+            
+            const progressStart = 35 + (index / totalFiles) * 50;
+            updateProgress(progressStart, `Uploading ${index + 1}/${totalFiles}...`);
+            
+            const finalSizeMB = (renamedFile.size / (1024 * 1024)).toFixed(2);
+            statusEl.innerHTML = `⏳ Uploading ${renamedFile.name} (${finalSizeMB}MB)...`;
+            
+            try {
+                const reader = new FileReader();
+                const base64 = await new Promise((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result.split(",")[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(renamedFile);
+                });
+                
+                const data = {
+                    fileName: renamedFile.name,
+                    mimeType: renamedFile.type,
+                    file: base64,
+                    postId: postId,
+                    folder: 'media'
+                };
+                
+                const res = await fetch(WEBAPP, {
+                    method: "POST",
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    const newProgress = 55 + ((index + 1) / totalFiles) * 40;
+                    updateProgress(newProgress, `Uploaded ${index + 1}/${totalFiles}`);
+                    statusEl.innerHTML = `✅ ${renamedFile.name} (${finalSizeMB}MB) uploaded as WebP`;
+                    return result.url;
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            } catch (err) {
+                statusEl.innerHTML = `❌ ${renamedFile.name} failed: ${err.message}`;
+                throw err;
+            }
+        }
+
+        // ========== SUBMIT MEDIA ==========
+        window.submitMedia = async function(e) {
+            e.preventDefault();
+            const title = document.getElementById('mediaTitle').value.trim();
+            const date = document.getElementById('mediaDate').value;
+            const type = 'activitie';
+            const files = document.getElementById('mediaFiles').files;
+
+            if (!title || !date) {
+                alert('Please fill all required fields.');
+                return;
+            }
+            if (files.length === 0 && youtubeLinks.length === 0) {
+                alert('Please upload at least one image or add a YouTube link.');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Publishing...';
+            
+            updateProgress(0, 'Starting...');
+
+            try {
+                const postData = {
+                    title,
+                    date,
+                    type: type,
+                    mediaUrls: [],
+                    youtubeUrls: youtubeLinks.slice(),
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    uid: firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'unknown'
+                };
+                const newPostRef = firebase.database().ref('posts').push();
+                const postId = newPostRef.key;
+                await newPostRef.set(postData);
+
+                const uploadedUrls = [];
+                for (let i = 0; i < files.length; i++) {
+                    const url = await uploadMediaFile(files[i], postId, i, files.length);
+                    if (url) uploadedUrls.push(url);
+                }
+                
+                if (uploadedUrls.length > 0) {
+                    await firebase.database().ref('posts/' + postId).update({ mediaUrls: uploadedUrls });
+                }
+                
+                updateProgress(100, '✅ Complete!');
+                alert(`✅ Media published! ${uploadedUrls.length} images (WebP), ${youtubeLinks.length} YouTube links.`);
+                
+                setTimeout(() => {
+                    hideProgress();
+                    resetMediaForm();
+                    loadMediaPosts();
+                }, 1500);
+                
+            } catch (err) {
+                console.error(err);
+                hideProgress();
+                alert('❌ Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        };
+
+        // ========== LOAD MEDIA POSTS ==========
+        function loadMediaPosts() {
+            const container = document.getElementById('postsContainer');
+            container.innerHTML = `<div class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</div>`;
+
+            firebase.database().ref('posts')
+                .orderByChild('createdAt')
+                .limitToLast(100)
+                .once('value', function(snapshot) {
+                    const posts = snapshot.val();
+                    if (!posts) { allPosts = []; renderPosts([]); return; }
+                    const keys = Object.keys(posts).reverse();
+                    const list = keys.map(key => {
+                        const p = posts[key];
+                        return { ...p, id: key };
+                    }).filter(p => p.title && p.type === 'activitie');
+                    allPosts = list;
+                    applyFilters();
+                }).catch(err => {
+                    container.innerHTML = `<div class="text-danger text-center py-3"><i class="bi bi-exclamation-triangle me-2"></i>Error loading</div>`;
+                });
+        }
+
+        // ========== FILTER + RENDER ==========
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const typeFilter = document.getElementById('typeFilter').value;
+            let filtered = allPosts;
+            if (search) filtered = filtered.filter(p => p.title && p.title.toLowerCase().includes(search));
+            if (typeFilter !== 'all') filtered = filtered.filter(p => p.type === typeFilter);
+            renderPosts(filtered);
+        }
+
+        function extractGoogleDriveFileId(url) {
+            if (!url) return null;
+            const match1 = url.match(/\/file\/d\/([^\/]+)/);
+            if (match1) return match1[1];
+            const match2 = url.match(/[?&]id=([^&]+)/);
+            if (match2) return match2[1];
+            const match3 = url.match(/\/uc\?id=([^&]+)/);
+            if (match3) return match3[1];
+            return null;
+        }
+
+        function getThumbnailUrl(url) {
+            const fileId = extractGoogleDriveFileId(url);
+            if (fileId) {
+                return `https://drive.google.com/thumbnail?id=${fileId}&sz=w100`;
+            }
+            return url;
+        }
+
+        function renderPosts(posts) {
+            const container = document.getElementById('postsContainer');
+            document.getElementById('postCount').textContent = posts.length;
+            if (!posts || posts.length === 0) {
+                container.innerHTML = `<div class="text-center text-secondary py-3"><i class="bi bi-inbox me-2"></i>No media posts</div>`;
+                return;
+            }
+            let html = '';
+            posts.forEach(p => {
+                const typeBadge = p.type || 'activitie';
+                let mediaThumbs = '';
+                if (p.mediaUrls && p.mediaUrls.length) {
+                    mediaThumbs += `<div class="media-thumbnails">`;
+                    p.mediaUrls.forEach((url) => {
+                        const thumbUrl = getThumbnailUrl(url);
+                        mediaThumbs += `
+                            <div class="thumb-wrapper">
+                                <img class="thumb" src="${thumbUrl}" alt="media" 
+                                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'36\\' height=\\'36\\'%3E%3Crect width=\\'36\\' height=\\'36\\' fill=\\'%23eef2f7\\'/%3E%3Ctext x=\\'18\\' y=\\'22\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'%2394a3b8\\'%3E📷%3C/text%3E%3C/svg%3E" />
+                            </div>
+                        `;
+                    });
+                    mediaThumbs += `</div>`;
+                }
+                // YouTube thumbnails
+                if (p.youtubeUrls && p.youtubeUrls.length) {
+                    mediaThumbs += `<div class="media-thumbnails">`;
+                    p.youtubeUrls.forEach(url => {
+                        const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\?\/]+)/i);
+                        const thumb = videoId ? `https://img.youtube.com/vi/${videoId[1]}/default.jpg` : '';
+                        mediaThumbs += `
+                            <div class="thumb-wrapper" title="YouTube">
+                                ${thumb ? `<img class="thumb" src="${thumb}" alt="yt" />` : `<div class="thumb" style="background:#000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;">YT</div>`}
+                                <span class="video-badge"><i class="bi bi-play-fill"></i></span>
+                            </div>
+                        `;
+                    });
+                    mediaThumbs += `</div>`;
+                }
+
+                const shortTitle = p.title && p.title.length > 50 ? p.title.substring(0,50)+'...' : p.title || 'Untitled';
+                const postIdTag = `<span class="post-id-tag">ID: ${p.id}</span>`;
+
+                html += `
+                    <div class="post-card d-flex justify-content-between align-items-start" data-id="${p.id}">
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge bg-secondary badge-type">${typeBadge}</span>
+                                <span class="badge bg-light text-secondary">${p.date || ''}</span>
+                                ${postIdTag}
+                            </div>
+                            <h6 class="fw-bold mt-1 mb-0 text-truncate">${shortTitle}</h6>
+                            ${mediaThumbs}
+                        </div>
+                        <div class="post-actions d-flex gap-1 flex-shrink-0 ms-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="editPost('${p.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deletePost('${p.id}')"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // ========== DELETE ==========
+        window.deletePost = function(postId) {
+            if (!confirm('Delete this media post?')) return;
+            firebase.database().ref('posts/' + postId).remove()
+                .then(() => { alert('🗑️ Deleted.'); loadMediaPosts(); })
+                .catch(err => alert('Error: ' + err.message));
+        };
+
+        // ========== EDIT ==========
+        window.editPost = function(postId) {
+            firebase.database().ref('posts/' + postId).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) { alert('Post not found.'); return; }
+                document.getElementById('editPostId').value = postId;
+                document.getElementById('editTitle').value = data.title || '';
+                document.getElementById('editDate').value = data.date || '';
+                document.getElementById('editType').value = 'activitie';
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            });
+        };
+
+        window.saveEdit = function() {
+            const postId = document.getElementById('editPostId').value;
+            const title = document.getElementById('editTitle').value.trim();
+            const date = document.getElementById('editDate').value;
+            if (!title || !date) { alert('Fill required fields.'); return; }
+            firebase.database().ref('posts/' + postId).update({ title, date, type: 'activitie' })
+                .then(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    alert('✅ Updated.');
+                    loadMediaPosts();
+                })
+                .catch(err => alert('Error: ' + err.message));
+        };
+
+        // ========== RESET ==========
+        window.resetMediaForm = function() {
+            document.getElementById('mediaTitle').value = '';
+            document.getElementById('mediaFiles').value = '';
+            document.getElementById('previewContainer').innerHTML = '';
+            document.getElementById('uploadStatus').innerHTML = '';
+            document.getElementById('sizeWarning').classList.remove('show');
+            hideProgress();
+            youtubeLinks = [];
+            renderYoutubeLinks();
+            document.getElementById('youtubeLinkInput').value = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('mediaDate').value = today;
+            document.getElementById('formFeedback').innerHTML = '';
+        };
+
+        window.loadMediaPosts = loadMediaPosts;
+        window.applyFilters = applyFilters;
+        // init YouTube list
+        renderYoutubeLinks();
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us · THE INDIA FACE</title>
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ----- global reset / reuse ----- */
+        body {
+            background: #f8faff;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        .section-header {
+            font-weight: 700;
+            color: #0b1e33;
+            border-left: 4px solid #6f42c1;
+            padding-left: 14px;
+            margin-bottom: 1.5rem;
+        }
+        .section-header i {
+            color: #6f42c1;
+            margin-right: 8px;
+        }
+        .shadow-soft {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+        }
+        .rounded-4 {
+            border-radius: 24px;
+        }
+
+        /* ----- about hero ----- */
+        .about-hero {
+            background: linear-gradient(135deg, #0b1e33 0%, #1a2d44 100%);
+            color: #fff;
+            padding: 4rem 0 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .about-hero::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(111, 66, 193, 0.12);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .about-hero .logo-wrapper {
+            width: 90px;
+            height: 90px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+        .about-hero .logo-wrapper img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        .about-hero h1 {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .about-hero p.lead {
+            color: rgba(255,255,255,0.80);
+            max-width: 600px;
+        }
+
+        /* ----- mission card ----- */
+        .mission-card {
+            background: white;
+            border-radius: 28px;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            border: 1px solid #eef2f7;
+            transition: 0.25s;
+            height: 100%;
+        }
+        .mission-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+        }
+        .mission-icon {
+            font-size: 2.2rem;
+            color: #6f42c1;
+            background: #f0ebff;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
+
+        /* ----- social work pillars ----- */
+        .pillar-card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.8rem 1.5rem;
+            border-left: 5px solid #6f42c1;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+            transition: 0.2s;
+            height: 100%;
+        }
+        .pillar-card:hover {
+            background: #faf8ff;
+            transform: translateX(6px);
+        }
+        .pillar-card .pillar-icon {
+            font-size: 2rem;
+            color: #6f42c1;
+            margin-bottom: 0.5rem;
+        }
+        .pillar-card h5 {
+            font-weight: 700;
+            color: #0b1e33;
+        }
+
+        /* ----- team / stats ----- */
+        .stat-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #6f42c1;
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* ----- footer (inline) ----- */
+        footer {
+            background: #212529;
+            color: #fff;
+            padding: 2rem 0;
+        }
+        footer a {
+            color: #adb5bd;
+            text-decoration: none;
+        }
+        footer a:hover {
+            color: #fff;
+        }
+        .social-footer a {
+            font-size: 1.4rem;
+            margin-right: 16px;
+        }
+
+        /* mobile tweaks */
+        @media (max-width: 768px) {
+            .about-hero { padding: 2.5rem 0 2rem; text-align: center; }
+            .about-hero .logo-wrapper { margin: 0 auto; }
+            .stat-number { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<div id="navbar"></div>
+
+<!-- ===== ABOUT HERO ===== -->
+<section class="about-hero mt-3">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="logo-wrapper">
+                        <img src="img/logo.png" alt="THE INDIA FACE logo" onerror="this.style.display='none'">
+                    </div>
+                    <div>
+                        <span class="badge bg-white text-dark bg-opacity-10 px-3 py-2 rounded-pill fw-semibold" style="background:rgba(255,255,255,0.08); color:#fff;">
+                            <i class="bi bi-info-circle me-1"></i> About Us
+                        </span>
+                    </div>
+                </div>
+                <h1 class="display-4 fw-bold">We Are <span style="background:linear-gradient(135deg,#f0e6ff,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">THE INDIA FACE</span></h1>
+                <p class="lead fs-5">
+                    A digital platform rooted in <strong>social impact</strong> — empowering communities through 
+                    <strong>education</strong>, <strong>health</strong>, and <strong>sustainable development</strong>.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    <span class="badge bg-light text-dark bg-opacity-15 px-4 py-2 rounded-pill" style="background:rgba(255,255,255,0.06); color:#fff;">
+                        <i class="bi bi-people me-1"></i> Since 2024
+                    </span>
+                    <span class="badge bg-light text-dark bg-opacity-15 px-4 py-2 rounded-pill" style="background:rgba(255,255,255,0.06); color:#fff;">
+                        <i class="bi bi-mortarboard me-1"></i> Education First
+                    </span>
+                    <span class="badge bg-light text-dark bg-opacity-15 px-4 py-2 rounded-pill" style="background:rgba(255,255,255,0.06); color:#fff;">
+                        <i class="bi bi-heart me-1"></i> Community Welfare
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 d-none d-md-block text-end">
+                <div style="font-size: 6rem; opacity: 0.15; line-height: 1;">
+                    <i class="bi bi-globe-asia-australia"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== MISSION + VISION ===== -->
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="mission-card">
+                <div class="mission-icon"><i class="bi bi-bullseye"></i></div>
+                <h4 class="fw-bold">Our Mission</h4>
+                <p class="text-secondary" style="font-size:1.05rem;">
+                    To <strong>bridge the digital divide</strong> and create a <strong>knowledge-driven society</strong> 
+                    by providing accessible education, promoting agriculture innovation, and fostering community-led 
+                    development across India.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mission-card">
+                <div class="mission-icon"><i class="bi bi-eye"></i></div>
+                <h4 class="fw-bold">Our Vision</h4>
+                <p class="text-secondary" style="font-size:1.05rem;">
+                    A <strong>self-reliant, empowered India</strong> where every individual has the opportunity to 
+                    learn, grow, and contribute to a <strong>progressive, inclusive society</strong> — powered by 
+                    technology and compassion.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SOCIAL WORK PILLARS ===== -->
+<div class="container pb-4">
+    <h4 class="section-header"><i class="bi bi-heart-fill"></i> Our Social Focus Areas</h4>
+    <div class="row g-4">
+        <!-- Education -->
+        <div class="col-md-4">
+            <div class="pillar-card">
+                <div class="pillar-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                <h5>Education for All</h5>
+                <p class="text-secondary mb-0">
+                    We believe education is the foundation of a strong society. We support <strong>digital literacy</strong>, 
+                    <strong>skill development</strong>, and <strong>access to quality learning</strong> for underserved 
+                    communities.
+                </p>
+                <div class="mt-3 small text-muted">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i> 1,200+ students reached
+                </div>
+            </div>
+        </div>
+        <!-- Healthcare -->
+        <div class="col-md-4">
+            <div class="pillar-card">
+                <div class="pillar-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+                <h5>Health &amp; Wellness</h5>
+                <p class="text-secondary mb-0">
+                    Promoting <strong>health awareness</strong>, nutrition, and access to basic healthcare. 
+                    We organize health camps, mental well-being sessions, and support rural health initiatives.
+                </p>
+                <div class="mt-3 small text-muted">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i> 45+ health camps organized
+                </div>
+            </div>
+        </div>
+        <!-- Community -->
+        <div class="col-md-4">
+            <div class="pillar-card">
+                <div class="pillar-icon"><i class="bi bi-people-fill"></i></div>
+                <h5>Community Empowerment</h5>
+                <p class="text-secondary mb-0">
+                    Building <strong>self-reliant communities</strong> through livelihood programs, women's 
+                    empowerment, environmental sustainability, and grassroots leadership.
+                </p>
+                <div class="mt-3 small text-muted">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i> 30+ community projects
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== STATS + CORE VALUES ===== -->
+<div class="container py-4">
+    <div class="row g-4 align-items-stretch">
+        <!-- Stats -->
+        <div class="col-md-5">
+            <div class="bg-white p-4 p-md-5 rounded-4 shadow-soft h-100">
+                <h5 class="section-header"><i class="bi bi-graph-up-arrow"></i> Impact at a Glance</h5>
+                <div class="row g-3 text-center">
+                    <div class="col-6">
+                        <div class="stat-number">2.5K+</div>
+                        <div class="stat-label">Lives Touched</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-number">50+</div>
+                        <div class="stat-label">Villages Reached</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-number">120+</div>
+                        <div class="stat-label">Volunteers</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">Partner NGOs</div>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <p class="text-secondary small mb-0">
+                    <i class="bi bi-flag-fill text-primary me-1"></i> 
+                    <strong>Committed to SDG 4 (Quality Education) &amp; SDG 3 (Good Health)</strong>
+                </p>
+            </div>
+        </div>
+        <!-- Core Values -->
+        <div class="col-md-7">
+            <div class="bg-white p-4 p-md-5 rounded-4 shadow-soft h-100">
+                <h5 class="section-header"><i class="bi bi-diamond-fill"></i> Our Core Values</h5>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="text-primary fs-4"><i class="bi bi-check-circle-fill"></i></span>
+                            <div><strong>Integrity</strong><br><small class="text-secondary">Transparency in all our actions</small></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="text-primary fs-4"><i class="bi bi-check-circle-fill"></i></span>
+                            <div><strong>Inclusivity</strong><br><small class="text-secondary">No one is left behind</small></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="text-primary fs-4"><i class="bi bi-check-circle-fill"></i></span>
+                            <div><strong>Innovation</strong><br><small class="text-secondary">Creative solutions for real problems</small></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="text-primary fs-4"><i class="bi bi-check-circle-fill"></i></span>
+                            <div><strong>Community First</strong><br><small class="text-secondary">People are our priority</small></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 p-3 bg-light rounded-4">
+                    <i class="bi bi-quote text-muted me-2"></i>
+                    <span class="fw-semibold">"Empowering India, one step at a time."</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TEAM / LEADERSHIP ===== -->
+<div class="container pb-5">
+    <h4 class="section-header"><i class="bi bi-people-fill"></i> Meet Our Team</h4>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="bg-white p-4 rounded-4 shadow-soft text-center">
+                <div class="rounded-circle bg-light mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:90px;height:90px;font-size:2.8rem;color:#6f42c1;">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <h5 class="fw-bold">Founder &amp; Director</h5>
+                <p class="text-secondary small">Visionary leader with 15+ years in social development and education.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="bg-white p-4 rounded-4 shadow-soft text-center">
+                <div class="rounded-circle bg-light mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:90px;height:90px;font-size:2.8rem;color:#6f42c1;">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <h5 class="fw-bold">Program Head</h5>
+                <p class="text-secondary small">Expert in community mobilization and rural education programs.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="bg-white p-4 rounded-4 shadow-soft text-center">
+                <div class="rounded-circle bg-light mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:90px;height:90px;font-size:2.8rem;color:#6f42c1;">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <h5 class="fw-bold">Health &amp; Wellness Lead</h5>
+                <p class="text-secondary small">Passionate about public health and mental well-being initiatives.</p>
+            </div>
+        </div>
+    </div>
+    <p class="text-center text-muted small mt-4">
+        <i class="bi bi-people me-1"></i> And a dedicated team of 120+ volunteers across India.
+    </p>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div id="footer"></div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="js/login.js"></script>
+<script src="js/include.js"></script>
+<script src="js/sg.js"></script>
+
+<script>
+    // Simple auth state for navbar (reuse your existing logic)
+    firebase.auth().onAuthStateChanged(function(user){
+        const signInBtn = document.getElementById("signInBtn");
+        const signUpBtn = document.getElementById("signUpBtn");
+        const userArea = document.getElementById("userArea");
+        const adminBtn = document.getElementById("adminBtn");
+
+        if(!user){
+            if(signInBtn) signInBtn.style.display = "inline-block";
+            if(signUpBtn) signUpBtn.style.display = "inline-block";
+            if(userArea) userArea.style.display = "none";
+            if(adminBtn) adminBtn.remove();
+            return;
+        }
+
+        const name = localStorage.getItem("name") || "User";
+        const type = localStorage.getItem("type");
+
+        if(signInBtn) signInBtn.style.display = "none";
+        if(signUpBtn) signUpBtn.style.display = "none";
+        if(userArea) userArea.style.display = "block";
+
+        const initials = name.trim().split(" ").map(n => n.charAt(0).toUpperCase()).join("");
+        document.getElementById("userName").textContent = initials;
+
+        if(type === "admin"){
+            if(!adminBtn){
+                const btn = document.createElement("a");
+                btn.id = "adminBtn";
+                btn.href = "ad-index.html";
+                btn.className = "btn btn-danger btn-sm me-2";
+                btn.innerHTML = '<i class="bi bi-shield-lock"></i> Admin';
+                document.getElementById("authArea").insertBefore(btn, userArea);
+            }
+        } else {
+            if(adminBtn) adminBtn.remove();
+        }
+    });
+
+    // Set current year in footer if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        const yearSpan = document.querySelector('.footer-year');
+        if(yearSpan) yearSpan.textContent = new Date().getFullYear();
+    });
+</script>
+
+</body>
+</html>
