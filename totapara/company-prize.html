@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Prize</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .prize-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s;
+        }
+        .prize-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .prize-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eef2f6;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+        }
+        .prize-card .card-body {
+            padding: 1.5rem;
+        }
+        .stat-box {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+        .stat-box:hover {
+            background: #e7f1ff;
+            border-color: #0d6efd;
+        }
+        .stat-box .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .stat-box .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        .stat-box .stat-icon {
+            font-size: 18px;
+            margin-right: 5px;
+        }
+        .stat-box.total .stat-number { color: #0d6efd; }
+        .stat-box.amount .stat-number { color: #ffc107; }
+        .stat-box.kg .stat-number { color: #6f42c1; }
+        .prize-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        .prize-item:hover {
+            background: #f8f9fa;
+        }
+        .prize-item:last-child {
+            border-bottom: none;
+        }
+        .prize-amount {
+            font-weight: 600;
+            font-size: 16px;
+            color: #ffc107;
+        }
+        .prize-amount.perkg {
+            color: #6f42c1;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        .no-data i {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+
+    <div class="main-wrapper">
+
+
+        <!-- PAGE CONTENT -->
+
+        <main class="container-fluid p-4">
+
+
+            <!-- HEADER -->
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+                    <h3 class="mb-1">
+                        <i class="bi bi-trophy text-warning me-2"></i>Company Prize
+                    </h3>
+                    <p class="text-muted mb-0">
+                        View all company prize records
+                    </p>
+                </div>
+
+                <div>
+                    <button class="btn btn-outline-success" id="exportCsvBtn">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Export CSV
+                    </button>
+                </div>
+
+            </div>
+
+
+            <!-- FILTER SECTION -->
+
+            <div class="card prize-card mb-4">
+                <div class="card-header bg-white">
+                    <i class="bi bi-funnel me-2 text-secondary"></i>Filter Records
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-folder me-1"></i>Project
+                            </label>
+                            <select id="prizeProjectFilter" class="form-select">
+                                <option value="">All Projects</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar3 me-1"></i>From Date
+                            </label>
+                            <input type="date" id="prizeFromDate" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar3 me-1"></i>To Date
+                            </label>
+                            <input type="date" id="prizeToDate" class="form-control">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" id="applyFilterBtn">
+                                <i class="bi bi-search me-1"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- SUMMARY SECTION -->
+
+            <div class="row g-3 mb-4" id="summarySection" style="display:none;">
+
+                <div class="col-md-4 col-6">
+                    <div class="stat-box total">
+                        <div class="stat-number" id="totalRecords">0</div>
+                        <div class="stat-label"><i class="bi bi-file-text stat-icon"></i>Total Records</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-6">
+                    <div class="stat-box amount">
+                        <div class="stat-number" id="totalAmount">0</div>
+                        <div class="stat-label"><i class="bi bi-currency-rupee stat-icon"></i>Total Prize Amount</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-6">
+                    <div class="stat-box kg">
+                        <div class="stat-number" id="totalKg">0</div>
+                        <div class="stat-label"><i class="bi bi-box stat-icon"></i>Total Collected Kg</div>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- PRIZE LIST -->
+
+            <div class="card prize-card">
+
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-list-ul me-2"></i>Prize Records</span>
+                    <span class="badge bg-primary" id="prizeCount">0</span>
+                </div>
+
+                <div class="card-body p-0" id="prizeContainer">
+
+                    <div class="no-data">
+                        <i class="bi bi-inbox"></i>
+                        <h5>No Prize Records</h5>
+                        <p>No company prize records found.</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </main>
+
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- Include -->
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+
+    <script>
+        // =====================================================
+        // COMPANY PRIZE
+        // =====================================================
+
+
+        // =====================================================
+        // STORE
+        // =====================================================
+
+        const PROJECT_STORE = STORES.PROJECTS;
+        const COMPANY_PRIZE_STORE = "companyPrize";
+
+
+        // =====================================================
+        // GET ALL PROJECTS
+        // =====================================================
+
+        async function getProjects() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(PROJECT_STORE, "readonly");
+                const store = transaction.objectStore(PROJECT_STORE);
+                const request = store.getAll();
+                request.onsuccess = function() { resolve(request.result); };
+                request.onerror = function() { reject(request.error); };
+                transaction.oncomplete = function() { db.close(); };
+            });
+        }
+
+
+        // =====================================================
+        // GET ALL COMPANY PRIZE RECORDS
+        // =====================================================
+
+        async function getAllCompanyPrize() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                if (!db.objectStoreNames.contains(COMPANY_PRIZE_STORE)) {
+                    db.close();
+                    resolve([]);
+                    return;
+                }
+                const transaction = db.transaction(COMPANY_PRIZE_STORE, "readonly");
+                const store = transaction.objectStore(COMPANY_PRIZE_STORE);
+                const request = store.getAll();
+                request.onsuccess = function() { resolve(request.result); };
+                request.onerror = function() { reject(request.error); };
+                transaction.oncomplete = function() { db.close(); };
+            });
+        }
+
+
+        // =====================================================
+        // LOAD PROJECTS INTO SELECT
+        // =====================================================
+
+        async function loadProjects() {
+            try {
+                const projects = await getProjects();
+                const select = document.getElementById('prizeProjectFilter');
+                const currentValue = select.value;
+
+                select.innerHTML = '<option value="">All Projects</option>';
+
+                if (projects.length === 0) {
+                    select.innerHTML += '<option value="" disabled>No projects available</option>';
+                } else {
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.id;
+                        option.textContent = project.name;
+                        select.appendChild(option);
+                    });
+                }
+
+                if (currentValue && projects.some(p => p.id == currentValue)) {
+                    select.value = currentValue;
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+
+        // =====================================================
+        // SET DEFAULT DATES
+        // =====================================================
+
+        function setDefaultDates() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('prizeFromDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('prizeToDate').value = today.toISOString().split('T')[0];
+        }
+
+
+        // =====================================================
+        // RENDER PRIZE RECORDS
+        // =====================================================
+
+        async function renderPrizeRecords() {
+            const container = document.getElementById('prizeContainer');
+            const countBadge = document.getElementById('prizeCount');
+            const summarySection = document.getElementById('summarySection');
+
+            const projectFilter = document.getElementById('prizeProjectFilter').value;
+            const fromDate = document.getElementById('prizeFromDate').value;
+            const toDate = document.getElementById('prizeToDate').value;
+
+            try {
+                let records = await getAllCompanyPrize();
+
+                // Apply filters
+                if (projectFilter) {
+                    records = records.filter(r => r.projectId == projectFilter);
+                }
+
+                if (fromDate) {
+                    records = records.filter(r => r.date >= fromDate);
+                }
+
+                if (toDate) {
+                    records = records.filter(r => r.date <= toDate);
+                }
+
+                // Sort by date (newest first)
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                countBadge.textContent = records.length;
+
+                // Update summary
+                if (records.length > 0) {
+                    summarySection.style.display = 'flex';
+                    
+                    const totalRecords = records.length;
+                    const totalAmount = records.reduce((sum, r) => sum + r.totalAmount, 0);
+                    const totalKg = records.reduce((sum, r) => sum + r.totalKg, 0);
+
+                    document.getElementById('totalRecords').textContent = totalRecords;
+                    document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+                    document.getElementById('totalKg').textContent = totalKg.toFixed(3);
+                } else {
+                    summarySection.style.display = 'none';
+                }
+
+                if (records.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-data">
+                            <i class="bi bi-inbox"></i>
+                            <h5>No Prize Records</h5>
+                            <p>${projectFilter ? 'No records found for the selected project.' : 'No company prize records found.'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const projects = await getProjects();
+                const projectMap = {};
+                projects.forEach(p => { projectMap[p.id] = p.name; });
+
+                let html = '<div class="list-group list-group-flush">';
+
+                records.forEach(record => {
+                    html += `
+                        <div class="list-group-item prize-item">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <strong>${escapeHTML(projectMap[record.projectId] || 'Unknown Project')}</strong>
+                                        <span class="badge bg-secondary"><i class="bi bi-calendar3 me-1"></i>${record.date}</span>
+                                    </div>
+                                    <div class="text-muted small mt-1">
+                                        <span class="me-3">
+                                            <i class="bi bi-tag me-1"></i>Setting: ₹${record.perKgSetting.toFixed(2)}/kg
+                                        </span>
+                                        <span class="me-3">
+                                            <i class="bi bi-calculator me-1"></i>Costing: ₹${record.perKgCosting.toFixed(2)}/kg
+                                        </span>
+                                        <span>
+                                            <i class="bi bi-box me-1"></i>${record.totalKg.toFixed(3)} kg
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="prize-amount">₹${record.totalAmount.toFixed(2)}</div>
+                                    <div class="small text-muted">₹${record.totalPerKg.toFixed(2)} / kg</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error rendering prize records:', error);
+                container.innerHTML = `
+                    <div class="text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle display-4 d-block mb-3"></i>
+                        <h5>Error Loading</h5>
+                        <p>${escapeHTML(error.message || 'Please try again.')}</p>
+                    </div>
+                `;
+                summarySection.style.display = 'none';
+            }
+        }
+
+
+        // =====================================================
+        // EXPORT CSV
+        // =====================================================
+
+        function exportCSV() {
+            const records = document.querySelectorAll('.prize-item');
+            if (records.length === 0) {
+                alert('No records to export.');
+                return;
+            }
+
+            let csv = 'Date,Project,Per Kg Setting,Per Kg Costing,Total Per Kg,Total Kg,Total Amount\n';
+
+            records.forEach(record => {
+                const project = record.querySelector('strong')?.textContent || '';
+                const date = record.querySelector('.badge-secondary')?.textContent?.trim() || '';
+                const details = record.querySelector('.text-muted')?.textContent || '';
+                
+                // Extract values from details
+                const settingMatch = details.match(/Setting: ₹([\d.]+)\/kg/);
+                const costingMatch = details.match(/Costing: ₹([\d.]+)\/kg/);
+                const kgMatch = details.match(/([\d.]+) kg/);
+                const amountMatch = record.querySelector('.prize-amount')?.textContent?.replace('₹', '') || '0';
+                const perKgMatch = record.querySelector('.small.text-muted')?.textContent?.replace('₹', '').replace(' / kg', '') || '0';
+
+                const setting = settingMatch ? settingMatch[1] : '0';
+                const costing = costingMatch ? costingMatch[1] : '0';
+                const kg = kgMatch ? kgMatch[1] : '0';
+
+                csv += `${date},${project},${setting},${costing},${perKgMatch},${kg},${amountMatch}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `company_prize_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
+
+        function escapeHTML(value) {
+            const div = document.createElement("div");
+            div.textContent = value ?? "";
+            return div.innerHTML;
+        }
+
+
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
+
+        document.addEventListener("DOMContentLoaded", async function() {
+
+            try {
+
+                await loadSettings();
+                await openDB();
+
+                await loadProjects();
+                setDefaultDates();
+                await renderPrizeRecords();
+
+                document.getElementById('applyFilterBtn').addEventListener('click', renderPrizeRecords);
+                document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+
+                // Auto-filter on project change
+                document.getElementById('prizeProjectFilter').addEventListener('change', renderPrizeRecords);
+
+                // Auto-filter on date change
+                document.getElementById('prizeFromDate').addEventListener('change', renderPrizeRecords);
+                document.getElementById('prizeToDate').addEventListener('change', renderPrizeRecords);
+
+            } catch (error) {
+                console.error("Company Prize initialization error:", error);
+            }
+
+        });
+    </script>
+
+</body>
+
+</html>

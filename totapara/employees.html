@@ -1,0 +1,2554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Employees</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link
+        rel="stylesheet"
+        href="css/style.css">
+
+    <!-- JsBarcode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js">
+    </script>
+
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+    </script>
+
+    <style>
+        /* Filter sidebar styles */
+        .filter-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1050;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .filter-sidebar.open {
+            right: 0;
+        }
+        .filter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1049;
+            display: none;
+        }
+        .filter-overlay.active {
+            display: block;
+        }
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        .filter-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+        }
+        .filter-section label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .filter-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+        }
+        /* PDF styles - FIXED: will be shown temporarily */
+        .pdf-content {
+            display: none;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+        }
+        .pdf-content .pdf-employee {
+            display: inline-block;
+            width: 200px;
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin: 8px;
+            text-align: center;
+            border-radius: 8px;
+            page-break-inside: avoid;
+            background: white;
+        }
+        .pdf-content .pdf-employee .pdf-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .pdf-content .pdf-employee .pdf-mobile {
+            font-size: 12px;
+            color: #666;
+            margin: 3px 0;
+        }
+        .pdf-content .pdf-employee .pdf-barcode {
+            margin: 5px auto;
+        }
+        .pdf-content .pdf-employee .pdf-id {
+            font-size: 11px;
+            color: #999;
+        }
+        .pdf-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .info-box {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .info-box .info-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .info-box .info-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .badge-phase-wise {
+            background-color: #198754;
+            color: white;
+        }
+        /* Loading overlay for PDF */
+        .pdf-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+        .pdf-loading.active {
+            display: flex;
+        }
+        .pdf-loading .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* PDF preview container - will be shown temporarily */
+        .pdf-preview-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9998;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            overflow: auto;
+            padding: 40px;
+        }
+        .pdf-preview-container.active {
+            display: block;
+        }
+        .pdf-preview-inner {
+            max-width: 794px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .designation-progress-badge {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        .designation-progress-badge.yes {
+            background: #d4edda;
+            color: #155724;
+        }
+        .designation-progress-badge.no {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .designation-type-badge {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: #e7f1ff;
+            color: #0d6efd;
+            margin-left: 8px;
+        }
+        .employee-designation-info {
+            font-size: 13px;
+            color: #6c757d;
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- PDF Loading Overlay -->
+<div class="pdf-loading" id="pdfLoading">
+    <div class="spinner"></div>
+    <h5 class="mt-3">Generating PDF...</h5>
+    <p class="text-light">Please wait</p>
+</div>
+
+
+<!-- Filter Overlay -->
+<div class="filter-overlay" id="filterOverlay"></div>
+
+<!-- Filter Sidebar -->
+<div class="filter-sidebar" id="filterSidebar">
+    <div class="filter-header">
+        <h5><i class="bi bi-funnel me-2"></i>Filter Employees</h5>
+        <button class="filter-close" id="closeFilterBtn">&times;</button>
+    </div>
+
+    <div class="filter-section">
+        <label><i class="bi bi-search me-1"></i>Search by Name or ID</label>
+        <input type="text" id="searchInput" class="form-control" placeholder="Search employees...">
+    </div>
+
+    <div class="filter-section">
+        <label><i class="bi bi-tag me-1"></i>Designation</label>
+        <select id="filterDesignation" class="form-select">
+            <option value="">All Designations</option>
+        </select>
+    </div>
+
+    <div class="filter-section">
+        <label><i class="bi bi-person me-1"></i>Sex</label>
+        <select id="filterSex" class="form-select">
+            <option value="">All</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+    </div>
+
+    <div class="filter-section">
+        <label><i class="bi bi-clock me-1"></i>Salary Type</label>
+        <select id="filterType" class="form-select">
+            <option value="">All Types</option>
+            <option value="Daily">Daily</option>
+            <option value="Monthly">Monthly</option>
+            <option value="Phase Wise">Phase Wise</option>
+        </select>
+    </div>
+
+    <div class="filter-actions">
+        <button class="btn btn-primary flex-grow-1" id="applyFilterBtn">
+            <i class="bi bi-check2 me-1"></i>Apply Filter
+        </button>
+        <button class="btn btn-outline-secondary" id="clearFilterBtn">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Clear
+        </button>
+    </div>
+</div>
+
+
+<div class="main-wrapper">
+
+
+    <!-- PAGE CONTENT -->
+
+    <main class="container-fluid p-4">
+
+
+        <!-- HEADER -->
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    mb-4">
+
+            <div>
+
+                <h3 class="mb-1">
+                    <i class="bi bi-people text-primary me-2"></i>Employees
+                    <span class="badge bg-primary ms-2" id="employeeCount">0</span>
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Manage employees
+                </p>
+
+            </div>
+
+            <div class="d-flex gap-2">
+                <button
+                    class="btn btn-outline-success"
+                    id="downloadPdfBtn">
+                    <i class="bi bi-file-pdf me-1"></i> PDF
+                </button>
+
+                <button
+                    class="btn btn-outline-primary"
+                    id="filterBtn">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#employeeModal">
+
+                    <i class="bi bi-plus-lg me-1"></i> Add Employee
+
+                </button>
+            </div>
+
+        </div>
+
+
+        <!-- STATISTICS BOXES -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="info-box text-center">
+                    <div class="info-number" id="totalCount">0</div>
+                    <div class="info-label"><i class="bi bi-people me-1"></i>Total</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="info-box text-center">
+                    <div class="info-number" id="dailyCount">0</div>
+                    <div class="info-label"><i class="bi bi-clock-history me-1"></i>Daily</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="info-box text-center">
+                    <div class="info-number" id="monthlyCount">0</div>
+                    <div class="info-label"><i class="bi bi-calendar-month me-1"></i>Monthly</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="info-box text-center">
+                    <div class="info-number" id="phaseWiseCount">0</div>
+                    <div class="info-label"><i class="bi bi-layers me-1"></i>Phase Wise</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- EMPLOYEE TABLE -->
+
+        <div class="card shadow-sm">
+
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table class="table
+                                  table-hover
+                                  align-middle
+                                  mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>#</th>
+
+                                <th>ID</th>
+
+                                <th>Name</th>
+
+                                <th>Mobile</th>
+
+                                <th>Sex</th>
+
+                                <th>Designation</th>
+
+                                <th>Type</th>
+
+                                <th>Salary</th>
+
+                                <th>Working Projects</th>
+
+                                <th>Barcode</th>
+
+                                <th>Action</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="employeesTableBody">
+
+                            <!-- Employees -->
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </main>
+
+
+
+    <!-- ADD/EDIT EMPLOYEE MODAL -->
+
+    <div
+        class="modal fade"
+        id="employeeModal"
+        tabindex="-1">
+
+
+        <div
+            class="modal-dialog modal-lg modal-dialog-centered">
+
+
+            <div class="modal-content">
+
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title" id="employeeModalTitle">
+                        <i class="bi bi-person-plus me-2"></i>Add Employee
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+
+
+                <div class="modal-body">
+
+
+                    <div class="row g-3">
+
+
+                        <!-- EMPLOYEE ID (auto-generated, readonly) -->
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Employee ID
+                            </label>
+
+                            <input
+                                type="text"
+                                id="employeeId"
+                                class="form-control bg-light"
+                                readonly
+                                placeholder="Auto-generated">
+
+                        </div>
+
+
+                        <!-- NAME -->
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="employeeName"
+                                class="form-control"
+                                placeholder="Employee name">
+
+                        </div>
+
+
+
+                        <!-- MOBILE -->
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Mobile
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="employeeMobile"
+                                class="form-control"
+                                placeholder="Mobile number">
+
+                        </div>
+
+
+
+                        <!-- SEX -->
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                Sex
+                            </label>
+
+                            <select
+                                id="employeeSex"
+                                class="form-select">
+
+                                <option value="">
+                                    Select
+                                </option>
+
+                                <option value="Male">
+                                    Male
+                                </option>
+
+                                <option value="Female">
+                                    Female
+                                </option>
+
+                                <option value="Other">
+                                    Other
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- DESIGNATION (as select) -->
+
+                        <div class="col-md-8">
+
+                            <label class="form-label">
+                                Designation
+                            </label>
+
+                            <select
+                                id="employeeDesignation"
+                                class="form-select">
+                                <option value="">Select Designation</option>
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- TYPE (with Phase Wise) -->
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Salary Type
+                            </label>
+
+                            <select
+                                id="employeeType"
+                                class="form-select">
+
+                                <option value="">
+                                    Select Type
+                                </option>
+
+                                <option value="Daily">
+                                    Daily
+                                </option>
+
+                                <option value="Monthly">
+                                    Monthly
+                                </option>
+
+                                <option value="Phase Wise">
+                                    Phase Wise
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- SALARY -->
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Salary Amount
+                            </label>
+
+                            <input
+                                type="number"
+                                id="employeeSalary"
+                                class="form-control"
+                                min="0"
+                                step="0.01"
+                                placeholder="Salary amount">
+
+                        </div>
+
+
+
+                        <!-- PROJECTS -->
+
+                        <div class="col-12">
+
+                            <label class="form-label fw-semibold">
+
+                                Working Projects
+
+                            </label>
+
+
+                            <div
+                                id="employeeProjects"
+                                class="border rounded p-3">
+
+                                <div class="text-muted">
+                                    Loading projects...
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- ERROR -->
+
+                        <div
+                            id="employeeError"
+                            class="text-danger small">
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="saveEmployeeBtn">
+
+                        <i class="bi bi-save me-1"></i> Save Employee
+
+                    </button>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- PDF Content (hidden, only employee boxes) -->
+<div class="pdf-content" id="pdfContent">
+    <div class="pdf-grid" id="pdfEmployeesGrid">
+        <!-- Employees will be inserted here -->
+    </div>
+</div>
+
+
+<!-- PDF Preview Container (visible during generation) -->
+<div class="pdf-preview-container" id="pdfPreviewContainer">
+    <div class="pdf-preview-inner" id="pdfPreviewInner">
+        <!-- PDF content will be cloned here -->
+    </div>
+</div>
+
+
+<!-- Bootstrap JS -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+<!-- Include -->
+
+<script src="js/include.js"></script>
+<script src="js/db.js"></script>
+
+<script>
+// =====================================================
+// EMPLOYEE MANAGEMENT
+// Uses central db.js
+// =====================================================
+
+
+// =====================================================
+// STORE
+// =====================================================
+
+const EMPLOYEE_STORE = STORES.EMPLOYEES;
+const PROJECT_STORE = STORES.PROJECTS;
+const DESIGNATION_STORE = STORES.DESIGNATIONS;
+
+// Store edit ID
+let editEmployeeId = null;
+let allEmployees = [];
+let filteredEmployees = [];
+
+// Filter state
+let filterState = {
+    search: '',
+    designation: '',
+    sex: '',
+    type: ''
+};
+
+// Store all designations for lookup
+let allDesignations = [];
+
+
+// =====================================================
+// GENERATE EMPLOYEE ID (5 alphanumeric characters)
+// =====================================================
+
+function generateEmployeeId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+
+// =====================================================
+// GET ALL PROJECTS
+// =====================================================
+
+async function getProjects() {
+
+    const db = await openDB();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(
+                PROJECT_STORE,
+                "readonly"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                PROJECT_STORE
+            );
+
+
+        const request =
+            store.getAll();
+
+
+        request.onsuccess = function () {
+
+            resolve(request.result);
+
+        };
+
+
+        request.onerror = function () {
+
+            reject(request.error);
+
+        };
+
+
+        transaction.oncomplete = function () {
+
+            db.close();
+
+        };
+
+    });
+
+}
+
+
+// =====================================================
+// GET ALL DESIGNATIONS
+// =====================================================
+
+async function getDesignations() {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(DESIGNATION_STORE, "readonly");
+            const store = transaction.objectStore(DESIGNATION_STORE);
+            const request = store.getAll();
+            request.onsuccess = function () {
+                resolve(request.result);
+            };
+            request.onerror = function () {
+                reject(request.error);
+            };
+            transaction.oncomplete = function () {
+                db.close();
+            };
+        });
+    } catch (error) {
+        console.error("Error getting designations:", error);
+        return [];
+    }
+}
+
+
+// =====================================================
+// LOAD DESIGNATIONS INTO SELECTS
+// =====================================================
+
+async function loadDesignations() {
+    try {
+        allDesignations = await getDesignations();
+        const selectElements = [
+            document.getElementById('employeeDesignation'),
+            document.getElementById('filterDesignation')
+        ];
+
+        selectElements.forEach(select => {
+            if (!select) return;
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Select Designation</option>';
+            allDesignations.forEach(designation => {
+                const option = document.createElement('option');
+                option.value = designation.name;
+                option.textContent = designation.name;
+                select.appendChild(option);
+            });
+            if (currentValue && allDesignations.some(d => d.name === currentValue)) {
+                select.value = currentValue;
+            }
+        });
+    } catch (error) {
+        console.error("Error loading designations:", error);
+    }
+}
+
+
+// =====================================================
+// LOAD PROJECT CHECKBOXES
+// =====================================================
+
+async function loadProjectCheckboxes(selectedProjectIds = []) {
+
+    const container =
+        document.getElementById(
+            "employeeProjects"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    try {
+
+        const projects =
+            await getProjects();
+
+
+        // No projects
+
+        if (!projects.length) {
+
+            container.innerHTML = `
+
+                <div class="text-muted">
+
+                    <i class="bi bi-folder me-1"></i> No projects available.
+
+                    <br>
+
+                    <small>
+                        Please create a project first.
+                    </small>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // Display projects
+
+        container.innerHTML =
+            projects.map(project => `
+
+                <div
+                    class="form-check mb-2">
+
+
+                    <input
+                        class="form-check-input
+                               project-checkbox"
+                        type="checkbox"
+                        value="${project.id}"
+                        id="project_${project.id}"
+                        ${selectedProjectIds.includes(project.id) ? 'checked' : ''}>
+
+
+                    <label
+                        class="form-check-label"
+                        for="project_${project.id}">
+
+                        ${escapeHTML(
+                            project.name
+                        )}
+
+                    </label>
+
+
+                </div>
+
+            `).join("");
+
+
+    } catch (error) {
+
+        console.error(
+            "Project loading error:",
+            error
+        );
+
+
+        container.innerHTML = `
+
+            <div class="text-danger">
+
+                <i class="bi bi-exclamation-triangle me-1"></i> Unable to load projects.
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// =====================================================
+// ADD EMPLOYEE
+// =====================================================
+
+async function addEmployee(employee) {
+
+    const db = await openDB();
+
+
+    return new Promise((resolve, reject) => {
+
+
+        const transaction =
+            db.transaction(
+                EMPLOYEE_STORE,
+                "readwrite"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                EMPLOYEE_STORE
+            );
+
+
+        const request =
+            store.add(employee);
+
+
+        request.onsuccess = function () {
+
+            resolve(
+                request.result
+            );
+
+        };
+
+
+        request.onerror = function () {
+
+            reject(
+                request.error
+            );
+
+        };
+
+
+        transaction.oncomplete = function () {
+
+            db.close();
+
+        };
+
+    });
+
+}
+
+
+// =====================================================
+// UPDATE EMPLOYEE
+// =====================================================
+
+async function updateEmployee(employee) {
+
+    const db = await openDB();
+
+
+    return new Promise((resolve, reject) => {
+
+
+        const transaction =
+            db.transaction(
+                EMPLOYEE_STORE,
+                "readwrite"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                EMPLOYEE_STORE
+            );
+
+
+        const request =
+            store.put(employee);
+
+
+        request.onsuccess = function () {
+
+            resolve(
+                request.result
+            );
+
+        };
+
+
+        request.onerror = function () {
+
+            reject(
+                request.error
+            );
+
+        };
+
+
+        transaction.oncomplete = function () {
+
+            db.close();
+
+        };
+
+    });
+
+}
+
+
+// =====================================================
+// GET ALL EMPLOYEES
+// =====================================================
+
+async function getAllEmployees() {
+
+    const db = await openDB();
+
+
+    return new Promise((resolve, reject) => {
+
+
+        const transaction =
+            db.transaction(
+                EMPLOYEE_STORE,
+                "readonly"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                EMPLOYEE_STORE
+            );
+
+
+        const request =
+            store.getAll();
+
+
+        request.onsuccess = function () {
+
+            resolve(
+                request.result
+            );
+
+        };
+
+
+        request.onerror = function () {
+
+            reject(
+                request.error
+            );
+
+        };
+
+
+        transaction.oncomplete = function () {
+
+            db.close();
+
+        };
+
+    });
+
+}
+
+
+// =====================================================
+// GET EMPLOYEE BY ID
+// =====================================================
+
+async function getEmployeeById(id) {
+
+    const db = await openDB();
+
+
+    return new Promise((resolve, reject) => {
+
+
+        const transaction =
+            db.transaction(
+                EMPLOYEE_STORE,
+                "readonly"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                EMPLOYEE_STORE
+            );
+
+
+        const request =
+            store.get(id);
+
+
+        request.onsuccess = function () {
+
+            resolve(
+                request.result
+            );
+
+        };
+
+
+        request.onerror = function () {
+
+            reject(
+                request.error
+            );
+
+        };
+
+
+        transaction.oncomplete = function () {
+
+            db.close();
+
+        };
+
+    });
+
+}
+
+
+// =====================================================
+// DELETE EMPLOYEE
+// =====================================================
+
+async function deleteEmployee(id) {
+
+    const db = await openDB();
+
+
+    return new Promise((resolve, reject) => {
+
+
+        const transaction =
+            db.transaction(
+                EMPLOYEE_STORE,
+                "readwrite"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                EMPLOYEE_STORE
+            );
+
+
+        store.delete(id);
+
+
+        transaction.oncomplete = function () {
+
+            db.close();
+
+            resolve();
+
+        };
+
+
+        transaction.onerror = function () {
+
+            reject(
+                transaction.error
+            );
+
+        };
+
+    });
+
+}
+
+
+// =====================================================
+// UPDATE STATISTICS
+// =====================================================
+
+function updateStatistics(employees) {
+    const total = employees.length;
+    const daily = employees.filter(e => e.type === 'Daily').length;
+    const monthly = employees.filter(e => e.type === 'Monthly').length;
+    const phaseWise = employees.filter(e => e.type === 'Phase Wise').length;
+
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('dailyCount').textContent = daily;
+    document.getElementById('monthlyCount').textContent = monthly;
+    document.getElementById('phaseWiseCount').textContent = phaseWise;
+}
+
+
+// =====================================================
+// FILTER EMPLOYEES
+// =====================================================
+
+function filterEmployees(employees) {
+    return employees.filter(employee => {
+        // Search filter
+        const searchMatch = !filterState.search || 
+            employee.name.toLowerCase().includes(filterState.search.toLowerCase()) ||
+            (employee.employeeId && employee.employeeId.toLowerCase().includes(filterState.search.toLowerCase()));
+
+        // Designation filter
+        const designationMatch = !filterState.designation || 
+            employee.designation === filterState.designation;
+
+        // Sex filter
+        const sexMatch = !filterState.sex || 
+            employee.sex === filterState.sex;
+
+        // Type filter
+        const typeMatch = !filterState.type || 
+            employee.type === filterState.type;
+
+        return searchMatch && designationMatch && sexMatch && typeMatch;
+    });
+}
+
+
+// =====================================================
+// RENDER EMPLOYEES
+// =====================================================
+
+async function renderEmployees() {
+
+    const tbody =
+        document.getElementById(
+            "employeesTableBody"
+        );
+
+    const countBadge =
+        document.getElementById(
+            "employeeCount"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    try {
+
+        allEmployees =
+            await getAllEmployees();
+
+        filteredEmployees =
+            filterEmployees(allEmployees);
+
+
+        // Update count
+        countBadge.textContent = filteredEmployees.length;
+
+        // Update statistics
+        updateStatistics(filteredEmployees);
+
+
+        // No employees
+
+        if (!filteredEmployees.length) {
+
+            tbody.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="11"
+                        class="text-center
+                               text-muted
+                               py-5">
+
+                        ${allEmployees.length === 0 ? '<i class="bi bi-people me-2"></i>No employees found.' : '<i class="bi bi-funnel me-2"></i>No employees match your filters.'}
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        // Render employees
+
+        tbody.innerHTML =
+            filteredEmployees.map(
+                (employee, index) => `
+
+                <tr>
+
+
+                    <!-- NUMBER -->
+
+                    <td>
+
+                        ${index + 1}
+
+                    </td>
+
+
+                    <!-- ID -->
+
+                    <td>
+
+                        <strong>
+                            ${escapeHTML(
+                                employee.employeeId || 'N/A'
+                            )}
+                        </strong>
+
+                    </td>
+
+
+                    <!-- NAME -->
+
+                    <td>
+
+                        <strong>
+
+                            ${escapeHTML(
+                                employee.name
+                            )}
+
+                        </strong>
+
+                    </td>
+
+
+
+                    <!-- MOBILE -->
+
+                    <td>
+
+                        ${escapeHTML(
+                            employee.mobile
+                        )}
+
+                    </td>
+
+
+
+                    <!-- SEX -->
+
+                    <td>
+
+                        ${escapeHTML(
+                            employee.sex
+                        )}
+
+                    </td>
+
+
+
+                    <!-- DESIGNATION -->
+
+                    <td>
+
+                        ${escapeHTML(
+                            employee.designation
+                        )}
+
+                    </td>
+
+
+
+                    <!-- TYPE -->
+
+                    <td>
+
+                        <span
+                            class="badge
+                            ${
+                                employee.type ===
+                                "Daily"
+
+                                ? "text-bg-info"
+
+                                : employee.type === "Phase Wise"
+                                ? "text-bg-success"
+                                : "text-bg-primary"
+                            }">
+
+                            ${escapeHTML(
+                                employee.type
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+
+                    <!-- SALARY -->
+
+                    <td>
+
+                        ₹${Number(
+                            employee.salary || 0
+                        ).toLocaleString(
+                            "en-IN"
+                        )}
+
+                    </td>
+
+
+
+                    <!-- PROJECTS -->
+
+                    <td>
+
+                        ${
+                            employee.projects &&
+                            employee.projects.length
+
+                            ?
+
+                            employee.projects
+                                .map(
+                                    project => `
+
+                                    <span
+                                        class="badge
+                                               text-bg-light
+                                               border
+                                               me-1
+                                               mb-1">
+
+                                        ${escapeHTML(
+                                            project.name
+                                        )}
+
+                                    </span>
+
+                                    `
+                                )
+                                .join("")
+
+                            :
+
+                            `<span
+                                class="text-muted">
+
+                                None
+
+                             </span>`
+                        }
+
+                    </td>
+
+
+                    <!-- BARCODE -->
+
+                    <td>
+
+                        <svg id="barcode_${employee.id}"></svg>
+
+                    </td>
+
+
+
+                    <!-- ACTION -->
+
+                    <td>
+
+                        <button
+                            class="btn
+                                   btn-sm
+                                   btn-outline-primary
+                                   me-1"
+                            onclick="
+                                editEmployee(
+                                    ${employee.id}
+                                )
+                            "
+                            title="Edit Employee">
+
+                            <i class="bi bi-pencil"></i>
+
+                        </button>
+
+                        <button
+                            class="btn
+                                   btn-sm
+                                   btn-outline-danger"
+                            onclick="
+                                removeEmployee(
+                                    ${employee.id}
+                                )
+                            "
+                            title="Delete Employee">
+
+                            <i class="bi bi-trash"></i>
+
+                        </button>
+
+                    </td>
+
+
+                </tr>
+
+            `
+            ).join("");
+
+
+        // Generate barcodes for each employee
+        filteredEmployees.forEach(employee => {
+            const svg = document.getElementById(`barcode_${employee.id}`);
+            if (svg) {
+                try {
+                    JsBarcode(svg, employee.employeeId || 'N/A', {
+                        format: "CODE128",
+                        width: 1.2,
+                        height: 30,
+                        displayValue: true,
+                        fontSize: 12,
+                        margin: 5,
+                        background: "#ffffff",
+                        lineColor: "#000000"
+                    });
+                } catch (e) {
+                    console.error('Barcode error:', e);
+                }
+            }
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Render employees error:",
+            error
+        );
+
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="11"
+                    class="text-center
+                           text-danger
+                           py-5">
+
+                    <i class="bi bi-exclamation-triangle me-2"></i> Unable to load employees.
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }
+
+}
+
+
+// =====================================================
+// EDIT EMPLOYEE
+// =====================================================
+
+async function editEmployee(id) {
+
+    try {
+
+        const employee =
+            await getEmployeeById(id);
+
+
+        if (!employee) {
+
+            console.error(
+                "Employee not found:",
+                id
+            );
+
+            return;
+
+        }
+
+
+        // Set edit mode
+        editEmployeeId = id;
+
+
+        // Update modal title
+        document.getElementById(
+            "employeeModalTitle"
+        ).innerHTML = '<i class="bi bi-pencil-square me-2"></i>Edit Employee';
+
+
+        // Fill form
+        document.getElementById(
+            "employeeId"
+        ).value = employee.employeeId || generateEmployeeId();
+
+
+        document.getElementById(
+            "employeeName"
+        ).value = employee.name || '';
+
+
+        document.getElementById(
+            "employeeMobile"
+        ).value = employee.mobile || '';
+
+
+        document.getElementById(
+            "employeeSex"
+        ).value = employee.sex || '';
+
+
+        document.getElementById(
+            "employeeDesignation"
+        ).value = employee.designation || '';
+
+
+        document.getElementById(
+            "employeeType"
+        ).value = employee.type || '';
+
+
+        document.getElementById(
+            "employeeSalary"
+        ).value = employee.salary || '';
+
+
+        // Load projects with selected
+        const selectedProjectIds =
+            employee.projects ?
+            employee.projects.map(p => p.id) :
+            [];
+
+
+        await loadProjectCheckboxes(
+            selectedProjectIds
+        );
+
+
+        // Change save button text
+        document.getElementById(
+            "saveEmployeeBtn"
+        ).innerHTML = '<i class="bi bi-pencil me-1"></i> Update Employee';
+
+
+        // Open modal
+        const modalElement =
+            document.getElementById(
+                "employeeModal"
+            );
+
+
+        const modal =
+            new bootstrap.Modal(
+                modalElement
+            );
+
+
+        modal.show();
+
+
+    } catch (error) {
+
+        console.error(
+            "Edit employee error:",
+            error
+        );
+
+        document.getElementById(
+            "employeeError"
+        ).textContent = "Error loading employee data.";
+
+    }
+
+}
+
+
+// =====================================================
+// REMOVE EMPLOYEE
+// =====================================================
+
+async function removeEmployee(id) {
+
+    if (
+        !confirm(
+            "Delete this employee?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await deleteEmployee(id);
+
+        await renderEmployees();
+
+    } catch (error) {
+
+        console.error(
+            "Delete employee error:",
+            error
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// SAVE EMPLOYEE
+// =====================================================
+
+async function saveEmployee() {
+
+    const errorElement =
+        document.getElementById(
+            "employeeError"
+        );
+
+
+    errorElement.textContent = "";
+
+
+
+    // =================================================
+    // GET VALUES
+    // =================================================
+
+    let employeeId =
+        document.getElementById(
+            "employeeId"
+        ).value.trim();
+
+
+    const name =
+        document.getElementById(
+            "employeeName"
+        ).value.trim();
+
+
+    const mobile =
+        document.getElementById(
+            "employeeMobile"
+        ).value.trim();
+
+
+    const sex =
+        document.getElementById(
+            "employeeSex"
+        ).value;
+
+
+    const designation =
+        document.getElementById(
+            "employeeDesignation"
+        ).value;
+
+
+    const type =
+        document.getElementById(
+            "employeeType"
+        ).value;
+
+
+    const salary =
+        document.getElementById(
+            "employeeSalary"
+        ).value;
+
+
+
+    // =================================================
+    // VALIDATION
+    // =================================================
+
+    if (!name) {
+
+        errorElement.textContent =
+            "Please enter employee name.";
+
+        return;
+
+    }
+
+
+    if (!mobile) {
+
+        errorElement.textContent =
+            "Please enter mobile number.";
+
+        return;
+
+    }
+
+
+    if (!sex) {
+
+        errorElement.textContent =
+            "Please select sex.";
+
+        return;
+
+    }
+
+
+    if (!designation) {
+
+        errorElement.textContent =
+            "Please select designation.";
+
+        return;
+
+    }
+
+
+    if (!type) {
+
+        errorElement.textContent =
+            "Please select salary type.";
+
+        return;
+
+    }
+
+
+    if (
+        salary === "" ||
+        Number(salary) < 0
+    ) {
+
+        errorElement.textContent =
+            "Please enter salary amount.";
+
+        return;
+
+    }
+
+
+    // Generate ID if not present
+    if (!employeeId) {
+        employeeId = generateEmployeeId();
+    }
+
+
+    // =================================================
+    // SELECTED PROJECT IDs
+    // =================================================
+
+    const selectedIds =
+        Array.from(
+            document.querySelectorAll(
+                ".project-checkbox:checked"
+            )
+        )
+        .map(
+            checkbox =>
+                Number(checkbox.value)
+        );
+
+
+
+    // =================================================
+    // GET PROJECT DETAILS
+    // =================================================
+
+    let workingProjects = [];
+
+    try {
+        const projects =
+            await getProjects();
+
+
+        workingProjects =
+            projects
+                .filter(
+                    project =>
+                        selectedIds.includes(
+                            project.id
+                        )
+                )
+                .map(
+                    project => ({
+
+                        id:
+                            project.id,
+
+                        name:
+                            project.name
+
+                    })
+                );
+    } catch (error) {
+        console.error("Error getting projects:", error);
+    }
+
+
+
+    // =================================================
+    // EMPLOYEE OBJECT
+    // =================================================
+
+    const employee = {
+        employeeId: employeeId,
+        name: name,
+        mobile: mobile,
+        sex: sex,
+        designation: designation,
+        type: type,
+        salary: Number(salary),
+        projects: workingProjects,
+        createdAt: new Date().toISOString()
+    };
+
+    // If editing, include the id
+    if (editEmployeeId) {
+        employee.id = editEmployeeId;
+    }
+
+
+    // =================================================
+    // SAVE OR UPDATE
+    // =================================================
+
+    try {
+
+        if (editEmployeeId) {
+
+            // Update existing
+            await updateEmployee(employee);
+
+        } else {
+
+            // Add new
+            await addEmployee(employee);
+
+        }
+
+
+        clearEmployeeForm();
+
+
+        // Close modal
+
+        const modalElement =
+            document.getElementById(
+                "employeeModal"
+            );
+
+
+        const modal =
+            bootstrap.Modal.getInstance(
+                modalElement
+            );
+
+
+        if (modal) {
+            modal.hide();
+        }
+
+
+        // Reset edit mode
+        editEmployeeId = null;
+
+
+        // Refresh table
+
+        await renderEmployees();
+
+
+    } catch (error) {
+
+        console.error(
+            "Save employee error:",
+            error
+        );
+
+
+        errorElement.textContent =
+            "Unable to save employee. Error: " + error.message;
+
+    }
+
+}
+
+
+// =====================================================
+// CLEAR FORM
+// =====================================================
+
+function clearEmployeeForm() {
+
+    document.getElementById(
+        "employeeId"
+    ).value = "";
+
+
+    document.getElementById(
+        "employeeName"
+    ).value = "";
+
+
+    document.getElementById(
+        "employeeMobile"
+    ).value = "";
+
+
+    document.getElementById(
+        "employeeSex"
+    ).value = "";
+
+
+    document.getElementById(
+        "employeeDesignation"
+    ).value = "";
+
+
+    document.getElementById(
+        "employeeType"
+    ).value = "";
+
+
+    document.getElementById(
+        "employeeSalary"
+    ).value = "";
+
+
+    document
+        .querySelectorAll(
+            ".project-checkbox"
+        )
+        .forEach(
+            checkbox => {
+                checkbox.checked = false;
+            }
+        );
+
+
+    document.getElementById(
+        "employeeError"
+    ).textContent = "";
+
+
+    // Reset modal title
+    document.getElementById(
+        "employeeModalTitle"
+    ).innerHTML = '<i class="bi bi-person-plus me-2"></i>Add Employee';
+
+
+    // Reset save button text
+    document.getElementById(
+        "saveEmployeeBtn"
+    ).innerHTML = '<i class="bi bi-save me-1"></i> Save Employee';
+
+}
+
+
+// =====================================================
+// FILTER FUNCTIONS
+// =====================================================
+
+function openFilterSidebar() {
+    document.getElementById('filterSidebar').classList.add('open');
+    document.getElementById('filterOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFilterSidebar() {
+    document.getElementById('filterSidebar').classList.remove('open');
+    document.getElementById('filterOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function applyFilters() {
+    filterState.search = document.getElementById('searchInput').value.trim();
+    filterState.designation = document.getElementById('filterDesignation').value;
+    filterState.sex = document.getElementById('filterSex').value;
+    filterState.type = document.getElementById('filterType').value;
+    renderEmployees();
+    closeFilterSidebar();
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterDesignation').value = '';
+    document.getElementById('filterSex').value = '';
+    document.getElementById('filterType').value = '';
+    filterState = { search: '', designation: '', sex: '', type: '' };
+    renderEmployees();
+    closeFilterSidebar();
+}
+
+
+// =====================================================
+// PDF DOWNLOAD (Only employee boxes, 3 per row, narrow margins)
+// =====================================================
+
+async function downloadPDF() {
+    try {
+        const employees = filteredEmployees.length > 0 ? filteredEmployees : allEmployees;
+        
+        if (employees.length === 0) {
+            alert('No employees to export.');
+            return;
+        }
+
+        // Show loading overlay
+        document.getElementById('pdfLoading').classList.add('active');
+
+        // Get the PDF content element
+        const sourceElement = document.getElementById('pdfContent');
+        
+        // Clone the content to avoid modifying the original
+        const clone = sourceElement.cloneNode(true);
+        clone.style.display = 'block';
+        clone.style.width = '100%';
+        clone.style.padding = '20px 10px';
+        clone.style.margin = '0';
+        clone.style.background = '#ffffff';
+        clone.style.fontFamily = 'Arial, sans-serif';
+        clone.style.boxSizing = 'border-box';
+        clone.style.textAlign = 'center';
+        
+        // Get the grid
+        const cloneGrid = clone.querySelector('#pdfEmployeesGrid');
+        
+        // Clear and rebuild grid
+        if (cloneGrid) {
+            cloneGrid.innerHTML = '';
+            cloneGrid.style.display = 'flex';
+            cloneGrid.style.flexWrap = 'wrap';
+            cloneGrid.style.justifyContent = 'center';
+            cloneGrid.style.alignItems = 'flex-start';
+            cloneGrid.style.gap = '8px';
+            cloneGrid.style.width = '100%';
+            cloneGrid.style.maxWidth = '640px';
+            cloneGrid.style.margin = '0 auto';
+            cloneGrid.style.padding = '0';
+            
+            // Create employee cards with barcodes (3 per row)
+            employees.forEach((employee, index) => {
+                const div = document.createElement('div');
+                div.style.display = 'inline-block';
+                div.style.width = '195px';
+                div.style.flex = '0 0 195px';
+                div.style.border = '1px solid #ddd';
+                div.style.padding = '10px 8px';
+                div.style.margin = '0';
+                div.style.textAlign = 'center';
+                div.style.borderRadius = '6px';
+                div.style.background = 'white';
+                div.style.pageBreakInside = 'avoid';
+                div.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                div.style.verticalAlign = 'top';
+                div.style.boxSizing = 'border-box';
+                
+                // Company Name
+                const companyDiv = document.createElement('div');
+                companyDiv.textContent = APP_NAME || 'Tea Estate Management';
+                companyDiv.style.fontSize = '10px';
+                companyDiv.style.fontWeight = 'bold';
+                companyDiv.style.color = '#0d6efd';
+                companyDiv.style.marginBottom = '6px';
+                companyDiv.style.textTransform = 'uppercase';
+                companyDiv.style.letterSpacing = '0.5px';
+                companyDiv.style.borderBottom = '1.5px solid #0d6efd';
+                companyDiv.style.paddingBottom = '4px';
+                
+                // ID
+                const idDiv = document.createElement('div');
+                idDiv.textContent = `ID: ${employee.employeeId || 'N/A'}`;
+                idDiv.style.fontSize = '9px';
+                idDiv.style.color = '#999';
+                idDiv.style.marginBottom = '0px';
+                
+                // Name
+                const nameDiv = document.createElement('div');
+                nameDiv.textContent = employee.name || '';
+                nameDiv.style.fontWeight = 'bold';
+                nameDiv.style.fontSize = '14px';
+                nameDiv.style.margin = '0px 0';
+                nameDiv.style.color = '#333';
+                
+                // Mobile
+                const mobileDiv = document.createElement('div');
+                mobileDiv.textContent = employee.mobile || '';
+                mobileDiv.style.fontSize = '12px';
+                mobileDiv.style.color = '#666';
+                mobileDiv.style.margin = '2px 0 6px 0';
+                
+                // Barcode container
+                const barcodeDiv = document.createElement('div');
+                barcodeDiv.style.margin = '4px auto';
+                barcodeDiv.style.textAlign = 'center';
+                barcodeDiv.style.display = 'flex';
+                barcodeDiv.style.justifyContent = 'center';
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('id', `pdf_barcode_${employee.id}_${index}`);
+                svg.style.width = '100%';
+                svg.style.height = '35px';
+                svg.style.maxWidth = '150px';
+                barcodeDiv.appendChild(svg);
+                
+                // Assemble card
+                div.appendChild(companyDiv);
+                div.appendChild(idDiv);
+                div.appendChild(nameDiv);
+                div.appendChild(mobileDiv);
+                div.appendChild(barcodeDiv);
+                cloneGrid.appendChild(div);
+
+                // Generate barcode
+                try {
+                    JsBarcode(svg, employee.employeeId || 'N/A', {
+                        format: "CODE128",
+                        width: 1.3,
+                        height: 35,
+                        displayValue: false,
+                        margin: 3,
+                        background: "#ffffff",
+                        lineColor: "#000000"
+                    });
+                } catch (e) {
+                    console.error('PDF Barcode error:', e);
+                }
+            });
+        }
+
+        // Show the clone in the preview container
+        const previewContainer = document.getElementById('pdfPreviewContainer');
+        const previewInner = document.getElementById('pdfPreviewInner');
+        previewInner.innerHTML = '';
+        previewInner.style.display = 'flex';
+        previewInner.style.justifyContent = 'center';
+        previewInner.style.alignItems = 'flex-start';
+        previewInner.style.minHeight = '100vh';
+        previewInner.style.padding = '10px';
+        previewInner.style.background = '#f5f5f5';
+        previewInner.appendChild(clone);
+        previewContainer.classList.add('active');
+
+        // Wait for barcodes to render
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Generate PDF from the visible clone
+        const opt = {
+            margin:        [8, 8, 8, 8],
+            filename:     `Employees_${new Date().toISOString().split('T')[0]}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                backgroundColor: '#ffffff'
+            },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        await html2pdf().set(opt).from(clone).save();
+
+        // Hide preview and loading
+        previewContainer.classList.remove('active');
+        document.getElementById('pdfLoading').classList.remove('active');
+
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        document.getElementById('pdfLoading').classList.remove('active');
+        document.getElementById('pdfPreviewContainer').classList.remove('active');
+        alert('Error generating PDF. Please try again.');
+    }
+}
+
+
+// =====================================================
+// HTML ESCAPE
+// =====================================================
+
+function escapeHTML(value) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        value ?? "";
+
+
+    return div.innerHTML;
+
+}
+
+
+// =====================================================
+// INITIALIZE
+// =====================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
+
+        try {
+
+            // Settings are loaded by db.js
+
+            await loadSettings();
+
+
+            // Make sure central DB exists
+
+            await openDB();
+
+
+            // Load designations
+            await loadDesignations();
+
+
+            // Load projects
+
+            await loadProjectCheckboxes();
+
+
+            // Load employees
+
+            await renderEmployees();
+
+
+            // Save button
+
+            const saveButton =
+                document.getElementById(
+                    "saveEmployeeBtn"
+                );
+
+
+            saveButton.addEventListener(
+                "click",
+                saveEmployee
+            );
+
+
+            // Reload projects whenever modal opens
+
+            document
+                .getElementById(
+                    "employeeModal"
+                )
+                .addEventListener(
+                    "show.bs.modal",
+                    function () {
+
+                        // Only load projects if not in edit mode
+                        if (!editEmployeeId) {
+                            loadProjectCheckboxes();
+                            // Generate new ID for new employee
+                            document.getElementById(
+                                "employeeId"
+                            ).value = generateEmployeeId();
+                            // Load designations
+                            loadDesignations();
+                        }
+
+                    }
+                );
+
+
+            // Reset edit mode when modal is hidden
+            document
+                .getElementById(
+                    "employeeModal"
+                )
+                .addEventListener(
+                    "hidden.bs.modal",
+                    function () {
+
+                        editEmployeeId = null;
+                        clearEmployeeForm();
+
+                    }
+                );
+
+
+            // Filter button
+            document.getElementById('filterBtn').addEventListener('click', openFilterSidebar);
+
+            // Close filter
+            document.getElementById('closeFilterBtn').addEventListener('click', closeFilterSidebar);
+            document.getElementById('filterOverlay').addEventListener('click', closeFilterSidebar);
+
+            // Apply filter
+            document.getElementById('applyFilterBtn').addEventListener('click', applyFilters);
+
+            // Clear filter
+            document.getElementById('clearFilterBtn').addEventListener('click', clearFilters);
+
+            // Enter key for search
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+
+            // PDF Download
+            document.getElementById('downloadPdfBtn').addEventListener('click', downloadPDF);
+
+
+        } catch (error) {
+
+            console.error(
+                "Employee initialization error:",
+                error
+            );
+
+        }
+
+    }
+);
+</script>
+</body>
+
+</html>

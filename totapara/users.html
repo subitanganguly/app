@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - Tea Estate Management</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .user-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s;
+        }
+        .user-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .user-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eef2f6;
+            font-weight: 600;
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+        .user-avatar.admin {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .user-avatar.user {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+        .badge-admin {
+            background: #667eea;
+            color: white;
+        }
+        .badge-user {
+            background: #48bb78;
+            color: white;
+        }
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+        }
+        .modal-header {
+            border-bottom: 1px solid #eef2f6;
+        }
+        .modal-footer {
+            border-top: 1px solid #eef2f6;
+        }
+        .permission-checkbox {
+            cursor: pointer;
+        }
+        .permission-checkbox:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .permission-group {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .permission-group:hover {
+            background: #e9ecef;
+        }
+        .permission-group label {
+            cursor: pointer;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+        .permission-group .bi {
+            font-size: 18px;
+        }
+        .permission-header {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+    <div class="main-wrapper">
+        <main class="container-fluid p-4">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1">
+                        <i class="bi bi-people text-primary me-2"></i>User Management
+                    </h3>
+                    <p class="text-muted mb-0">
+                        Manage system users and their permissions
+                    </p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" id="addUserBtn">
+                        <i class="bi bi-person-plus me-1"></i> Add User
+                    </button>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="card user-card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-list-ul me-2"></i>System Users</span>
+                    <span class="badge bg-primary" id="userCount">0</span>
+                </div>
+                <div class="card-body p-0" id="usersContainer">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                        <h5>No Users Found</h5>
+                        <p>Add your first user to get started.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key me-2 text-warning"></i>Change Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <input type="hidden" id="changePasswordUserId">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" id="currentPassword" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" id="newPassword" class="form-control" required minlength="4">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" class="form-control" required>
+                        </div>
+                        <div id="passwordError" class="text-danger small"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="savePasswordBtn">
+                        <i class="bi bi-save me-1"></i> Update Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalTitle">
+                        <i class="bi bi-person-plus me-2 text-primary"></i>Add User
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">User ID</label>
+                                    <input type="text" id="newUserId" class="form-control" readonly>
+                                    <small class="text-muted">Auto-generated</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">User Type</label>
+                                    <select id="newUserType" class="form-select">
+                                        <option value="false">Standard User</option>
+                                        <option value="true">Administrator</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" id="newUserPassword" class="form-control" required minlength="4">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" id="confirmUserPassword" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Permissions Section -->
+                        <div class="mt-3 pt-3 border-top">
+                            <h6 class="mb-2">
+                                <i class="bi bi-shield-check me-1 text-primary"></i>Menu Permissions
+                            </h6>
+                            <p class="text-muted small mb-3">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Check the menus this user can access. Administrators have access to all menus.
+                            </p>
+                            <div id="permissionsContainer">
+                                <!-- Permissions will be loaded dynamically -->
+                            </div>
+                            <div id="userFormError" class="text-danger small mt-2"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveUserBtn">
+                        <i class="bi bi-save me-1"></i> Save User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+    <!-- Include -->
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+    <script>
+        // =====================================================
+        // USER MANAGEMENT
+        // =====================================================
+
+        let currentUser = null;
+        let changePasswordModal = null;
+        let userModal = null;
+
+
+
+// Define all menu items with their display names and icons
+const MENU_ITEMS = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'bi-grid-1x2' },
+    { id: 'projects', label: 'Projects', icon: 'bi-kanban' },
+    { id: 'employees', label: 'Employees', icon: 'bi-people' },
+    { id: 'attendance', label: 'Attendance', icon: 'bi-calendar-check' },
+    { id: 'auto-attendance', label: 'Auto Attendance', icon: 'bi-qr-code-scan' },
+    { id: 'salary', label: 'Salary', icon: 'bi-cash-stack' },
+    { id: 'expenses', label: 'Expenses', icon: 'bi-wallet2' },
+    { id: 'company-prize', label: 'Company Prize', icon: 'bi-award' },
+    { id: 'backup', label: 'Backup & Restore', icon: 'bi-database' },
+    { id: 'users', label: 'Users', icon: 'bi-people-fill', adminOnly: true },
+    { id: 'settings', label: 'Settings', icon: 'bi-gear' }
+];
+
+        // =====================================================
+        // CHECK AUTHENTICATION
+        // =====================================================
+
+        function checkAuth() {
+            const user = requireAuth();
+            if (!user) return;
+            currentUser = user;
+            
+            // Check if admin
+            if (!user.isAdmin) {
+                alert('Access denied. Admin privileges required.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            loadUsers();
+        }
+
+        // =====================================================
+        // LOAD USERS
+        // =====================================================
+
+        async function loadUsers() {
+            try {
+                const users = await getAllUsers();
+                const container = document.getElementById('usersContainer');
+                const countBadge = document.getElementById('userCount');
+                
+                countBadge.textContent = users.length;
+
+                if (users.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                            <h5>No Users Found</h5>
+                            <p>Add your first user to get started.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="table-responsive">';
+                html += `
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>User ID</th>
+                                <th>Type</th>
+                                <th>Permissions</th>
+                                <th>Created At</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                users.forEach((user, index) => {
+                    const isAdmin = user.isAdmin || false;
+                    const isCurrentUser = currentUser && currentUser.id === user.id;
+                    const permissions = user.permissions || [];
+                    const permissionCount = permissions.length;
+                    const totalMenus = MENU_ITEMS.filter(item => !item.adminOnly).length;
+                    
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${escapeHTML(user.userId)}</strong></td>
+                            <td>
+                                <span class="badge ${isAdmin ? 'badge-admin' : 'badge-user'}">
+                                    ${isAdmin ? 'Administrator' : 'Standard User'}
+                                </span>
+                                ${isCurrentUser ? ' <span class="badge bg-info">You</span>' : ''}
+                            </td>
+                            <td>
+                                ${isAdmin ? 
+                                    '<span class="text-muted small"><i class="bi bi-check-circle text-success"></i> All Menus</span>' : 
+                                    `<span class="badge bg-secondary">${permissionCount}/${totalMenus} Menus</span>`
+                                }
+                            </td>
+                            <td>${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editUserPermissions(${user.id})">
+                                    <i class="bi bi-shield-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning me-1" onclick="openChangePassword(${user.id}, '${escapeHTML(user.userId)}')">
+                                    <i class="bi bi-key"></i>
+                                </button>
+                                ${!isCurrentUser ? `
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUserHandler(${user.id}, '${escapeHTML(user.userId)}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersContainer').innerHTML = `
+                    <div class="text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle display-4 d-block mb-3"></i>
+                        <h5>Error Loading Users</h5>
+                        <p>${escapeHTML(error.message || 'Please try again.')}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // =====================================================
+        // EDIT USER PERMISSIONS
+        // =====================================================
+
+        async function editUserPermissions(userId) {
+            try {
+                const users = await getAllUsers();
+                const user = users.find(u => u.id === userId);
+                if (!user) {
+                    alert('User not found.');
+                    return;
+                }
+
+                // Open the modal in edit mode
+                document.getElementById('userModalTitle').innerHTML = 
+                    '<i class="bi bi-shield-check me-2 text-primary"></i>Edit Permissions - ' + escapeHTML(user.userId);
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('newUserId').value = user.userId;
+                document.getElementById('newUserPassword').value = '';
+                document.getElementById('confirmUserPassword').value = '';
+                document.getElementById('newUserType').value = user.isAdmin ? 'true' : 'false';
+                document.getElementById('userFormError').textContent = '';
+
+                // Disable password fields for editing
+                document.getElementById('newUserPassword').disabled = true;
+                document.getElementById('confirmUserPassword').disabled = true;
+                document.getElementById('newUserType').disabled = true;
+
+                // Load permissions
+                loadPermissions(user);
+
+                userModal.show();
+
+            } catch (error) {
+                console.error('Error editing permissions:', error);
+                alert('Error loading user permissions.');
+            }
+        }
+
+        // =====================================================
+        // LOAD PERMISSIONS
+        // =====================================================
+
+        function loadPermissions(user) {
+            const container = document.getElementById('permissionsContainer');
+            const isAdmin = user.isAdmin || false;
+            const userPermissions = user.permissions || [];
+
+            if (isAdmin) {
+                container.innerHTML = `
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Administrators have access to all menus. Permissions are automatically granted.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="permission-header">
+                    <i class="bi bi-menu-app me-1"></i> Select menus for this user:
+                </div>
+            `;
+
+            // Show only non-admin menus for standard users
+            const menuItems = MENU_ITEMS.filter(item => !item.adminOnly);
+            
+            menuItems.forEach(item => {
+                const isChecked = userPermissions.includes(item.id);
+                html += `
+                    <div class="permission-group d-flex align-items-center">
+                        <input type="checkbox" 
+                               id="perm_${item.id}" 
+                               class="form-check-input permission-checkbox" 
+                               ${isChecked ? 'checked' : ''}
+                               data-permission-id="${item.id}">
+                        <label for="perm_${item.id}" class="d-flex align-items-center">
+                            <i class="bi ${item.icon} me-2 text-primary"></i>
+                            ${item.label}
+                        </label>
+                    </div>
+                `;
+            });
+
+            // Add select all / deselect all
+            html += `
+                <div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllPermissions()">
+                        <i class="bi bi-check-all me-1"></i> Select All
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="deselectAllPermissions()">
+                        <i class="bi bi-x-circle me-1"></i> Deselect All
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // =====================================================
+        // SELECT / DESELECT ALL PERMISSIONS
+        // =====================================================
+
+        function selectAllPermissions() {
+            const checkboxes = document.querySelectorAll('.permission-checkbox:not(:disabled)');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+
+        function deselectAllPermissions() {
+            const checkboxes = document.querySelectorAll('.permission-checkbox:not(:disabled)');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        // =====================================================
+        // CHANGE PASSWORD
+        // =====================================================
+
+        function openChangePassword(userId, userDisplayId) {
+            document.getElementById('changePasswordUserId').value = userId;
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordError').textContent = '';
+            
+            const isOwnAccount = currentUser && currentUser.id === userId;
+            const currentPasswordField = document.getElementById('currentPassword');
+            const currentPasswordLabel = currentPasswordField.closest('.mb-3');
+            
+            if (!isOwnAccount) {
+                currentPasswordLabel.style.display = 'none';
+                currentPasswordField.removeAttribute('required');
+            } else {
+                currentPasswordLabel.style.display = 'block';
+                currentPasswordField.setAttribute('required', '');
+            }
+            
+            changePasswordModal.show();
+        }
+
+        async function savePassword() {
+            const userId = parseInt(document.getElementById('changePasswordUserId').value);
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorEl = document.getElementById('passwordError');
+
+            errorEl.textContent = '';
+
+            if (newPassword.length < 4) {
+                errorEl.textContent = 'Password must be at least 4 characters long.';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'New passwords do not match.';
+                return;
+            }
+
+            try {
+                const user = await getUserByUserId(currentUser.userId);
+                
+                if (userId === currentUser.id) {
+                    if (user.password !== currentPassword) {
+                        errorEl.textContent = 'Current password is incorrect.';
+                        return;
+                    }
+                }
+
+                const allUsers = await getAllUsers();
+                const targetUser = allUsers.find(u => u.id === userId);
+                
+                if (!targetUser) {
+                    errorEl.textContent = 'User not found.';
+                    return;
+                }
+
+                targetUser.password = newPassword;
+                await updateUser(targetUser);
+
+                changePasswordModal.hide();
+                await loadUsers();
+                alert('Password updated successfully!');
+                
+            } catch (error) {
+                console.error('Error updating password:', error);
+                errorEl.textContent = 'Error updating password. Please try again.';
+            }
+        }
+
+        // =====================================================
+        // ADD/EDIT USER
+        // =====================================================
+
+        async function openAddUser() {
+            document.getElementById('userModalTitle').innerHTML = 
+                '<i class="bi bi-person-plus me-2 text-primary"></i>Add User';
+            document.getElementById('editUserId').value = '';
+            document.getElementById('newUserPassword').value = '';
+            document.getElementById('confirmUserPassword').value = '';
+            document.getElementById('newUserType').value = 'false';
+            document.getElementById('userFormError').textContent = '';
+            
+            // Enable password and type fields for new user
+            document.getElementById('newUserPassword').disabled = false;
+            document.getElementById('confirmUserPassword').disabled = false;
+            document.getElementById('newUserType').disabled = false;
+            
+            // Generate next user ID
+            const nextId = await generateNextUserId();
+            document.getElementById('newUserId').value = nextId;
+            
+            // Reset permissions container
+            document.getElementById('permissionsContainer').innerHTML = '';
+            
+            // Load default permissions (all checked for new user)
+            loadDefaultPermissions();
+            
+            userModal.show();
+        }
+
+        function loadDefaultPermissions() {
+            const container = document.getElementById('permissionsContainer');
+            const userType = document.getElementById('newUserType').value;
+            const isAdmin = userType === 'true';
+
+            if (isAdmin) {
+                container.innerHTML = `
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Administrators have access to all menus. Permissions are automatically granted.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="permission-header">
+                    <i class="bi bi-menu-app me-1"></i> Select menus for this user:
+                </div>
+            `;
+
+            const menuItems = MENU_ITEMS.filter(item => !item.adminOnly);
+            
+            menuItems.forEach(item => {
+                html += `
+                    <div class="permission-group d-flex align-items-center">
+                        <input type="checkbox" 
+                               id="perm_${item.id}" 
+                               class="form-check-input permission-checkbox" 
+                               checked
+                               data-permission-id="${item.id}">
+                        <label for="perm_${item.id}" class="d-flex align-items-center">
+                            <i class="bi ${item.icon} me-2 text-primary"></i>
+                            ${item.label}
+                        </label>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllPermissions()">
+                        <i class="bi bi-check-all me-1"></i> Select All
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="deselectAllPermissions()">
+                        <i class="bi bi-x-circle me-1"></i> Deselect All
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Listen for user type change
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('newUserType').addEventListener('change', function() {
+                const isAdmin = this.value === 'true';
+                if (isAdmin) {
+                    document.getElementById('permissionsContainer').innerHTML = `
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Administrators have access to all menus. Permissions are automatically granted.
+                        </div>
+                    `;
+                } else {
+                    loadDefaultPermissions();
+                }
+            });
+        });
+
+        async function saveUser() {
+            const editId = document.getElementById('editUserId').value;
+            const userId = document.getElementById('newUserId').value;
+            const password = document.getElementById('newUserPassword').value;
+            const confirmPassword = document.getElementById('confirmUserPassword').value;
+            const isAdmin = document.getElementById('newUserType').value === 'true';
+            const errorEl = document.getElementById('userFormError');
+
+            errorEl.textContent = '';
+
+            // Get permissions
+            let permissions = [];
+            if (!isAdmin) {
+                const checkboxes = document.querySelectorAll('.permission-checkbox:checked');
+                checkboxes.forEach(cb => {
+                    permissions.push(cb.dataset.permissionId);
+                });
+            }
+
+            try {
+                if (editId) {
+                    // Editing existing user
+                    const allUsers = await getAllUsers();
+                    const existingUser = allUsers.find(u => u.id === parseInt(editId));
+                    if (!existingUser) {
+                        errorEl.textContent = 'User not found.';
+                        return;
+                    }
+
+                    // Update user
+                    existingUser.isAdmin = isAdmin;
+                    existingUser.permissions = permissions;
+                    await updateUser(existingUser);
+                    
+                    userModal.hide();
+                    await loadUsers();
+                    alert('User permissions updated successfully!');
+                } else {
+                    // Creating new user
+                    if (password.length < 4) {
+                        errorEl.textContent = 'Password must be at least 4 characters long.';
+                        return;
+                    }
+
+                    if (password !== confirmPassword) {
+                        errorEl.textContent = 'Passwords do not match.';
+                        return;
+                    }
+
+                    // Check if user already exists
+                    const existingUser = await getUserByUserId(userId);
+                    if (existingUser) {
+                        errorEl.textContent = 'User ID already exists.';
+                        return;
+                    }
+
+                    const newUser = {
+                        userId: userId,
+                        password: password,
+                        isAdmin: isAdmin,
+                        permissions: permissions,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    await addUser(newUser);
+                    
+                    userModal.hide();
+                    await loadUsers();
+                    alert('User created successfully!');
+                }
+                
+            } catch (error) {
+                console.error('Error saving user:', error);
+                errorEl.textContent = 'Error saving user. Please try again.';
+            }
+        }
+
+        // =====================================================
+        // DELETE USER
+        // =====================================================
+
+        async function deleteUserHandler(id, userId) {
+            if (id === currentUser.id) {
+                alert('You cannot delete your own account.');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete user ${userId}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                await deleteUser(id);
+                await loadUsers();
+                alert('User deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user. Please try again.');
+            }
+        }
+
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
+
+        function escapeHTML(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await loadSettings();
+                await openDB();
+                
+                // Initialize modals
+                changePasswordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+                userModal = new bootstrap.Modal(document.getElementById('userModal'));
+                
+                // Check authentication
+                checkAuth();
+                
+                // Event listeners
+                document.getElementById('addUserBtn').addEventListener('click', openAddUser);
+                document.getElementById('savePasswordBtn').addEventListener('click', savePassword);
+                document.getElementById('saveUserBtn').addEventListener('click', saveUser);
+                
+                // Enter key support for forms
+                document.getElementById('changePasswordForm').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        savePassword();
+                    }
+                });
+                
+                document.getElementById('userForm').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveUser();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('User management initialization error:', error);
+            }
+        });
+    </script>
+
+</body>
+</html>

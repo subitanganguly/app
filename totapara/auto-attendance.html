@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Attendance</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .barcode-scanner {
+            border: 3px dashed #dee2e6;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .barcode-scanner.active {
+            border-color: #0d6efd;
+            background: #e7f1ff;
+        }
+        .barcode-scanner .scan-icon {
+            font-size: 64px;
+            color: #6c757d;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .barcode-scanner.active .scan-icon {
+            color: #0d6efd;
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto 20px auto;
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+        .filter-row .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-row .filter-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .filter-row .filter-group select,
+        .filter-row .filter-group input {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            width: 100%;
+            background: white;
+        }
+        .filter-row .filter-group select:focus,
+        .filter-row .filter-group input:focus {
+            border-color: #0d6efd;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+        .filter-row .mode-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .filter-row .mode-buttons .btn-mode {
+            padding: 6px 16px;
+            font-size: 13px;
+            border-radius: 20px;
+            border: 2px solid #dee2e6;
+            background: white;
+            color: #6c757d;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .filter-row .mode-buttons .btn-mode:hover {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+        .filter-row .mode-buttons .btn-mode.active {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        .filter-row .mode-buttons .btn-mode i {
+            margin-right: 4px;
+        }
+        .barcode-input-wrapper {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .barcode-input-wrapper input {
+            font-size: 20px;
+            letter-spacing: 2px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid #dee2e6;
+            width: 100%;
+            text-align: center;
+        }
+        .barcode-input-wrapper input:focus {
+            border-color: #0d6efd;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+        }
+        .present-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #198754;
+            margin-right: 6px;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .success-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 9999;
+            text-align: center;
+            min-width: 300px;
+            display: none;
+        }
+        .success-modal .icon {
+            font-size: 64px;
+            color: #198754;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .success-modal .employee-name {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .success-modal .employee-detail {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            display: none;
+        }
+        .log-tabs .nav-link {
+            color: #6c757d;
+            border-radius: 8px 8px 0 0;
+        }
+        .log-tabs .nav-link.active {
+            color: #0d6efd;
+            background: transparent;
+            border-bottom: 3px solid #0d6efd;
+        }
+        .log-tabs .nav-link:hover {
+            border-color: transparent;
+        }
+        .print-receipt {
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .print-receipt .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .print-receipt .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+        .print-receipt .receipt-total {
+            border-top: 1px dashed #000;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receiptPrintArea, #receiptPrintArea * {
+                visibility: visible;
+            }
+            #receiptPrintArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white;
+            }
+        }
+        .date-badge {
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 30px;
+            background: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+        }
+        .date-badge i {
+            margin-right: 6px;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .barcode-input-wrapper {
+            position: relative;
+        }
+        .barcode-input-wrapper input.d-none {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-row .filter-group {
+                min-width: 100%;
+            }
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+    <div class="main-wrapper">
+
+        <!-- PAGE CONTENT -->
+        <main class="container-fluid p-4">
+
+            <!-- HEADER -->
+            <div class="header-top mb-3">
+                <div>
+                    <h3 class="mb-0">
+                        <i class="bi bi-qr-code-scan text-primary me-2"></i>Auto Attendance
+                    </h3>
+                    <p class="text-muted mb-0 small">Scan barcode to mark attendance automatically</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="date-badge" id="attendanceDateDisplay">
+                        <i class="bi bi-calendar3"></i> <span id="currentDateText">Loading...</span>
+                    </span>
+                    <span id="modeBadge" class="badge bg-info" style="font-size:14px;padding:8px 16px;">
+                        <i class="bi bi-calendar3 me-1"></i> Without Phase
+                    </span>
+                </div>
+            </div>
+
+            <!-- FILTER ROW - All in one row -->
+            <div class="filter-row">
+                <!-- Project -->
+                <div class="filter-group">
+                    <label><i class="bi bi-folder me-1"></i>Project</label>
+                    <select id="projectSelect">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+
+                <!-- Mode -->
+                <div class="filter-group">
+                    <label><i class="bi bi-diagram-3 me-1"></i>Mode</label>
+                    <div class="mode-buttons">
+                        <button class="btn-mode active" id="modeWithout" onclick="setMode('without')">
+                            <i class="bi bi-calendar3"></i> Without
+                        </button>
+                        <button class="btn-mode" id="modePhasewise" onclick="setMode('phasewise')">
+                            <i class="bi bi-diagram-3"></i> Phase Wise
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Phase (shows only in Phase Wise mode) -->
+                <div class="filter-group" id="phaseGroup" style="display:none;">
+                    <label><i class="bi bi-clock me-1"></i>Phase</label>
+                    <select id="phaseSelect">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- BARCODE SCANNER -->
+            <div class="barcode-scanner mb-4" id="barcodeScanner">
+                <i class="bi bi-upc-scan scan-icon"></i>
+                <h4>Scan Employee Barcode</h4>
+                <p class="text-muted mb-0">Click "Start Scan" and point barcode scanner at this window</p>
+                <div class="mt-3">
+                    <button class="btn btn-info btn-lg" onclick="startBarcodeScan()">
+                        <i class="bi bi-upc-scan me-2"></i> Start Scan
+                    </button>
+                    <button class="btn btn-secondary btn-lg" onclick="stopBarcodeScan()" style="display:none;" id="stopScanBtn">
+                        <i class="bi bi-stop-circle me-2"></i> Stop Scan
+                    </button>
+                </div>
+                <div class="mt-3 barcode-input-wrapper">
+                    <input type="text" id="barcodeInput" class="form-control form-control-lg text-center d-none" 
+                           placeholder="Barcode will appear here...">
+                    <div id="scanStatus" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- SUCCESS MODAL -->
+            <div class="modal-overlay" id="successOverlay"></div>
+            <div class="success-modal" id="successModal">
+                <i class="bi bi-check-circle-fill icon"></i>
+                <div class="employee-name" id="successEmployeeName">Employee Name</div>
+                <div class="employee-detail" id="successEmployeeDetail">Employee Code</div>
+                <div class="employee-detail mt-2" id="successEmployeeType" style="font-size:14px;"></div>
+            </div>
+
+            <!-- TODAY'S ATTENDANCE LOG -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-2"></i>Today's Attendance Log</span>
+                    <span class="badge bg-primary" id="logCount">0</span>
+                </div>
+                <div class="card-body">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs log-tabs" id="attendanceTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="withoutPhaseTab" data-bs-toggle="tab" 
+                                    data-bs-target="#withoutPhaseContent" type="button" role="tab">
+                                <i class="bi bi-calendar3 me-1"></i> Without Phase
+                                <span class="badge bg-secondary ms-1" id="withoutPhaseCount">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="phaseWiseTab" data-bs-toggle="tab" 
+                                    data-bs-target="#phaseWiseContent" type="button" role="tab">
+                                <i class="bi bi-diagram-3 me-1"></i> Phase Wise
+                                <span class="badge bg-secondary ms-1" id="phaseWiseCount">0</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content pt-3">
+                        <!-- Without Phase Content -->
+                        <div class="tab-pane fade show active" id="withoutPhaseContent" role="tabpanel">
+                            <div id="withoutPhaseLog">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                                    <h6>No Without Phase Attendance</h6>
+                                    <p class="small">Switch to Without Phase mode and scan employee barcodes</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phase Wise Content -->
+                        <div class="tab-pane fade" id="phaseWiseContent" role="tabpanel">
+                            <div id="phaseWiseLog">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                                    <h6>No Phase Wise Attendance</h6>
+                                    <p class="small">Switch to Phase Wise mode and scan employee barcodes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Phase Wise Attendance Modal -->
+    <div class="modal fade" id="phaseWiseModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>Phase Wise Attendance
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Employee</label>
+                            <input type="text" id="modalEmployeeName" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phase</label>
+                            <input type="text" id="modalPhaseName" class="form-control" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Value Collected</label>
+                            <input type="number" id="modalValue" class="form-control" step="0.001" placeholder="Enter value (e.g. 10.900)">
+                            <small class="text-muted">Enter the collected value</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Salary Amount</label>
+                            <input type="text" id="modalSalary" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="col-12" id="modalBreakdown" style="display:none;">
+                            <label class="form-label fw-semibold">Calculation Breakdown</label>
+                            <div id="modalBreakdownContent" class="border rounded p-2 bg-light" style="font-size:13px;"></div>
+                        </div>
+                    </div>
+                    <div id="modalError" class="text-danger small mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="printReceiptBtn" style="display:none;">
+                        <i class="bi bi-printer me-1"></i> Print Receipt
+                    </button>
+                    <button type="button" class="btn btn-success" id="modalSaveBtn">
+                        <i class="bi bi-check-circle me-1"></i> Save & Mark Present
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Print Area -->
+    <div id="receiptPrintArea" style="display:none;"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!-- Include -->
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+    <script>
+  // =====================================================
+// AUTO ATTENDANCE MANAGEMENT
+// =====================================================
+
+const EMPLOYEE_STORE = STORES.EMPLOYEES;
+const PROJECT_STORE = STORES.PROJECTS;
+const PHASE_STORE = STORES.PHASES;
+const ATTENDANCE_STORE = STORES.ATTENDANCE;
+const SALARY_SETTINGS_STORE = STORES.SALARY_SETTINGS;
+
+// Store data
+let attendanceData = {};
+let attendanceProgressValues = {};
+let attendanceSalaryAmounts = {};
+let withoutPhaseLog = [];
+let phaseWiseLog = [];
+let currentEmployees = [];
+let currentProjectId = null;
+let currentDate = null;
+let currentPhaseId = null;
+let currentMode = 'without';
+let isProcessing = false;
+let pendingPhaseWiseEmployee = null;
+let modalInstance = null;
+let currentSalarySettings = [];
+let lastBreakdownResult = null;
+let allPhases = [];
+let audioContext = null;
+let isBarcodeScanning = false;
+let scanTimeout = null;
+
+// =====================================================
+// AUTO DETECT SCANNER - Press Shift, Ctrl, or Alt to start scan
+// =====================================================
+
+// Global variable to track scanner activation
+let isScannerActivated = false;
+
+// Detect when Shift, Ctrl, or Alt is pressed to activate scanner
+document.addEventListener('keydown', function(event) {
+    // Check if Shift, Ctrl, or Alt is pressed
+    if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt') {
+        // Only activate if not already scanning and not in an input field
+        const tag = event.target.tagName.toLowerCase();
+        if (tag !== 'input' && tag !== 'select' && tag !== 'textarea') {
+            isScannerActivated = true;
+            // Start scan if not already scanning
+            if (!isBarcodeScanning) {
+                startBarcodeScan();
+            }
+        }
+    }
+});
+
+// Optional: Also detect when these keys are released to stop scan after a delay
+document.addEventListener('keyup', function(event) {
+    if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt') {
+        // Don't stop immediately - wait for barcode to complete
+        setTimeout(() => {
+            // If no barcode input after 1 second, stop scan
+            const barcodeInput = document.getElementById('barcodeInput');
+            if (barcodeInput && !barcodeInput.value.trim()) {
+                // Only stop if there's no barcode
+                if (isBarcodeScanning && !isProcessing) {
+                    // Don't auto-stop if we're processing
+                }
+            }
+        }, 1000);
+    }
+});
+
+// =====================================================
+// PLAY BEEP SOUND
+// =====================================================
+function playBeep(frequency = 800, duration = 200) {
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        oscillator.start();
+        setTimeout(() => {
+            oscillator.stop();
+        }, duration);
+    } catch (e) {
+        console.log('Audio not available');
+    }
+}
+
+function playSuccessBeep() {
+    playBeep(1200, 150);
+    setTimeout(() => playBeep(1500, 150), 180);
+}
+
+function playErrorBeep() {
+    playBeep(400, 300);
+}
+
+// =====================================================
+// BARCODE SCANNER FUNCTIONS
+// =====================================================
+function startBarcodeScan() {
+    isBarcodeScanning = true;
+    const scanBtn = document.querySelector('button[onclick="startBarcodeScan()"]');
+    if (scanBtn) scanBtn.style.display = 'none';
+    
+    const stopBtn = document.getElementById('stopScanBtn');
+    if (stopBtn) stopBtn.style.display = 'inline-block';
+    
+    const barcodeInput = document.getElementById('barcodeInput');
+    if (barcodeInput) {
+        barcodeInput.classList.remove('d-none');
+        barcodeInput.value = '';
+        barcodeInput.focus();
+    }
+    
+    showScanStatus('🔄 Ready to scan - point barcode scanner at this window', 'info');
+    playBeep(600, 100);
+}
+
+function stopBarcodeScan() {
+    isBarcodeScanning = false;
+    isScannerActivated = false;
+    
+    const scanBtn = document.querySelector('button[onclick="startBarcodeScan()"]');
+    if (scanBtn) scanBtn.style.display = 'inline-block';
+    
+    const stopBtn = document.getElementById('stopScanBtn');
+    if (stopBtn) stopBtn.style.display = 'none';
+    
+    const barcodeInput = document.getElementById('barcodeInput');
+    if (barcodeInput) {
+        barcodeInput.classList.add('d-none');
+        barcodeInput.value = '';
+    }
+    showScanStatus('', '');
+}
+
+// =====================================================
+// GET ALL PROJECTS
+// =====================================================
+async function getProjects() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(PROJECT_STORE, "readonly");
+        const store = transaction.objectStore(PROJECT_STORE);
+        const request = store.getAll();
+        request.onsuccess = function() { resolve(request.result); };
+        request.onerror = function() { reject(request.error); };
+        transaction.oncomplete = function() { db.close(); };
+    });
+}
+
+// =====================================================
+// GET ALL PHASES
+// =====================================================
+async function getPhases() {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(PHASE_STORE, "readonly");
+            const store = transaction.objectStore(PHASE_STORE);
+            const request = store.getAll();
+            request.onsuccess = function() { resolve(request.result); };
+            request.onerror = function() { reject(request.error); };
+            transaction.oncomplete = function() { db.close(); };
+        });
+    } catch (error) {
+        console.error("Error getting phases:", error);
+        return [];
+    }
+}
+
+// =====================================================
+// GET ALL EMPLOYEES
+// =====================================================
+async function getAllEmployees() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(EMPLOYEE_STORE, "readonly");
+        const store = transaction.objectStore(EMPLOYEE_STORE);
+        const request = store.getAll();
+        request.onsuccess = function() { resolve(request.result); };
+        request.onerror = function() { reject(request.error); };
+        transaction.oncomplete = function() { db.close(); };
+    });
+}
+
+// =====================================================
+// GET SALARY SETTINGS BY PROJECT
+// =====================================================
+async function getSalarySettings(projectId) {
+    try {
+        const db = await openDB();
+        if (!db.objectStoreNames.contains(SALARY_SETTINGS_STORE)) {
+            db.close();
+            return [];
+        }
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(SALARY_SETTINGS_STORE, "readonly");
+            const store = transaction.objectStore(SALARY_SETTINGS_STORE);
+            const index = store.index('projectId');
+            const request = index.getAll(parseInt(projectId));
+            request.onsuccess = function() { resolve(request.result || []); };
+            request.onerror = function() { reject(request.error); };
+            transaction.oncomplete = function() { db.close(); };
+        });
+    } catch (error) {
+        console.error('Error getting salary settings:', error);
+        return [];
+    }
+}
+
+// =====================================================
+// GET ATTENDANCE BY DATE AND PROJECT (without phase)
+// =====================================================
+async function getAttendanceByDateAndProject(projectId, date) {
+    try {
+        const db = await openDB();
+        if (!db.objectStoreNames.contains(ATTENDANCE_STORE)) {
+            db.close();
+            return null;
+        }
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(ATTENDANCE_STORE, 'readonly');
+            const store = transaction.objectStore(ATTENDANCE_STORE);
+            const index = store.index('projectDatePhase');
+            const range = IDBKeyRange.only([parseInt(projectId), date, 0]);
+            const request = index.get(range);
+            request.onsuccess = function() { resolve(request.result || null); };
+            request.onerror = function() { reject(request.error); };
+            transaction.oncomplete = function() { db.close(); };
+        });
+    } catch (error) {
+        console.error('Error getting attendance:', error);
+        return null;
+    }
+}
+
+// =====================================================
+// GET ATTENDANCE BY DATE, PROJECT AND PHASE
+// =====================================================
+async function getAttendanceByDateAndPhase(projectId, date, phaseId) {
+    try {
+        const db = await openDB();
+        if (!db.objectStoreNames.contains(ATTENDANCE_STORE)) {
+            db.close();
+            return null;
+        }
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(ATTENDANCE_STORE, 'readonly');
+            const store = transaction.objectStore(ATTENDANCE_STORE);
+            const index = store.index('projectDatePhase');
+            const range = IDBKeyRange.only([parseInt(projectId), date, parseInt(phaseId)]);
+            const request = index.get(range);
+            request.onsuccess = function() { resolve(request.result || null); };
+            request.onerror = function() { reject(request.error); };
+            transaction.oncomplete = function() { db.close(); };
+        });
+    } catch (error) {
+        console.error('Error getting attendance:', error);
+        return null;
+    }
+}
+
+// =====================================================
+// SAVE ATTENDANCE TO DATABASE
+// =====================================================
+async function saveAttendanceToDB(attendanceRecord) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(ATTENDANCE_STORE, 'readwrite');
+        const store = transaction.objectStore(ATTENDANCE_STORE);
+
+        const index = store.index('projectDatePhase');
+        const range = IDBKeyRange.only([
+            attendanceRecord.projectId,
+            attendanceRecord.date,
+            attendanceRecord.phaseId
+        ]);
+        const getRequest = index.get(range);
+
+        getRequest.onsuccess = function() {
+            const existingRecord = getRequest.result;
+            if (existingRecord) {
+                attendanceRecord.id = existingRecord.id;
+                attendanceRecord.updatedAt = new Date().toISOString();
+                const putRequest = store.put(attendanceRecord);
+                putRequest.onsuccess = () => resolve(attendanceRecord);
+                putRequest.onerror = () => reject(putRequest.error);
+            } else {
+                attendanceRecord.createdAt = new Date().toISOString();
+                attendanceRecord.updatedAt = new Date().toISOString();
+                const addRequest = store.add(attendanceRecord);
+                addRequest.onsuccess = () => resolve(attendanceRecord);
+                addRequest.onerror = () => reject(addRequest.error);
+            }
+        };
+
+        getRequest.onerror = function() { reject(getRequest.error); };
+        transaction.oncomplete = function() { db.close(); };
+    });
+}
+
+// =====================================================
+// CALCULATE PHASE SALARY - SLAB WISE
+// =====================================================
+function calculatePhaseSalary(value, settings) {
+    if (!settings || settings.length === 0) {
+        return { totalSalary: 0, breakdown: [], noRules: true, equalityMatch: false };
+    }
+
+    value = parseFloat(value);
+    if (isNaN(value) || value <= 0) {
+        return { totalSalary: 0, breakdown: [], noRules: true, equalityMatch: false };
+    }
+
+    let totalSalary = 0;
+    let breakdown = [];
+
+    const rules = settings
+        .map(setting => {
+            const valueName = setting.valueName || '';
+            const match = valueName.match(/([\d.]+)/);
+            if (!match) return null;
+            return {
+                threshold: parseFloat(match[1]),
+                condition: setting.condition || 'greater',
+                rate: parseFloat(setting.rate) || 0,
+                valueName: valueName
+            };
+        })
+        .filter(rule => rule && rule.rate >= 0)
+        .sort((a, b) => a.threshold - b.threshold);
+
+    if (rules.length === 0) {
+        return { totalSalary: 0, breakdown: [], noRules: true, equalityMatch: false };
+    }
+
+    let lessRule = null;
+    let equalRule = null;
+    let greaterRule = null;
+
+    rules.forEach(rule => {
+        if (rule.condition === 'less') lessRule = rule;
+        else if (rule.condition === 'equal') equalRule = rule;
+        else if (rule.condition === 'greater') greaterRule = rule;
+    });
+
+    // EXACT EQUALITY
+    if (equalRule && value === equalRule.threshold) {
+        const amount = value * equalRule.rate;
+        totalSalary += amount;
+        breakdown.push({
+            condition: 'equal',
+            threshold: equalRule.threshold,
+            rate: equalRule.rate,
+            quantity: value,
+            calculatedAmount: amount,
+            valueName: equalRule.valueName,
+            displayText: `${value} × ₹${equalRule.rate.toFixed(2)} = ₹${amount.toFixed(2)}`
+        });
+        return { totalSalary, breakdown, noRules: false, equalityMatch: true };
+    }
+
+    // VALUE BELOW THRESHOLD
+    if (lessRule && value < lessRule.threshold) {
+        const amount = value * lessRule.rate;
+        totalSalary += amount;
+        breakdown.push({
+            condition: 'less',
+            threshold: lessRule.threshold,
+            rate: lessRule.rate,
+            quantity: value,
+            calculatedAmount: amount,
+            valueName: lessRule.valueName,
+            displayText: `${value} × ₹${lessRule.rate.toFixed(2)} = ₹${amount.toFixed(2)}`
+        });
+        return { totalSalary, breakdown, noRules: false, equalityMatch: false };
+    }
+
+    // VALUE GREATER THAN THRESHOLD
+    if (greaterRule && value > greaterRule.threshold) {
+        const baseQuantity = greaterRule.threshold;
+        const extraQuantity = value - baseQuantity;
+
+        if (lessRule) {
+            const firstRate = lessRule.rate;
+            const firstAmount = baseQuantity * firstRate;
+            totalSalary += firstAmount;
+            breakdown.push({
+                condition: 'less',
+                threshold: baseQuantity,
+                rate: firstRate,
+                quantity: baseQuantity,
+                calculatedAmount: firstAmount,
+                valueName: lessRule.valueName,
+                displayText: `${baseQuantity} × ₹${firstRate.toFixed(2)} = ₹${firstAmount.toFixed(2)}`
+            });
+        }
+
+        const extraAmount = extraQuantity * greaterRule.rate;
+        totalSalary += extraAmount;
+        breakdown.push({
+            condition: 'greater',
+            threshold: greaterRule.threshold,
+            rate: greaterRule.rate,
+            quantity: extraQuantity,
+            calculatedAmount: extraAmount,
+            valueName: greaterRule.valueName,
+            displayText: `${extraQuantity} × ₹${greaterRule.rate.toFixed(2)} = ₹${extraAmount.toFixed(2)}`
+        });
+
+        return { totalSalary, breakdown, noRules: false, equalityMatch: false };
+    }
+
+    return { totalSalary: 0, breakdown: [], noRules: true, equalityMatch: false };
+}
+
+// =====================================================
+// CALCULATE SALARY IN MODAL
+// =====================================================
+async function calculateSalaryInModal() {
+    const valueInput = document.getElementById('modalValue');
+    const salaryInput = document.getElementById('modalSalary');
+    const errorDiv = document.getElementById('modalError');
+    const breakdownDiv = document.getElementById('modalBreakdown');
+    const breakdownContent = document.getElementById('modalBreakdownContent');
+    const printBtn = document.getElementById('printReceiptBtn');
+
+    const value = parseFloat(valueInput.value);
+    if (isNaN(value) || value <= 0) {
+        salaryInput.value = '';
+        errorDiv.textContent = 'Please enter a valid value.';
+        breakdownDiv.style.display = 'none';
+        printBtn.style.display = 'none';
+        return;
+    }
+
+    errorDiv.textContent = '';
+
+    const projectId = currentProjectId;
+    if (!projectId) {
+        salaryInput.value = '';
+        errorDiv.textContent = 'No project selected.';
+        breakdownDiv.style.display = 'none';
+        printBtn.style.display = 'none';
+        return;
+    }
+
+    try {
+        const settings = await getSalarySettings(projectId);
+        currentSalarySettings = settings;
+        const result = calculatePhaseSalary(value, settings);
+        lastBreakdownResult = result;
+
+        if (result.totalSalary === 0 && settings.length > 0) {
+            errorDiv.textContent = '⚠️ No salary rules matched this value. Salary will be ₹0.00';
+        } else {
+            errorDiv.textContent = '';
+        }
+
+        salaryInput.value = '₹ ' + result.totalSalary.toFixed(2);
+
+        if (result.totalSalary > 0) {
+            printBtn.style.display = 'inline-block';
+        } else {
+            printBtn.style.display = 'none';
+        }
+
+        if (result.breakdown && result.breakdown.length > 0) {
+            let breakdownHtml = '<div class="small">';
+            breakdownHtml += '<div class="fw-bold mb-1">Applied Rules:</div>';
+            result.breakdown.forEach((item, index) => {
+                breakdownHtml += `<div class="d-flex justify-content-between py-1 border-bottom">`;
+                breakdownHtml += `<span>${index + 1}. ${item.displayText}</span>`;
+                breakdownHtml += `</div>`;
+            });
+            breakdownHtml += `<div class="fw-bold mt-1 text-success">Total: ₹${result.totalSalary.toFixed(2)}</div>`;
+            breakdownHtml += '</div>';
+            breakdownContent.innerHTML = breakdownHtml;
+            breakdownDiv.style.display = 'block';
+        } else {
+            breakdownDiv.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Error calculating salary:', error);
+        salaryInput.value = '';
+        errorDiv.textContent = 'Error calculating salary. Please check settings.';
+        breakdownDiv.style.display = 'none';
+        printBtn.style.display = 'none';
+    }
+}
+
+// =====================================================
+// SET MODE
+// =====================================================
+function setMode(mode) {
+    currentMode = mode;
+    
+    document.getElementById('modeWithout').classList.toggle('active', mode === 'without');
+    document.getElementById('modePhasewise').classList.toggle('active', mode === 'phasewise');
+    
+    const phaseGroup = document.getElementById('phaseGroup');
+    const badge = document.getElementById('modeBadge');
+    
+    if (mode === 'without') {
+        phaseGroup.style.display = 'none';
+        badge.className = 'badge bg-info';
+        badge.style.cssText = 'font-size:14px;padding:8px 16px;';
+        badge.innerHTML = '<i class="bi bi-calendar3 me-1"></i> Without Phase';
+    } else {
+        phaseGroup.style.display = 'block';
+        badge.className = 'badge bg-success';
+        badge.style.cssText = 'font-size:14px;padding:8px 16px;';
+        badge.innerHTML = '<i class="bi bi-diagram-3 me-1"></i> Phase Wise';
+        loadPhases();
+    }
+    
+    loadTodayAttendance();
+}
+
+// =====================================================
+// LOAD PHASES
+// =====================================================
+async function loadPhases() {
+    try {
+        allPhases = await getPhases();
+        const select = document.getElementById('phaseSelect');
+        const currentValue = select.value;
+
+        select.innerHTML = '<option value="">-- Select --</option>';
+
+        if (allPhases.length === 0) {
+            select.innerHTML += '<option value="" disabled>No phases available</option>';
+        } else {
+            allPhases.forEach(phase => {
+                const option = document.createElement('option');
+                option.value = phase.id;
+                option.textContent = `${phase.name} (${phase.time || '--:--'})`;
+                select.appendChild(option);
+            });
+        }
+
+        if (currentValue && allPhases.some(p => p.id == currentValue)) {
+            select.value = currentValue;
+        } else if (allPhases.length > 0) {
+            select.value = allPhases[0].id;
+            currentPhaseId = allPhases[0].id;
+        }
+    } catch (error) {
+        console.error('Error loading phases:', error);
+    }
+}
+
+// =====================================================
+// SET DEFAULT DATE
+// =====================================================
+function setDefaultDate() {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    currentDate = dateStr;
+    
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    document.getElementById('currentDateText').textContent = today.toLocaleDateString('en-US', options);
+}
+
+// =====================================================
+// LOAD PROJECTS INTO SELECT
+// =====================================================
+async function loadProjects() {
+    try {
+        const projects = await getProjects();
+        const select = document.getElementById('projectSelect');
+
+        select.innerHTML = '<option value="">-- Select --</option>';
+
+        if (projects.length === 0) {
+            select.innerHTML += '<option value="" disabled>No projects available</option>';
+        } else {
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
+}
+
+// =====================================================
+// SELECT PROJECT
+// =====================================================
+async function selectProject(projectId) {
+    try {
+        const projects = await getProjects();
+        const project = projects.find(p => p.id == projectId);
+        
+        if (!project) {
+            return;
+        }
+
+        currentProjectId = project.id;
+        await loadTodayAttendance();
+    } catch (error) {
+        console.error('Error selecting project:', error);
+    }
+}
+
+// =====================================================
+// LOAD TODAY'S ATTENDANCE
+// =====================================================
+async function loadTodayAttendance() {
+    const projectId = currentProjectId;
+    const date = currentDate;
+
+    if (!projectId || !date) {
+        return;
+    }
+
+    try {
+        const allEmployees = await getAllEmployees();
+
+        currentEmployees = allEmployees.filter(emp => {
+            if (!emp.projects || emp.projects.length === 0) return false;
+            return emp.projects.some(p => p.id == projectId);
+        });
+
+        attendanceData = {};
+        attendanceProgressValues = {};
+        attendanceSalaryAmounts = {};
+        withoutPhaseLog = [];
+        phaseWiseLog = [];
+
+        const withoutPhaseAttendance = await getAttendanceByDateAndProject(projectId, date);
+        const phases = await getPhases();
+
+        if (withoutPhaseAttendance) {
+            withoutPhaseAttendance.records.forEach(record => {
+                attendanceData[record.employeeId] = record.status;
+                if (record.progressValue) {
+                    attendanceProgressValues[record.employeeId] = record.progressValue;
+                }
+                if (record.salaryAmount) {
+                    attendanceSalaryAmounts[record.employeeId] = record.salaryAmount;
+                }
+                if (record.status === 'present') {
+                    const emp = currentEmployees.find(e => e.id === record.employeeId);
+                    if (emp) {
+                        withoutPhaseLog.push({
+                            employeeId: record.employeeId,
+                            name: emp.name,
+                            employeeCode: emp.employeeId,
+                            progressValue: record.progressValue || '',
+                            salaryAmount: record.salaryAmount || 0,
+                            time: record.updatedAt ? new Date(record.updatedAt).toLocaleTimeString() : new Date().toLocaleTimeString()
+                        });
+                    }
+                }
+            });
+        }
+
+        for (const phase of phases) {
+            const phaseAttendance = await getAttendanceByDateAndPhase(projectId, date, phase.id);
+            if (phaseAttendance) {
+                phaseAttendance.records.forEach(record => {
+                    attendanceData[record.employeeId] = record.status;
+                    if (record.progressValue) {
+                        attendanceProgressValues[record.employeeId] = record.progressValue;
+                    }
+                    if (record.salaryAmount) {
+                        attendanceSalaryAmounts[record.employeeId] = record.salaryAmount;
+                    }
+                    if (record.status === 'present') {
+                        const emp = currentEmployees.find(e => e.id === record.employeeId);
+                        if (emp) {
+                            phaseWiseLog.push({
+                                employeeId: record.employeeId,
+                                name: emp.name,
+                                employeeCode: emp.employeeId,
+                                progressValue: record.progressValue || '',
+                                salaryAmount: record.salaryAmount || 0,
+                                phaseName: phase.name,
+                                time: record.updatedAt ? new Date(record.updatedAt).toLocaleTimeString() : new Date().toLocaleTimeString()
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        renderAttendanceLog();
+
+    } catch (error) {
+        console.error('Error loading attendance:', error);
+    }
+}
+
+// =====================================================
+// PROCESS BARCODE SCAN - Like your working example
+// =====================================================
+function processBarcodeScan() {
+    const barcodeInput = document.getElementById('barcodeInput');
+    
+    // Clear any existing timeout
+    if (scanTimeout) {
+        clearTimeout(scanTimeout);
+    }
+
+    // Wait 300ms to allow the scanner to finish inputting all characters
+    scanTimeout = setTimeout(() => {
+        const barcode = barcodeInput.value.trim();
+        if (barcode.length > 0 && isBarcodeScanning) {
+            processBarcode(barcode);
+            barcodeInput.value = '';
+        }
+    }, 300);
+}
+
+async function processBarcode(barcode) {
+    if (isProcessing) return;
+    if (!barcode || barcode.trim() === '') return;
+
+    if (!currentProjectId) {
+        showScanStatus('Please select a project first.', 'danger');
+        playErrorBeep();
+        document.getElementById('barcodeInput').value = '';
+        return;
+    }
+
+    if (!currentDate) {
+        showScanStatus('Please select a date.', 'danger');
+        playErrorBeep();
+        document.getElementById('barcodeInput').value = '';
+        return;
+    }
+
+    // If Phase Wise mode, check if phase is selected
+    if (currentMode === 'phasewise') {
+        const phaseSelect = document.getElementById('phaseSelect');
+        const phaseId = parseInt(phaseSelect.value);
+        if (!phaseId) {
+            showScanStatus('Please select a phase for Phase Wise mode.', 'danger');
+            playErrorBeep();
+            document.getElementById('barcodeInput').value = '';
+            return;
+        }
+        currentPhaseId = phaseId;
+    }
+
+    isProcessing = true;
+    const scanner = document.getElementById('barcodeScanner');
+    scanner.classList.add('active');
+
+    try {
+        const allEmployees = await getAllEmployees();
+        const employee = allEmployees.find(emp => 
+            emp.employeeId && emp.employeeId.toLowerCase() === barcode.trim().toLowerCase()
+        );
+
+        if (!employee) {
+            showScanStatus('❌ Employee not found! Please check the barcode.', 'danger');
+            playErrorBeep();
+            scanner.classList.remove('active');
+            isProcessing = false;
+            document.getElementById('barcodeInput').value = '';
+            return;
+        }
+
+        const hasProject = employee.projects && employee.projects.some(p => p.id == currentProjectId);
+        if (!hasProject) {
+            showScanStatus(`❌ ${employee.name} is not assigned to this project.`, 'danger');
+            playErrorBeep();
+            scanner.classList.remove('active');
+            isProcessing = false;
+            document.getElementById('barcodeInput').value = '';
+            return;
+        }
+
+        if (attendanceData[employee.id] === 'present') {
+            showScanStatus(`✅ ${employee.name} is already marked present.`, 'success');
+            playSuccessBeep();
+            scanner.classList.remove('active');
+            isProcessing = false;
+            document.getElementById('barcodeInput').value = '';
+            return;
+        }
+
+        // Check if employee type matches mode
+        if (currentMode === 'phasewise') {
+            if (employee.type !== 'Phase Wise') {
+                showScanStatus(`❌ ${employee.name} is not a Phase Wise employee. Please switch to Without Phase mode.`, 'danger');
+                playErrorBeep();
+                scanner.classList.remove('active');
+                isProcessing = false;
+                document.getElementById('barcodeInput').value = '';
+                return;
+            }
+            // Open modal for Phase Wise employee
+            pendingPhaseWiseEmployee = employee;
+            openPhaseWiseModal(employee);
+            scanner.classList.remove('active');
+            isProcessing = false;
+            document.getElementById('barcodeInput').value = '';
+            return;
+        } else {
+            // Without Phase mode - only non-Phase Wise employees
+            if (employee.type === 'Phase Wise') {
+                showScanStatus(`❌ ${employee.name} is a Phase Wise employee. Please switch to Phase Wise mode.`, 'danger');
+                playErrorBeep();
+                scanner.classList.remove('active');
+                isProcessing = false;
+                document.getElementById('barcodeInput').value = '';
+                return;
+            }
+            
+            // Mark present directly
+            attendanceData[employee.id] = 'present';
+            
+            withoutPhaseLog.push({
+                employeeId: employee.id,
+                name: employee.name,
+                employeeCode: employee.employeeId,
+                progressValue: '',
+                salaryAmount: 0,
+                time: new Date().toLocaleTimeString()
+            });
+
+            showScanStatus(`✅ ${employee.name} marked present!`, 'success');
+            playSuccessBeep();
+            showSuccessModal(employee.name, employee.employeeId, 'Without Phase');
+            renderAttendanceLog();
+            await autoSaveAttendance();
+            document.getElementById('barcodeInput').value = '';
+        }
+
+    } catch (error) {
+        console.error('Error processing barcode:', error);
+        showScanStatus('❌ Error processing barcode. Please try again.', 'danger');
+        playErrorBeep();
+    }
+
+    setTimeout(() => {
+        scanner.classList.remove('active');
+    }, 1000);
+
+    isProcessing = false;
+}
+
+// =====================================================
+// SHOW SUCCESS MODAL
+// =====================================================
+function showSuccessModal(name, code, type) {
+    const overlay = document.getElementById('successOverlay');
+    const modal = document.getElementById('successModal');
+    
+    document.getElementById('successEmployeeName').textContent = name;
+    document.getElementById('successEmployeeDetail').textContent = `Code: ${code}`;
+    document.getElementById('successEmployeeType').textContent = `Type: ${type}`;
+    
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        modal.style.display = 'none';
+    }, 2000);
+}
+
+// =====================================================
+// SHOW SCAN STATUS
+// =====================================================
+function showScanStatus(message, type) {
+    const statusDiv = document.getElementById('scanStatus');
+    if (!message) {
+        statusDiv.innerHTML = '';
+        return;
+    }
+    const alertClass = type === 'success' ? 'alert-success' : type === 'danger' ? 'alert-danger' : 'alert-info';
+    statusDiv.innerHTML = `<div class="alert ${alertClass} mb-0">${message}</div>`;
+    setTimeout(() => {
+        statusDiv.innerHTML = '';
+    }, 5000);
+}
+
+// =====================================================
+// OPEN PHASE WISE MODAL
+// =====================================================
+function openPhaseWiseModal(employee) {
+    const phaseSelect = document.getElementById('phaseSelect');
+    const phaseName = phaseSelect.options[phaseSelect.selectedIndex]?.text || '';
+
+    document.getElementById('modalEmployeeName').value = employee.name;
+    document.getElementById('modalPhaseName').value = phaseName;
+    document.getElementById('modalValue').value = '';
+    document.getElementById('modalSalary').value = '';
+    document.getElementById('modalError').textContent = '';
+    document.getElementById('modalBreakdown').style.display = 'none';
+    document.getElementById('printReceiptBtn').style.display = 'none';
+    lastBreakdownResult = null;
+
+    if (!modalInstance) {
+        modalInstance = new bootstrap.Modal(document.getElementById('phaseWiseModal'));
+    }
+    modalInstance.show();
+
+    setTimeout(() => {
+        document.getElementById('modalValue').focus();
+    }, 300);
+}
+
+// =====================================================
+// SAVE PHASE WISE ATTENDANCE
+// =====================================================
+async function savePhaseWiseAttendance() {
+    const valueInput = document.getElementById('modalValue');
+    const salaryInput = document.getElementById('modalSalary');
+    const errorDiv = document.getElementById('modalError');
+
+    const value = parseFloat(valueInput.value);
+    if (isNaN(value) || value <= 0) {
+        errorDiv.textContent = 'Please enter a valid value.';
+        valueInput.focus();
+        return;
+    }
+
+    const salaryText = salaryInput.value;
+    const salary = parseFloat(salaryText.replace('₹ ', '')) || 0;
+
+    const employee = pendingPhaseWiseEmployee;
+    if (!employee) {
+        errorDiv.textContent = 'Employee not found.';
+        return;
+    }
+
+    attendanceProgressValues[employee.id] = value.toString();
+    attendanceSalaryAmounts[employee.id] = salary;
+    attendanceData[employee.id] = 'present';
+
+    const phaseName = document.getElementById('modalPhaseName').value;
+
+    phaseWiseLog.push({
+        employeeId: employee.id,
+        name: employee.name,
+        employeeCode: employee.employeeId,
+        progressValue: value.toString(),
+        salaryAmount: salary,
+        phaseName: phaseName,
+        time: new Date().toLocaleTimeString()
+    });
+
+    if (modalInstance) {
+        modalInstance.hide();
+    }
+
+    renderAttendanceLog();
+    await autoSaveAttendance();
+
+    playSuccessBeep();
+    showScanStatus(`✅ ${employee.name} marked present with ${value} units, ₹${salary.toFixed(2)}`, 'success');
+    showSuccessModal(employee.name, employee.employeeId, 'Phase Wise');
+    document.getElementById('barcodeInput').value = '';
+}
+
+// =====================================================
+// AUTO-SAVE ATTENDANCE
+// =====================================================
+async function autoSaveAttendance() {
+    if (currentEmployees.length === 0) return;
+
+    const projectId = currentProjectId;
+    const date = currentDate;
+
+    if (!projectId || !date) return;
+
+    try {
+        const withoutPhaseRecords = currentEmployees
+            .filter(emp => emp.type !== 'Phase Wise')
+            .map(emp => {
+                const status = attendanceData[emp.id] || 'pending';
+                const progressValue = (status === 'present' && attendanceProgressValues[emp.id]) ?
+                    attendanceProgressValues[emp.id] : '';
+                const salaryAmount = (status === 'present' && attendanceSalaryAmounts[emp.id]) ?
+                    attendanceSalaryAmounts[emp.id] : 0;
+
+                return {
+                    employeeId: emp.id,
+                    employeeName: emp.name,
+                    employeeCode: emp.employeeId,
+                    employeeType: emp.type || 'Daily',
+                    designationProgress: emp.designationProgress || 'No',
+                    status: status,
+                    progressValue: progressValue,
+                    progressValueName: emp.designationProgressValue || '',
+                    salaryAmount: salaryAmount
+                };
+            });
+
+        if (withoutPhaseRecords.length > 0) {
+            const withoutPhaseRecord = {
+                projectId: parseInt(projectId),
+                date: date,
+                phaseId: 0,
+                records: withoutPhaseRecords,
+                updatedAt: new Date().toISOString()
+            };
+            await saveAttendanceToDB(withoutPhaseRecord);
+        }
+
+        const phases = await getPhases();
+        for (const phase of phases) {
+            const phaseRecords = currentEmployees
+                .filter(emp => emp.type === 'Phase Wise')
+                .map(emp => {
+                    const status = attendanceData[emp.id] || 'pending';
+                    const progressValue = (status === 'present' && attendanceProgressValues[emp.id]) ?
+                        attendanceProgressValues[emp.id] : '';
+                    const salaryAmount = (status === 'present' && attendanceSalaryAmounts[emp.id]) ?
+                        attendanceSalaryAmounts[emp.id] : 0;
+
+                    return {
+                        employeeId: emp.id,
+                        employeeName: emp.name,
+                        employeeCode: emp.employeeId,
+                        employeeType: emp.type || 'Phase Wise',
+                        designationProgress: emp.designationProgress || 'No',
+                        status: status,
+                        progressValue: progressValue,
+                        progressValueName: emp.designationProgressValue || '',
+                        salaryAmount: salaryAmount
+                    };
+                });
+
+            if (phaseRecords.length > 0) {
+                const phaseRecord = {
+                    projectId: parseInt(projectId),
+                    date: date,
+                    phaseId: phase.id,
+                    records: phaseRecords,
+                    updatedAt: new Date().toISOString()
+                };
+                await saveAttendanceToDB(phaseRecord);
+            }
+        }
+
+    } catch (error) {
+        console.error('Auto-save error:', error);
+    }
+}
+
+// =====================================================
+// RENDER ATTENDANCE LOG
+// =====================================================
+function renderAttendanceLog() {
+    document.getElementById('withoutPhaseCount').textContent = withoutPhaseLog.length;
+    document.getElementById('phaseWiseCount').textContent = phaseWiseLog.length;
+    document.getElementById('logCount').textContent = withoutPhaseLog.length + phaseWiseLog.length;
+
+    // Without Phase
+    const withoutContainer = document.getElementById('withoutPhaseLog');
+    if (withoutPhaseLog.length === 0) {
+        withoutContainer.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                <h6>No Without Phase Attendance</h6>
+                <p class="small">Switch to Without Phase mode and scan employee barcodes</p>
+            </div>
+        `;
+    } else {
+        let html = '<div class="list-group list-group-flush">';
+        withoutPhaseLog.slice().reverse().forEach((entry) => {
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="present-indicator"></span>
+                        <strong>${escapeHTML(entry.name)}</strong>
+                        <span class="text-muted ms-2">${escapeHTML(entry.employeeCode)}</span>
+                    </div>
+                    <div class="text-muted small">
+                        <i class="bi bi-clock me-1"></i>${entry.time}
+                        <span class="badge bg-success ms-2">PRESENT</span>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        withoutContainer.innerHTML = html;
+    }
+
+    // Phase Wise
+    const phaseContainer = document.getElementById('phaseWiseLog');
+    if (phaseWiseLog.length === 0) {
+        phaseContainer.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                <h6>No Phase Wise Attendance</h6>
+                <p class="small">Switch to Phase Wise mode and scan employee barcodes</p>
+            </div>
+        `;
+    } else {
+        let html = '<div class="list-group list-group-flush">';
+        phaseWiseLog.slice().reverse().forEach((entry) => {
+            const salaryDisplay = entry.salaryAmount > 0 ? 
+                `<span class="badge bg-success ms-1">₹${entry.salaryAmount.toFixed(2)}</span>` : '';
+            const progressDisplay = entry.progressValue ? 
+                `<span class="badge bg-info ms-1">${entry.progressValue}</span>` : '';
+            const phaseDisplay = entry.phaseName ? 
+                `<span class="badge bg-primary ms-1">${escapeHTML(entry.phaseName)}</span>` : '';
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="present-indicator"></span>
+                        <strong>${escapeHTML(entry.name)}</strong>
+                        <span class="text-muted ms-2">${escapeHTML(entry.employeeCode)}</span>
+                        ${phaseDisplay}
+                        ${progressDisplay}
+                        ${salaryDisplay}
+                    </div>
+                    <div class="text-muted small">
+                        <i class="bi bi-clock me-1"></i>${entry.time}
+                        <span class="badge bg-success ms-2">PRESENT</span>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        phaseContainer.innerHTML = html;
+    }
+}
+
+// =====================================================
+// PRINT RECEIPT
+// =====================================================
+function printReceipt(employee, value, salary) {
+    const printArea = document.getElementById('receiptPrintArea');
+    
+    let breakdownText = '';
+    if (lastBreakdownResult && lastBreakdownResult.breakdown && lastBreakdownResult.breakdown.length > 0) {
+        lastBreakdownResult.breakdown.forEach(item => {
+            breakdownText += `<div class="receipt-item"><span>${item.displayText}</span></div>`;
+        });
+    }
+
+    const phaseName = document.getElementById('modalPhaseName').value;
+
+    printArea.innerHTML = `
+        <div class="print-receipt">
+            <div class="receipt-header">
+                <h5>${APP_NAME || 'Tea Estate Management'}</h5>
+                <div>Attendance Receipt</div>
+                <div style="font-size:10px;color:#666;">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
+            </div>
+            <div class="receipt-item"><span>Employee</span><span>${employee.name}</span></div>
+            <div class="receipt-item"><span>Code</span><span>${employee.employeeId}</span></div>
+            <div class="receipt-item"><span>Phase</span><span>${phaseName}</span></div>
+            <div class="receipt-item"><span>Value Collected</span><span>${value}</span></div>
+            ${breakdownText ? `<div style="margin-top:8px;border-top:1px dashed #ddd;padding-top:8px;">${breakdownText}</div>` : ''}
+            <div class="receipt-total">
+                <div class="receipt-item"><span>Total Salary</span><span>₹${salary.toFixed(2)}</span></div>
+            </div>
+            <div style="text-align:center;margin-top:15px;font-size:10px;color:#999;border-top:1px dashed #ddd;padding-top:10px;">
+                Thank you!
+            </div>
+        </div>
+    `;
+
+    printArea.style.display = 'block';
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            printArea.style.display = 'none';
+        }, 1000);
+    }, 500);
+}
+
+// =====================================================
+// HTML ESCAPE
+// =====================================================
+function escapeHTML(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+}
+
+// =====================================================
+// INITIALIZE
+// =====================================================
+document.addEventListener("DOMContentLoaded", async function() {
+    try {
+        await loadSettings();
+        await openDB();
+
+        setDefaultDate();
+
+        await loadProjects();
+        await loadPhases();
+
+        // Project select - no auto-focus interference
+        document.getElementById('projectSelect').addEventListener('change', function() {
+            const projectId = this.value;
+            if (projectId) {
+                selectProject(projectId);
+            }
+        });
+
+        // Phase select - no auto-focus interference
+        document.getElementById('phaseSelect').addEventListener('change', function() {
+            const phaseId = parseInt(this.value);
+            if (phaseId) {
+                currentPhaseId = phaseId;
+                loadTodayAttendance();
+            }
+        });
+
+        // Barcode input - like your working example
+        const barcodeInput = document.getElementById('barcodeInput');
+        barcodeInput.addEventListener('input', function() {
+            if (!isBarcodeScanning) return;
+            processBarcodeScan();
+        });
+
+        // Modal events
+        document.getElementById('modalValue').addEventListener('input', calculateSalaryInModal);
+        document.getElementById('modalSaveBtn').addEventListener('click', savePhaseWiseAttendance);
+
+        document.getElementById('printReceiptBtn').addEventListener('click', function() {
+            const employee = pendingPhaseWiseEmployee;
+            const value = parseFloat(document.getElementById('modalValue').value);
+            const salaryText = document.getElementById('modalSalary').value;
+            const salary = parseFloat(salaryText.replace('₹ ', '')) || 0;
+            
+            if (employee && value > 0) {
+                printReceipt(employee, value, salary);
+            }
+        });
+
+        document.getElementById('phaseWiseModal').addEventListener('hidden.bs.modal', function() {
+            pendingPhaseWiseEmployee = null;
+            document.getElementById('printReceiptBtn').style.display = 'none';
+            lastBreakdownResult = null;
+        });
+
+        document.getElementById('successOverlay').addEventListener('click', function() {
+            this.style.display = 'none';
+            document.getElementById('successModal').style.display = 'none';
+        });
+
+        // Set default mode
+        setMode('without');
+
+    } catch (error) {
+        console.error("Auto Attendance initialization error:", error);
+    }
+});
+    </script>
+</body>
+
+</html>

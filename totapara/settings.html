@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings · Designations & Phases</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS (all custom styles are in this file) -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Bootstrap Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+    <!-- SIDEBAR placeholder -->
+    <div id="sidebar-container"></div>
+
+    <div class="main-wrapper">
+        <main class="container-fluid p-4">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1"><i class="fas fa-sliders-h text-primary me-2"></i>Settings</h3>
+                    <p class="text-muted mb-0">Manage designations, project-wise work phases & prize settings</p>
+                </div>
+            </div>
+
+            <!-- rows -->
+            <div class="row g-4">
+
+                <!-- ============================================ -->
+                <!-- DESIGNATIONS COLUMN (simplified)             -->
+                <!-- ============================================ -->
+                <div class="col-lg-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-tag me-2 text-primary"></i> Designations
+                                <span class="badge bg-secondary ms-2" id="designationCount">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- add form: only name -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-8">
+                                    <input type="text" id="designationInput" class="form-control" placeholder="Designation name (e.g. Manager, Worker, Supervisor)" autocomplete="off">
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary w-100" id="addDesignationBtn">
+                                        <i class="fas fa-plus me-1"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="designationError" class="text-danger small mb-2"></div>
+
+                            <!-- list -->
+                            <div id="designationList" class="mt-2">
+                                <div class="text-muted text-center py-3">
+                                    <i class="far fa-circle me-2"></i>No designations added yet.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- WORK PHASES COLUMN (Project-wise)             -->
+                <!-- ============================================ -->
+                <div class="col-lg-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2 text-primary"></i> Work phases in a day
+                                <span class="badge bg-secondary ms-2" id="phaseCount">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Project selector -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Select Project</label>
+                                <select id="phaseProjectSelect" class="form-select">
+                                    <option value="">-- Select a project --</option>
+                                </select>
+                            </div>
+
+                            <!-- add form: phase name + time -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-7">
+                                    <input type="text" id="phaseNameInput" class="form-control" placeholder="Phase name (e.g. Morning)" autocomplete="off">
+                                </div>
+                                <div class="col-3">
+                                    <input type="time" id="phaseTimeInput" class="form-control" value="08:00">
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-primary w-100" id="addPhaseBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="phaseError" class="text-danger small mb-2"></div>
+
+                            <!-- list -->
+                            <div id="phaseList" class="mt-2">
+                                <div class="text-muted text-center py-3">
+                                    <i class="far fa-clock me-2"></i>No phases defined.
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- PHASE SALARY SETTINGS (Project-wise)         -->
+                <!-- ============================================ -->
+                <div class="col-lg-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-money-bill-wave me-2 text-primary"></i> Phase Salary Settings
+                                <span class="badge bg-secondary ms-2" id="salarySettingCount">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Project selector for salary settings -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Select Project</label>
+                                <select id="salaryProjectSelect" class="form-select">
+                                    <option value="">-- Select a project --</option>
+                                </select>
+                            </div>
+
+                            <!-- add form: value name, condition, rate -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <input type="text" id="salaryValueName" class="form-control" placeholder="Value name (e.g. 10.900 kg, 5.5 hours)" autocomplete="off">
+                                    <small class="text-muted" id="salaryValueHint">e.g. 10.900 kg, 5.5 hours, 100 gram</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="salaryCondition" class="form-select">
+                                        <option value="greater">Greater than</option>
+                                        <option value="less">Less than</option>
+                                        <option value="equal">Equal to</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" id="salaryRate" class="form-control" placeholder="Rate per unit" step="0.01" min="0">
+                                    <small class="text-muted">Rate per unit (₹)</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" id="addSalarySettingBtn">
+                                        <i class="fas fa-plus me-1"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="salarySettingError" class="text-danger small mb-2"></div>
+
+                            <!-- Word display -->
+                            <div id="salaryValueWord" class="text-success small mb-2" style="display:none; font-weight:500;">
+                                <i class="fas fa-edit me-1"></i> <span id="salaryValueWordText"></span>
+                            </div>
+
+                            <!-- list -->
+                            <div id="salarySettingList" class="mt-2">
+                                <div class="text-muted text-center py-3">
+                                    <i class="far fa-circle me-2"></i>No salary settings added yet.
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- PRIZE SETTINGS (Project-wise)                -->
+                <!-- ============================================ -->
+                <div class="col-lg-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-trophy me-2 text-warning"></i> Prize Settings
+                                <span class="badge bg-secondary ms-2" id="prizeSettingCount">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Project selector for prize settings -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Select Project</label>
+                                <select id="prizeProjectSelect" class="form-select">
+                                    <option value="">-- Select a project --</option>
+                                </select>
+                            </div>
+
+                            <!-- add form: per kg prize -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-8">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-trophy text-warning"></i></span>
+                                        <input type="number" id="prizeRate" class="form-control" placeholder="Per kg prize amount" step="0.01" min="0">
+                                        <span class="input-group-text">₹ / kg</span>
+                                    </div>
+                                    <small class="text-muted">Set the prize amount per kg for this project</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-warning w-100" id="addPrizeSettingBtn">
+                                        <i class="fas fa-plus me-1"></i> Save Prize
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="prizeSettingError" class="text-danger small mb-2"></div>
+
+                            <!-- list -->
+                            <div id="prizeSettingList" class="mt-2">
+                                <div class="text-muted text-center py-3">
+                                    <i class="far fa-circle me-2"></i>No prize settings added yet.
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- include.js and db.js are expected to exist (side effects) -->
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+
+    <script>
+        // ============================================================
+        // SETTINGS PAGE - Designations (simplified) & Phases
+        // ============================================================
+
+        // ---- ensure STORES are defined (from db.js) ----
+        if (typeof STORES !== 'undefined') {
+            STORES.DESIGNATIONS = 'designations';
+            STORES.PHASES = 'phases';
+            STORES.SALARY_SETTINGS = 'salarySettings';
+            STORES.PRIZE_SETTINGS = 'prizeSettings';
+        }
+
+        // ---- helpers ----
+        function escapeHTML(value) {
+            const div = document.createElement('div');
+            div.textContent = value ?? '';
+            return div.innerHTML;
+        }
+
+        // ---- Number to Words Converter ----
+        function numberToWords(num) {
+            if (num === 0) return 'Zero';
+
+            const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+                'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+            function convertLessThanThousand(n) {
+                if (n < 20) return ones[n];
+                if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+                return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + convertLessThanThousand(n % 100) : '');
+            }
+
+            function convertNumber(n) {
+                if (n < 1000) return convertLessThanThousand(n);
+                if (n < 100000) {
+                    const lakhs = Math.floor(n / 1000);
+                    const remainder = n % 1000;
+                    return convertLessThanThousand(lakhs) + ' Thousand' + (remainder ? ' ' + convertLessThanThousand(remainder) :
+                        '');
+                }
+                if (n < 10000000) {
+                    const lakhs = Math.floor(n / 100000);
+                    const remainder = n % 100000;
+                    return convertLessThanThousand(lakhs) + ' Lakh' + (remainder ? ' ' + convertNumber(remainder) : '');
+                }
+                const crores = Math.floor(n / 10000000);
+                const remainder = n % 10000000;
+                return convertLessThanThousand(crores) + ' Crore' + (remainder ? ' ' + convertNumber(remainder) : '');
+            }
+
+            // Split integer and decimal parts
+            const numStr = num.toString();
+            const parts = numStr.split('.');
+            const integerPart = parseInt(parts[0]);
+            const decimalPart = parts[1] ? parseInt(parts[1]) : 0;
+
+            let result = '';
+            if (integerPart > 0) {
+                result = convertNumber(integerPart);
+            }
+
+            if (decimalPart > 0) {
+                // Convert decimal part to words (treat as whole number)
+                const decimalWords = convertNumber(decimalPart);
+                // Pad with leading zeros if needed
+                const decimalStr = parts[1];
+                const decimalLength = decimalStr.length;
+                let decimalWord = decimalWords.toLowerCase();
+                // Add 'and' between integer and decimal
+                if (result) {
+                    result += ' and ';
+                }
+                result += decimalWord + ' point';
+                // Add 'zero' for each leading zero in decimal
+                for (let i = 0; i < decimalLength; i++) {
+                    if (decimalStr[i] === '0') {
+                        result += ' zero';
+                    } else {
+                        // The first non-zero digit will be handled by convertNumber
+                        break;
+                    }
+                }
+            }
+
+            return result || 'Zero';
+        }
+
+        // ---- Convert value name to words and display ----
+        function convertValueNameToWords(valueName) {
+            const wordDisplay = document.getElementById('salaryValueWord');
+            const wordText = document.getElementById('salaryValueWordText');
+
+            if (!valueName || valueName.trim() === '') {
+                wordDisplay.style.display = 'none';
+                return;
+            }
+
+            // Extract numeric part and unit part
+            const match = valueName.match(/^([\d.]+)\s*(.*)$/);
+            if (match) {
+                const num = parseFloat(match[1]);
+                const unit = match[2].trim();
+                if (!isNaN(num)) {
+                    const words = numberToWords(num);
+                    let result = words + (unit ? ' ' + unit : '');
+                    // Capitalize first letter
+                    result = result.charAt(0).toUpperCase() + result.slice(1);
+                    wordText.textContent = result;
+                    wordDisplay.style.display = 'block';
+                    return;
+                }
+            }
+
+            // If no numeric part found, just display the original value
+            wordText.textContent = valueName;
+            wordDisplay.style.display = 'block';
+        }
+
+        // ---- generic CRUD ----
+        async function addItem(storeName, item) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.add(item);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function getAllItems(storeName) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function deleteItem(storeName, id) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                store.delete(id);
+                tx.oncomplete = () => { db.close();
+                    resolve(); };
+                tx.onerror = () => { reject(tx.error); };
+            });
+        }
+
+        async function updateItem(storeName, item) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.put(item);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function getItemsByProject(storeName, projectId) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const index = store.index('projectId');
+                const request = index.getAll(projectId);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function getItemByProject(storeName, projectId) {
+            const items = await getItemsByProject(storeName, projectId);
+            return items.length > 0 ? items[0] : null;
+        }
+
+        // ---- Get projects from PROJECTS store ----
+        async function getProjects() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORES.PROJECTS, 'readonly');
+                const store = tx.objectStore(STORES.PROJECTS);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        // ---- Load projects into selects ----
+        async function loadProjectSelects() {
+            const selects = ['phaseProjectSelect', 'salaryProjectSelect', 'prizeProjectSelect'];
+            try {
+                const projects = await getProjects();
+
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    if (!select) return;
+                    const currentValue = select.value;
+
+                    select.innerHTML = '<option value="">-- Select a project --</option>';
+
+                    if (projects.length === 0) {
+                        select.innerHTML += '<option value="" disabled>No projects available. Create one first.</option>';
+                    } else {
+                        projects.forEach(project => {
+                            const option = document.createElement('option');
+                            option.value = project.id;
+                            option.textContent = project.name;
+                            select.appendChild(option);
+                        });
+                    }
+
+                    if (currentValue && projects.some(p => p.id == currentValue)) {
+                        select.value = currentValue;
+                    }
+                });
+            } catch (e) {
+                console.error('Error loading projects:', e);
+            }
+        }
+
+        // ---- Check if designation name exists (case-insensitive) ----
+        async function isDesignationExists(name, excludeId = null) {
+            const all = await getAllItems('designations');
+            return all.some(item =>
+                item.name.toLowerCase() === name.toLowerCase() &&
+                item.id !== excludeId
+            );
+        }
+
+        // ---- ensure object stores exist ----
+        async function upgradeStoresIfNeeded() {
+            const APP_NAME = window.APP_NAME || 'tea-estate-management';
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(APP_NAME, 5);
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('designations')) {
+                        const store = db.createObjectStore('designations', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('name', 'name', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('phases')) {
+                        const store = db.createObjectStore('phases', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('projectId', 'projectId', { unique: false });
+                        store.createIndex('name', 'name', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('salarySettings')) {
+                        const store = db.createObjectStore('salarySettings', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('projectId', 'projectId', { unique: false });
+                        store.createIndex('valueName', 'valueName', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('prizeSettings')) {
+                        const store = db.createObjectStore('prizeSettings', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('projectId', 'projectId', { unique: true });
+                        store.createIndex('rate', 'rate', { unique: false });
+                    }
+                    console.log('✅ Settings stores created (designations, phases, salarySettings, prizeSettings)');
+                };
+                request.onsuccess = function(e) {
+                    const db = e.target.result;
+                    db.close();
+                    resolve();
+                };
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        async function ensureStores() {
+            try {
+                const db = await openDB();
+                const existing = Array.from(db.objectStoreNames);
+                const needed = ['designations', 'phases', 'salarySettings', 'prizeSettings'];
+                const missing = needed.filter(s => !existing.includes(s));
+                db.close();
+                if (missing.length === 0) return;
+                await upgradeStoresIfNeeded();
+            } catch (e) {
+                console.warn('ensureStores error', e);
+                await upgradeStoresIfNeeded();
+            }
+        }
+
+        // ---- RENDER DESIGNATIONS (simplified) ----
+        async function renderDesignations() {
+            const list = document.getElementById('designationList');
+            const countBadge = document.getElementById('designationCount');
+            try {
+                const items = await getAllItems('designations');
+                countBadge.textContent = items.length;
+                if (items.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-muted text-center py-3">
+                            <i class="far fa-circle me-2"></i>No designations added yet.
+                        </div>
+                    `;
+                    return;
+                }
+                list.innerHTML = items.map(item => `
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2" data-id="${item.id}">
+                        <div>
+                            <i class="fas fa-tag text-primary me-2" style="opacity:0.6;"></i>
+                            ${escapeHTML(item.name)}
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeDesignation(${item.id})" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="text-danger">⚠️ Could not load designations.</div>`;
+                console.error(e);
+            }
+        }
+
+        // ---- RENDER PHASES ----
+        async function renderPhases() {
+            const list = document.getElementById('phaseList');
+            const countBadge = document.getElementById('phaseCount');
+            try {
+                const items = await getAllItems('phases');
+                countBadge.textContent = items.length;
+
+                if (items.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-muted text-center py-3">
+                            <i class="far fa-clock me-2"></i>No phases defined.
+                        </div>
+                    `;
+                    return;
+                }
+
+                const projects = await getProjects();
+                const projectMap = {};
+                projects.forEach(p => { projectMap[p.id] = p.name; });
+
+                list.innerHTML = items.map(item => `
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2" data-id="${item.id}">
+                        <div>
+                            <span class="badge bg-primary me-2">${escapeHTML(projectMap[item.projectId] || 'Unknown')}</span>
+                            <i class="fas fa-clock text-primary me-1" style="opacity:0.6;"></i>
+                            ${escapeHTML(item.name)}
+                            <span class="badge bg-light text-dark ms-2">
+                                <i class="far fa-hourglass me-1"></i>${escapeHTML(item.time || '--:--')}
+                            </span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removePhase(${item.id})" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="text-danger">⚠️ Could not load phases.</div>`;
+                console.error(e);
+            }
+        }
+
+        // ---- RENDER SALARY SETTINGS (project-wise) ----
+        async function renderSalarySettings() {
+            const list = document.getElementById('salarySettingList');
+            const countBadge = document.getElementById('salarySettingCount');
+            const projectSelect = document.getElementById('salaryProjectSelect');
+            const projectId = projectSelect.value;
+
+            try {
+                let items = [];
+                if (projectId) {
+                    items = await getItemsByProject('salarySettings', parseInt(projectId));
+                } else {
+                    items = await getAllItems('salarySettings');
+                }
+
+                countBadge.textContent = items.length;
+
+                if (items.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-muted text-center py-3">
+                            <i class="far fa-circle me-2"></i>${projectId ? 'No salary settings for this project.' : 'Select a project to view salary settings.'}
+                        </div>
+                    `;
+                    return;
+                }
+
+                const projects = await getProjects();
+                const projectMap = {};
+                projects.forEach(p => { projectMap[p.id] = p.name; });
+
+                list.innerHTML = items.map(item => {
+                    let conditionBadge = '';
+                    if (item.condition === 'greater') {
+                        conditionBadge = '<span class="badge bg-success ms-2">Greater than</span>';
+                    } else if (item.condition === 'less') {
+                        conditionBadge = '<span class="badge bg-warning text-dark ms-2">Less than</span>';
+                    } else if (item.condition === 'equal') {
+                        conditionBadge = '<span class="badge bg-primary ms-2">Equal to</span>';
+                    }
+
+                    return `
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2" data-id="${item.id}">
+                        <div>
+                            <span class="badge bg-primary me-2">${escapeHTML(projectMap[item.projectId] || 'Unknown')}</span>
+                            <i class="fas fa-weight text-primary me-2" style="opacity:0.6;"></i>
+                            <strong>${escapeHTML(item.valueName)}</strong>
+                            ${conditionBadge}
+                            <span class="badge bg-info ms-2">
+                                ₹${Number(item.rate || 0).toFixed(2)} / unit
+                            </span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeSalarySetting(${item.id})" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `}).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="text-danger">⚠️ Could not load salary settings. Error: ${e.message}</div>`;
+                console.error(e);
+            }
+        }
+
+        // ---- RENDER PRIZE SETTINGS (project-wise) ----
+        async function renderPrizeSettings() {
+            const list = document.getElementById('prizeSettingList');
+            const countBadge = document.getElementById('prizeSettingCount');
+            const projectSelect = document.getElementById('prizeProjectSelect');
+            const projectId = projectSelect.value;
+
+            try {
+                let items = [];
+                if (projectId) {
+                    const item = await getItemByProject('prizeSettings', parseInt(projectId));
+                    if (item) items = [item];
+                } else {
+                    items = await getAllItems('prizeSettings');
+                }
+
+                countBadge.textContent = items.length;
+
+                if (items.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-muted text-center py-3">
+                            <i class="far fa-circle me-2"></i>${projectId ? 'No prize setting for this project.' : 'Select a project to view prize settings.'}
+                        </div>
+                    `;
+                    // Clear the input
+                    document.getElementById('prizeRate').value = '';
+                    return;
+                }
+
+                const projects = await getProjects();
+                const projectMap = {};
+                projects.forEach(p => { projectMap[p.id] = p.name; });
+
+                list.innerHTML = items.map(item => `
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2" data-id="${item.id}">
+                        <div>
+                            <span class="badge bg-primary me-2">${escapeHTML(projectMap[item.projectId] || 'Unknown')}</span>
+                            <i class="fas fa-trophy text-warning me-2" style="opacity:0.6;"></i>
+                            <strong>Prize Rate</strong>
+                            <span class="badge bg-warning text-dark ms-2">
+                                ₹${Number(item.rate || 0).toFixed(2)} / kg
+                            </span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removePrizeSetting(${item.id})" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+                // Fill the input with current rate
+                if (items.length > 0) {
+                    document.getElementById('prizeRate').value = items[0].rate;
+                }
+
+            } catch (e) {
+                list.innerHTML = `<div class="text-danger">⚠️ Could not load prize settings. Error: ${e.message}</div>`;
+                console.error(e);
+            }
+        }
+
+        // ---- ADD DESIGNATION (only name) ----
+        async function addDesignation() {
+            const nameInput = document.getElementById('designationInput');
+            const error = document.getElementById('designationError');
+            const name = nameInput.value.trim();
+
+            error.textContent = '';
+
+            if (!name) {
+                error.textContent = 'Please enter a designation name.';
+                nameInput.focus();
+                return;
+            }
+
+            // Check if exists
+            const exists = await isDesignationExists(name);
+            if (exists) {
+                error.textContent = `Designation "${name}" already exists. Please use a different name.`;
+                nameInput.focus();
+                nameInput.select();
+                return;
+            }
+
+            try {
+                await addItem('designations', { name });
+                nameInput.value = '';
+                await renderDesignations();
+            } catch (e) {
+                error.textContent = 'Failed to save designation.';
+                console.error(e);
+            }
+        }
+
+        // ---- ADD PHASE ----
+        async function addPhase() {
+            const projectSelect = document.getElementById('phaseProjectSelect');
+            const nameInput = document.getElementById('phaseNameInput');
+            const timeInput = document.getElementById('phaseTimeInput');
+            const error = document.getElementById('phaseError');
+
+            const projectId = projectSelect.value;
+            const name = nameInput.value.trim();
+            const time = timeInput.value;
+
+            error.textContent = '';
+            if (!projectId) {
+                error.textContent = 'Please select a project.';
+                return;
+            }
+            if (!name) {
+                error.textContent = 'Please enter a phase name.';
+                return;
+            }
+            if (!time) {
+                error.textContent = 'Please select a time.';
+                return;
+            }
+
+            try {
+                await addItem('phases', {
+                    projectId: parseInt(projectId),
+                    name,
+                    time
+                });
+                nameInput.value = '';
+                timeInput.value = '08:00';
+                await renderPhases();
+                await loadProjectSelects();
+            } catch (e) {
+                error.textContent = 'Failed to save phase.';
+                console.error(e);
+            }
+        }
+
+        // ---- ADD SALARY SETTING (project-wise) ----
+        async function addSalarySetting() {
+            const projectSelect = document.getElementById('salaryProjectSelect');
+            const valueNameInput = document.getElementById('salaryValueName');
+            const conditionSelect = document.getElementById('salaryCondition');
+            const rateInput = document.getElementById('salaryRate');
+            const error = document.getElementById('salarySettingError');
+
+            const projectId = projectSelect.value;
+            const valueName = valueNameInput.value.trim();
+            const condition = conditionSelect.value;
+            const rate = rateInput.value.trim();
+
+            error.textContent = '';
+
+            if (!projectId) {
+                error.textContent = 'Please select a project.';
+                projectSelect.focus();
+                return;
+            }
+
+            if (!valueName) {
+                error.textContent = 'Please enter a value name (e.g. 10.900 kg, 5.5 hours).';
+                valueNameInput.focus();
+                return;
+            }
+
+            // Allow letters, numbers, dots, spaces, and underscores
+            if (!/^[a-zA-Z0-9.\s_]+$/.test(valueName)) {
+                error.textContent = 'Value name can only contain letters, numbers, dots, spaces, and underscores.';
+                valueNameInput.focus();
+                valueNameInput.select();
+                return;
+            }
+
+            if (rate === '' || Number(rate) < 0) {
+                error.textContent = 'Please enter a valid rate per unit.';
+                rateInput.focus();
+                return;
+            }
+
+            try {
+                await addItem('salarySettings', {
+                    projectId: parseInt(projectId),
+                    valueName: valueName,
+                    condition: condition,
+                    rate: Number(rate)
+                });
+                valueNameInput.value = '';
+                conditionSelect.value = 'greater';
+                rateInput.value = '';
+                document.getElementById('salaryValueWord').style.display = 'none';
+                await renderSalarySettings();
+            } catch (e) {
+                error.textContent = 'Failed to save salary setting.';
+                console.error(e);
+            }
+        }
+
+        // ---- ADD/UPDATE PRIZE SETTING (project-wise) ----
+        async function addPrizeSetting() {
+            const projectSelect = document.getElementById('prizeProjectSelect');
+            const rateInput = document.getElementById('prizeRate');
+            const error = document.getElementById('prizeSettingError');
+
+            const projectId = projectSelect.value;
+            const rate = rateInput.value.trim();
+
+            error.textContent = '';
+
+            if (!projectId) {
+                error.textContent = 'Please select a project.';
+                projectSelect.focus();
+                return;
+            }
+
+            if (rate === '' || Number(rate) < 0) {
+                error.textContent = 'Please enter a valid prize amount per kg.';
+                rateInput.focus();
+                return;
+            }
+
+            try {
+                // Check if prize setting already exists for this project
+                const existing = await getItemByProject('prizeSettings', parseInt(projectId));
+
+                if (existing) {
+                    // Update existing
+                    existing.rate = Number(rate);
+                    await updateItem('prizeSettings', existing);
+                } else {
+                    // Add new
+                    await addItem('prizeSettings', {
+                        projectId: parseInt(projectId),
+                        rate: Number(rate)
+                    });
+                }
+
+                rateInput.value = '';
+                await renderPrizeSettings();
+            } catch (e) {
+                error.textContent = 'Failed to save prize setting.';
+                console.error(e);
+            }
+        }
+
+        // ---- REMOVE DESIGNATION ----
+        async function removeDesignation(id) {
+            if (!confirm('Remove this designation?')) return;
+            try {
+                await deleteItem('designations', id);
+                await renderDesignations();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ---- REMOVE PHASE ----
+        async function removePhase(id) {
+            if (!confirm('Remove this work phase?')) return;
+            try {
+                await deleteItem('phases', id);
+                await renderPhases();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ---- REMOVE SALARY SETTING ----
+        async function removeSalarySetting(id) {
+            if (!confirm('Remove this salary setting?')) return;
+            try {
+                await deleteItem('salarySettings', id);
+                await renderSalarySettings();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ---- REMOVE PRIZE SETTING ----
+        async function removePrizeSetting(id) {
+            if (!confirm('Remove this prize setting?')) return;
+            try {
+                await deleteItem('prizeSettings', id);
+                document.getElementById('prizeRate').value = '';
+                await renderPrizeSettings();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ---- Real-time validation and word conversion for salary value name ----
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'salaryValueName') {
+                const value = e.target.value;
+                const hint = document.getElementById('salaryValueHint');
+
+                // Validate format
+                if (value) {
+                    if (!/^[a-zA-Z0-9.\s_]*$/.test(value)) {
+                        hint.style.color = '#dc3545';
+                        hint.textContent = '❌ Only letters, numbers, dots, spaces, and underscores allowed';
+                    } else {
+                        hint.style.color = '#28a745';
+                        hint.textContent = '✅ Valid format';
+                        // Convert to words
+                        convertValueNameToWords(value);
+                    }
+                } else {
+                    hint.style.color = '#6c757d';
+                    hint.textContent = 'e.g. 10.900 kg, 5.5 hours, 100 gram';
+                    document.getElementById('salaryValueWord').style.display = 'none';
+                }
+            }
+        });
+
+        // ---- Auto-load prize rate when project changes ----
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'prizeProjectSelect') {
+                renderPrizeSettings();
+            }
+        });
+
+        // ---- INIT ----
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load settings (if any)
+            if (typeof loadSettings === 'function') {
+                await loadSettings();
+            }
+
+            try {
+                await ensureStores();
+            } catch (e) {
+                console.warn('store upgrade issue, continuing', e);
+            }
+
+            try {
+                await openDB();
+            } catch (e) {
+                console.warn('openDB issue', e);
+            }
+
+            await loadProjectSelects();
+            await renderDesignations();
+            await renderPhases();
+            await renderSalarySettings();
+            await renderPrizeSettings();
+
+            // Event listeners
+            document.getElementById('addDesignationBtn').addEventListener('click', addDesignation);
+            document.getElementById('designationInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addDesignation();
+            });
+
+            document.getElementById('addPhaseBtn').addEventListener('click', addPhase);
+            document.getElementById('phaseNameInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addPhase();
+            });
+
+            document.getElementById('phaseProjectSelect').addEventListener('change', function() {
+                renderPhases();
+            });
+
+            document.getElementById('addSalarySettingBtn').addEventListener('click', addSalarySetting);
+            document.getElementById('salaryValueName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addSalarySetting();
+            });
+            document.getElementById('salaryRate').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addSalarySetting();
+            });
+
+            document.getElementById('salaryProjectSelect').addEventListener('change', function() {
+                renderSalarySettings();
+            });
+
+            document.getElementById('addPrizeSettingBtn').addEventListener('click', addPrizeSetting);
+            document.getElementById('prizeRate').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addPrizeSetting();
+            });
+
+            // Expose globally for onclick
+            window.removeDesignation = removeDesignation;
+            window.removePhase = removePhase;
+            window.removeSalarySetting = removeSalarySetting;
+            window.removePrizeSetting = removePrizeSetting;
+        });
+    </script>
+</body>
+
+</html>

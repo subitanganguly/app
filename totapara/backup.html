@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Restore</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+
+    <div class="main-wrapper">
+
+
+        <!-- PAGE CONTENT -->
+
+        <main class="container-fluid p-4">
+
+
+            <!-- HEADER -->
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+                    <h3 class="mb-1">
+                        <i class="bi bi-database text-primary me-2"></i>Backup & Restore
+                    </h3>
+                    <p class="text-muted mb-0">
+                        Download database backup or import from JSON file or cloud
+                    </p>
+                </div>
+
+                <!-- Only show for admin -->
+                <div id="adminActions" style="display:none;">
+                    <a href="users.html" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-people me-1"></i> Manage Users
+                    </a>
+                </div>
+
+            </div>
+
+
+            <div class="row g-4">
+
+                <!-- DOWNLOAD BACKUP (Local) -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <i class="bi bi-download me-2 text-success"></i>Download Backup
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3" style="width:60px;height:60px;align-items:center;justify-content:center;font-size:28px;color:#28a745;">
+                                <i class="bi bi-database-down"></i>
+                            </div>
+                            <h5>Export Database</h5>
+                            <p class="text-muted mb-3">
+                                Download all data as a JSON file.
+                            </p>
+                            <div class="mb-2">
+                                <span class="badge bg-secondary" id="backupStoreCount">0 stores</span>
+                                <span class="badge bg-primary ms-2" id="backupRecordCount">0 records</span>
+                            </div>
+                            <button class="btn btn-success w-100" id="downloadBackupBtn">
+                                <i class="bi bi-download me-2"></i>Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BACKUP TO CLOUD (Upload) -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <i class="bi bi-cloud-upload me-2 text-primary"></i>Backup to Cloud
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3" style="width:60px;height:60px;align-items:center;justify-content:center;font-size:28px;color:#0d6efd;">
+                                <i class="bi bi-cloud-upload"></i>
+                            </div>
+                            <h5>Upload to Cloud</h5>
+                            <p class="text-muted mb-3">
+                                Upload backup to Google Drive.
+                            </p>
+                            <div class="mx-auto" >
+                                <input
+                                    type="password"
+                                    id="cloudUploadPassword"
+                                    class="form-control mb-2"
+                                    placeholder="Enter password">
+                            </div>
+                            <button class="btn btn-primary w-100" id="cloudUploadBtn">
+                                <i class="bi bi-cloud-upload me-2"></i>Upload
+                            </button>
+                            <div class="mt-2" id="cloudUploadStatus"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DOWNLOAD CLOUD BACKUP (Google Drive direct link) -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <i class="bi bi-cloud-download me-2 text-warning"></i>Download Cloud Backup
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3" style="width:60px;height:60px;align-items:center;justify-content:center;font-size:28px;color:#ffc107;">
+                                <i class="bi bi-cloud-download"></i>
+                            </div>
+                            <h5>Download from Google Drive</h5>
+                            <p class="text-muted mb-3">
+                                Get the latest cloud backup file.
+                            </p>
+                            <a href="https://drive.google.com/uc?export=download&id=1vf2aRyx5WPjTISuaEjgEF2u0LzwJlq57" 
+                               class="btn btn-warning w-100" 
+                               target="_blank" 
+                               rel="noopener noreferrer">
+                                <i class="bi bi-cloud-arrow-down me-2"></i>Download
+                            </a>
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-info-circle"></i> Direct download from cloud
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Second row: Restore from File -->
+            <div class="row g-4 mt-3">
+                <div class="col-md-6 offset-md-3">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <i class="bi bi-upload me-2 text-primary"></i>Restore from File
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3" style="width:60px;height:60px;align-items:center;justify-content:center;font-size:28px;color:#0d6efd;">
+                                <i class="bi bi-upload"></i>
+                            </div>
+                            <h5>Restore from File</h5>
+                            <p class="text-muted mb-3">
+                                Upload a JSON backup file to restore.
+                                <strong class="text-danger">Replaces all data!</strong>
+                            </p>
+                            <div class="border border-2 border-dashed rounded p-4 text-center cursor-pointer bg-light" id="dropZone" style="cursor:pointer;border-style:dashed !important;">
+                                <i class="bi bi-cloud-upload fs-2 d-block mb-2 text-muted"></i>
+                                <p class="mb-0"><strong>Click</strong> or drag & drop</p>
+                                <p class="text-muted small mb-0">JSON files only</p>
+                                <input
+                                    type="file"
+                                    id="fileInput"
+                                    accept=".json"
+                                    style="display:none;">
+                            </div>
+
+                            <div class="bg-info bg-opacity-10 rounded p-3 mt-3" id="fileInfo" style="display:none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-filetype-json text-primary me-2"></i>
+                                        <span class="fw-semibold text-primary" id="fileName">file.json</span>
+                                    </div>
+                                    <span class="badge bg-success" id="fileStoreCount">0 stores</span>
+                                </div>
+                                <div class="mt-1 text-start">
+                                    <small class="text-muted">Stores found:</small>
+                                    <div class="mt-1" id="fileStoreList" style="max-height:200px;overflow-y:auto;"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3" id="progressContainer" style="display:none;">
+                                <div class="progress" style="height:6px;">
+                                    <div
+                                        class="progress-bar progress-bar-striped progress-bar-animated"
+                                        id="importProgress"
+                                        role="progressbar"
+                                        style="width: 0%">
+                                        0%
+                                    </div>
+                                </div>
+                                <p class="text-muted small mt-1" id="progressText">Importing...</p>
+                            </div>
+
+                            <button class="btn btn-primary w-100 mt-2" id="importBtn" disabled>
+                                <i class="bi bi-upload me-2"></i>Import & Replace
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STORE LIST SECTION -->
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <i class="bi bi-list-ul me-2 text-secondary"></i>Database Stores
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="storeStats">
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeProjects">0</div>
+                                <div class="small text-muted"><i class="bi bi-folder me-1"></i>Projects</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeEmployees">0</div>
+                                <div class="small text-muted"><i class="bi bi-people me-1"></i>Employees</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeDesignations">0</div>
+                                <div class="small text-muted"><i class="bi bi-tags me-1"></i>Designations</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storePhases">0</div>
+                                <div class="small text-muted"><i class="bi bi-clock me-1"></i>Phases</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeAttendance">0</div>
+                                <div class="small text-muted"><i class="bi bi-clipboard-check me-1"></i>Attendance</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeSalarySettings">0</div>
+                                <div class="small text-muted"><i class="bi bi-currency-rupee me-1"></i>Salary Settings</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeExpenses">0</div>
+                                <div class="small text-muted"><i class="bi bi-wallet2 me-1"></i>Expenses</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storePrizeSettings">0</div>
+                                <div class="small text-muted"><i class="bi bi-trophy me-1"></i>Prize Settings</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeCompanyPrize">0</div>
+                                <div class="small text-muted"><i class="bi bi-trophy-fill me-1"></i>Company Prize</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <div class="h3 mb-0 text-primary" id="storeUsers">0</div>
+                                <div class="small text-muted"><i class="bi bi-people-fill me-1"></i>Users</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>      
+        </main>
+
+    </div>
+
+
+    <!-- Bootstrap JS -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+
+    <!-- Include -->
+
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+
+    <script>
+        // =====================================================
+        // BACKUP & RESTORE
+        // =====================================================
+
+        // =====================================================
+        // CHECK AUTHENTICATION
+        // =====================================================
+
+        let currentUser = null;
+
+        function checkAuth() {
+            const user = requireAuth();
+            if (!user) return;
+            currentUser = user;
+            
+            // Show admin actions if user is admin
+            if (user.isAdmin) {
+                document.getElementById('adminActions').style.display = 'block';
+            }
+            
+            // Check if user has backup permission
+            checkBackupPermission();
+        }
+
+        async function checkBackupPermission() {
+            if (!currentUser) return;
+            
+            // If admin, always allow
+            if (currentUser.isAdmin) return;
+            
+            // Check if user has backup permission
+            const hasPermission = await canAccessPage(currentUser.userId, 'backup');
+            if (!hasPermission) {
+                // Redirect to dashboard or show access denied
+                alert('Access Denied: You do not have permission to access Backup & Restore.');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // =====================================================
+        // STORE NAMES (INCLUDING USERS)
+        // =====================================================
+
+        const STORE_NAMES = [
+            'projects',
+            'employees',
+            'designations',
+            'phases',
+            'attendance',
+            'salarySettings',
+            'expenses',
+            'prizeSettings',
+            'companyPrize',
+            'users'  // Added users store
+        ];
+
+        const STORE_DISPLAY_NAMES = {
+            projects: 'Projects',
+            employees: 'Employees',
+            designations: 'Designations',
+            phases: 'Phases',
+            attendance: 'Attendance',
+            salarySettings: 'Salary Settings',
+            expenses: 'Expenses',
+            prizeSettings: 'Prize Settings',
+            companyPrize: 'Company Prize',
+            users: 'Users'  // Added users display name
+        };
+
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzk-HhwqfQ-wKfDu8jtsTtdT-yffTPgA66c5kNwfGknn3IiplYjjenQkXa7y5Zh8R2NnA/exec';
+
+
+        // =====================================================
+        // SAFE HTML ESCAPE
+        // =====================================================
+
+        function escapeHTML(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+
+        // =====================================================
+        // GET ALL DATA FROM A STORE
+        // =====================================================
+
+        async function getAllData(storeName) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.close();
+                    resolve([]);
+                    return;
+                }
+                const transaction = db.transaction(storeName, 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                request.onerror = function() {
+                    reject(request.error);
+                };
+                transaction.oncomplete = function() {
+                    db.close();
+                };
+            });
+        }
+
+
+        // =====================================================
+        // GET STORE COUNT
+        // =====================================================
+
+        async function getStoreCount(storeName) {
+            const data = await getAllData(storeName);
+            return data.length;
+        }
+
+
+        // =====================================================
+        // DELETE ALL DATA FROM A STORE
+        // =====================================================
+
+        async function deleteAllData(storeName) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.close();
+                    resolve();
+                    return;
+                }
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.clear();
+                request.onsuccess = function() {
+                    resolve();
+                };
+                request.onerror = function() {
+                    reject(request.error);
+                };
+                transaction.oncomplete = function() {
+                    db.close();
+                };
+            });
+        }
+
+
+        // =====================================================
+        // INSERT DATA INTO A STORE
+        // =====================================================
+
+        async function insertData(storeName, data) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+
+                let count = 0;
+                if (data && data.length > 0) {
+                    data.forEach(function(item) {
+                        const request = store.add(item);
+                        request.onsuccess = function() {
+                            count++;
+                        };
+                        request.onerror = function() {
+                            reject(request.error);
+                        };
+                    });
+                }
+
+                transaction.oncomplete = function() {
+                    db.close();
+                    resolve(count);
+                };
+                transaction.onerror = function() {
+                    reject(transaction.error);
+                };
+            });
+        }
+
+
+        // =====================================================
+        // UPDATE STORE STATS
+        // =====================================================
+
+        async function updateStoreStats() {
+            try {
+                var counts = {};
+                for (var i = 0; i < STORE_NAMES.length; i++) {
+                    var store = STORE_NAMES[i];
+                    counts[store] = await getStoreCount(store);
+                }
+
+                document.getElementById('storeProjects').textContent = counts.projects || 0;
+                document.getElementById('storeEmployees').textContent = counts.employees || 0;
+                document.getElementById('storeDesignations').textContent = counts.designations || 0;
+                document.getElementById('storePhases').textContent = counts.phases || 0;
+                document.getElementById('storeAttendance').textContent = counts.attendance || 0;
+                document.getElementById('storeSalarySettings').textContent = counts.salarySettings || 0;
+                document.getElementById('storeExpenses').textContent = counts.expenses || 0;
+                document.getElementById('storePrizeSettings').textContent = counts.prizeSettings || 0;
+                document.getElementById('storeCompanyPrize').textContent = counts.companyPrize || 0;
+                document.getElementById('storeUsers').textContent = counts.users || 0;
+
+                var totalRecords = 0;
+                for (var key in counts) {
+                    totalRecords += counts[key];
+                }
+                var totalStores = STORE_NAMES.length;
+                document.getElementById('backupStoreCount').textContent = totalStores + ' stores';
+                document.getElementById('backupRecordCount').textContent = totalRecords + ' records';
+
+            } catch (error) {
+                console.error('Error updating store stats:', error);
+            }
+        }
+
+
+        // =====================================================
+        // DOWNLOAD BACKUP (Local)
+        // =====================================================
+
+        async function downloadBackup() {
+            try {
+                var loadBtn = document.getElementById('downloadBackupBtn');
+                loadBtn.disabled = true;
+                loadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Preparing...';
+
+                var backupData = {};
+                var totalRecords = 0;
+
+                for (var i = 0; i < STORE_NAMES.length; i++) {
+                    var store = STORE_NAMES[i];
+                    var data = await getAllData(store);
+                    backupData[store] = data;
+                    totalRecords += data.length;
+                }
+
+                backupData.metadata = {
+                    appName: APP_NAME || 'tea-estate-management',
+                    exportedAt: new Date().toISOString(),
+                    version: DB_VERSION || 1,
+                    totalRecords: totalRecords,
+                    stores: STORE_NAMES
+                };
+
+                var json = JSON.stringify(backupData, null, 2);
+                var blob = new Blob([json], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'backup_' + new Date().toISOString().split('T')[0] + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                loadBtn.disabled = false;
+                loadBtn.innerHTML = '<i class="bi bi-download me-2"></i>Download';
+
+            } catch (error) {
+                console.error('Error downloading backup:', error);
+                alert('Error creating backup. Please try again.');
+                var loadBtn = document.getElementById('downloadBackupBtn');
+                loadBtn.disabled = false;
+                loadBtn.innerHTML = '<i class="bi bi-download me-2"></i>Download';
+            }
+        }
+
+
+        // =====================================================
+        // UPLOAD TO CLOUD (Google Drive)
+        // =====================================================
+
+        async function uploadToCloud() {
+            var password = document.getElementById('cloudUploadPassword').value.trim();
+            var statusDiv = document.getElementById('cloudUploadStatus');
+            var uploadBtn = document.getElementById('cloudUploadBtn');
+
+            if (!password) {
+                statusDiv.innerHTML = '<div class="alert alert-danger mb-0">Please enter the upload password.</div>';
+                return;
+            }
+
+            try {
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+                statusDiv.innerHTML = '<div class="alert alert-info mb-0">Preparing backup...</div>';
+
+                var backupData = {};
+                var totalRecords = 0;
+
+                for (var i = 0; i < STORE_NAMES.length; i++) {
+                    var store = STORE_NAMES[i];
+                    var data = await getAllData(store);
+                    backupData[store] = data;
+                    totalRecords += data.length;
+                }
+
+                backupData.metadata = {
+                    appName: APP_NAME || 'tea-estate-management',
+                    exportedAt: new Date().toISOString(),
+                    version: DB_VERSION || 1,
+                    totalRecords: totalRecords,
+                    stores: STORE_NAMES
+                };
+
+                var json = JSON.stringify(backupData, null, 2);
+                var base64 = btoa(unescape(encodeURIComponent(json)));
+
+                statusDiv.innerHTML = '<div class="alert alert-info mb-0">Uploading to cloud... Please wait.</div>';
+
+                var payload = {
+                    password: password,
+                    file: base64,
+                    fileName: 'backup_' + new Date().toISOString().split('T')[0] + '.json',
+                    mimeType: 'application/json'
+                };
+
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                statusDiv.innerHTML = `
+                    <div class="alert alert-success mb-0">
+                        Backup uploaded to cloud successfully!
+                        <div class="small text-muted mt-1 d-none"><strong>File:</strong> ${escapeHTML(payload.fileName)}</div>
+                    </div>
+                `;
+
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-cloud-upload me-2"></i>Upload';
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                statusDiv.innerHTML = '<div class="alert alert-danger mb-0">Upload failed: ' + escapeHTML(error.message) +
+                    '</div>';
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-cloud-upload me-2"></i>Upload';
+            }
+        }
+
+
+        // =====================================================
+        // PERFORM IMPORT (Local File)
+        // =====================================================
+
+        async function performImport(backupData) {
+            var stores = backupData.metadata.stores || STORE_NAMES;
+
+            var progressContainer = document.getElementById('progressContainer');
+            var progressBar = document.getElementById('importProgress');
+            var progressText = document.getElementById('progressText');
+            var importBtn = document.getElementById('importBtn');
+
+            progressContainer.style.display = 'block';
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Importing...';
+
+            var total = stores.length;
+            var completed = 0;
+
+            for (var i = 0; i < stores.length; i++) {
+                var store = stores[i];
+                progressText.textContent = 'Deleting existing data from ' + (STORE_DISPLAY_NAMES[store] || store) + '...';
+                await deleteAllData(store);
+
+                completed++;
+                var progress = Math.round((completed / total) * 50);
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = progress + '%';
+
+                var data = backupData[store] || [];
+                if (data.length > 0) {
+                    progressText.textContent = 'Importing ' + data.length + ' records to ' + (STORE_DISPLAY_NAMES[store] ||
+                        store) + '...';
+                    await insertData(store, data);
+                }
+
+                completed++;
+                var progress2 = Math.round((completed / (total * 2)) * 100);
+                progressBar.style.width = progress2 + '%';
+                progressBar.textContent = progress2 + '%';
+            }
+
+            progressText.textContent = 'Import completed successfully!';
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressBar.classList.remove('progress-bar-animated');
+
+            setTimeout(async function() {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0%';
+                progressBar.classList.add('progress-bar-animated');
+
+                importBtn.disabled = true;
+                importBtn.innerHTML = '<i class="bi bi-upload me-2"></i>Import & Replace';
+
+                document.getElementById('fileInfo').style.display = 'none';
+                document.getElementById('fileInput').value = '';
+
+                await updateStoreStats();
+
+                alert('Database restored successfully! All data has been replaced with the backup.');
+
+            }, 2000);
+        }
+
+
+        // =====================================================
+        // HANDLE FILE SELECTION (Local)
+        // =====================================================
+
+        function handleFile(file) {
+            var fileInfo = document.getElementById('fileInfo');
+            var fileName = document.getElementById('fileName');
+            var fileStoreList = document.getElementById('fileStoreList');
+            var fileStoreCount = document.getElementById('fileStoreCount');
+            var importBtn = document.getElementById('importBtn');
+
+            if (!file) {
+                fileInfo.style.display = 'none';
+                importBtn.disabled = true;
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = JSON.parse(e.target.result);
+
+                    if (!data.metadata || !data.metadata.stores) {
+                        alert('Invalid backup file. Missing metadata.');
+                        return;
+                    }
+
+                    fileName.textContent = file.name;
+
+                    var stores = data.metadata.stores || [];
+                    var totalRecords = data.metadata.totalRecords || 0;
+                    fileStoreCount.textContent = stores.length + ' stores, ' + totalRecords + ' records';
+
+                    fileStoreList.innerHTML = '';
+                    for (var i = 0; i < stores.length; i++) {
+                        var store = stores[i];
+                        var count = data[store] ? data[store].length : 0;
+                        var div = document.createElement('div');
+                        div.className = 'd-flex justify-content-between align-items-center border-bottom py-1';
+                        div.innerHTML =
+                            '<span class="fw-medium small">' + (STORE_DISPLAY_NAMES[store] || store) +
+                            '</span><span class="badge bg-secondary">' + count + ' records</span>';
+                        fileStoreList.appendChild(div);
+                    }
+
+                    fileInfo.style.display = 'block';
+                    importBtn.disabled = false;
+                    importBtn.dataset.backupData = JSON.stringify(data);
+
+                } catch (error) {
+                    alert('Invalid JSON file. Please select a valid backup file.');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+
+        // =====================================================
+        // IMPORT BACKUP (Local)
+        // =====================================================
+
+        async function importBackup() {
+            var importBtn = document.getElementById('importBtn');
+            var dataStr = importBtn.dataset.backupData;
+
+            if (!dataStr) {
+                alert('No backup data to import.');
+                return;
+            }
+
+            var confirmMsg = 'WARNING: This will DELETE ALL existing data and replace it with the backup data. This action cannot be undone!\n\nAre you sure you want to continue?';
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            try {
+                var backupData = JSON.parse(dataStr);
+                await performImport(backupData);
+            } catch (error) {
+                console.error('Error importing backup:', error);
+                alert('Error importing backup. Please try again.');
+
+                var importBtn = document.getElementById('importBtn');
+                importBtn.disabled = false;
+                importBtn.innerHTML = '<i class="bi bi-upload me-2"></i>Import & Replace';
+
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        }
+
+
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            async function() {
+
+                try {
+
+                    await loadSettings();
+                    await openDB();
+                    
+                    // Check authentication and permissions
+                    checkAuth();
+
+                    await updateStoreStats();
+
+                    document.getElementById('downloadBackupBtn').addEventListener('click', downloadBackup);
+                    document.getElementById('cloudUploadBtn').addEventListener('click', uploadToCloud);
+
+                    var fileInput = document.getElementById('fileInput');
+                    var dropZone = document.getElementById('dropZone');
+
+                    dropZone.addEventListener('click', function() {
+                        fileInput.click();
+                    });
+
+                    fileInput.addEventListener('change', function(e) {
+                        if (this.files && this.files[0]) {
+                            handleFile(this.files[0]);
+                        }
+                    });
+
+                    dropZone.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        this.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+                    });
+
+                    dropZone.addEventListener('dragleave', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+                    });
+
+                    dropZone.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            fileInput.files = e.dataTransfer.files;
+                            handleFile(e.dataTransfer.files[0]);
+                        }
+                    });
+
+                    document.getElementById('importBtn').addEventListener('click', importBackup);
+
+                } catch (error) {
+
+                    console.error(
+                        "Backup initialization error:",
+                        error
+                    );
+
+                }
+
+            }
+        );
+    </script>
+</body>
+
+</html>

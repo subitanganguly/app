@@ -1,0 +1,187 @@
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
+
+<aside id="sidebar" class="sidebar">
+
+    <!-- Logo -->
+ <!-- Add this in your sidebar header/logo section -->
+<div class="sidebar-header p-1 w-100">
+    <div>
+        <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle me-2"></i>
+            <div>
+                <div id="sidebarUserDisplay" class="fw-bold small">Loading...</div>
+                <span id="sidebarUserBadge" class="badge bg-secondary">User</span>
+            </div>
+        </div>
+      
+    </div>
+</div>
+
+    <hr>
+
+
+    <!-- Navigation -->
+<nav class="sidebar-nav">
+    <ul class="nav flex-column">
+        <li class="nav-item d-none" data-page="dashboard">
+            <a class="nav-link" href="index.html">
+                <i class="bi bi-grid-1x2 me-2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item d-none" data-page="projects">
+            <a class="nav-link" href="projects.html">
+                <i class="bi bi-kanban me-2"></i> Projects
+            </a>
+        </li>
+        <li class="nav-item d-none" data-page="employees">
+            <a class="nav-link" href="employees.html">
+                <i class="bi bi-people me-2"></i> Employees
+            </a>
+        </li>
+<li class="nav-item">
+    <a class="nav-link d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       href="#attendanceMenu"
+       role="button"
+       aria-expanded="false"
+       aria-controls="attendanceMenu">
+
+        <span>
+            <i class="bi bi-calendar-check me-2"></i>
+            Attendance
+        </span>
+
+        <i class="bi bi-chevron-down small"></i>
+    </a>
+
+    <div class="collapse" id="attendanceMenu">
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item d-none" data-page="attendance">
+                <a class="nav-link" href="attendance.html">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Attendance
+                </a>
+            </li>
+
+            <li class="nav-item d-none" data-page="auto-attendance">
+                <a class="nav-link" href="auto-attendance.html">
+                    <i class="bi bi-qr-code-scan me-2"></i>
+                    Auto Attendance
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
+        <li class="nav-item d-none" data-page="salary">
+            <a class="nav-link" href="salary.html">
+                <i class="bi bi-cash-stack me-2"></i> Salary
+            </a>
+        </li>
+        <li class="nav-item d-none" data-page="expenses">
+            <a class="nav-link" href="expenses.html">
+                <i class="bi bi-wallet2 me-2"></i> Expenses
+            </a>
+        </li>
+ <li class="nav-item">
+
+    <a class="nav-link d-flex justify-content-between align-items-center"
+       data-bs-toggle="collapse"
+       href="#companyMenu"
+       role="button"
+       aria-expanded="false"
+       aria-controls="companyMenu">
+
+        <span>
+            <i class="bi bi-building me-2"></i>
+            Pricing
+        </span>
+
+        <i class="bi bi-chevron-down small"></i>
+    </a>
+
+    <div class="collapse" id="companyMenu">
+
+        <ul class="nav flex-column ms-3">
+
+            <li class="nav-item d-none" data-page="company-prize">
+                <a class="nav-link" href="company-prize.html">
+                    <i class="bi bi-award me-2"></i>
+                    Company Price
+                </a>
+            </li>
+
+            <li class="nav-item d-none" data-page="find-costing">
+                <a class="nav-link" href="find-costing.html">
+                    <i class="bi bi-search me-2"></i>
+                    Find Price
+                </a>
+            </li>
+
+        </ul>
+
+    </div>
+
+</li>
+        <li class="nav-item d-none" data-page="backup">
+            <a class="nav-link" href="backup.html">
+                <i class="bi bi-database me-2"></i> Backup & Restore
+            </a>
+        </li>
+        <!-- Admin only -->
+        <li class="nav-item d-none admin-only" data-page="users">
+            <a class="nav-link" href="users.html">
+                <i class="bi bi-people-fill me-2"></i> Users
+            </a>
+        </li>
+        <li class="nav-item d-none" data-page="settings">
+            <a class="nav-link" href="settings.html">
+                <i class="bi bi-gear me-2"></i> Settings
+            </a>
+        </li>
+    </ul>
+</nav>
+
+      <button class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="logoutUser()">
+            <i class="bi bi-box-arrow-right me-1"></i> Logout
+        </button>
+
+ 
+
+
+    <!-- Bottom -->
+    <div class="sidebar-bottom">
+
+        <div class="small text-secondary">
+            <i class="bi bi-database me-1"></i>
+            Offline Database
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =====================================================
+     TOP NAVBAR
+===================================================== -->
+
+<nav class="top-navbar navbar">
+
+    <div class="container-fluid">
+
+        <button
+            class="btn btn-dark d-lg-none ms-auto"
+            id="mobileMenuBtn"
+            type="button"
+        >
+            <i class="bi bi-list"></i>
+        </button>
+
+    </div>
+
+</nav>

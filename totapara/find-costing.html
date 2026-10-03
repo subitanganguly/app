@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Costing</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Include -->
+    <script src="js/include.js"></script>
+    <!-- Central Database -->
+    <script src="js/db.js"></script>
+
+    <style>
+        /* minimal custom – everything else is Bootstrap */
+        .costing-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .costing-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eef2f6;
+            font-weight: 600;
+        }
+        .stat-box {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .stat-box .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .stat-box .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .stat-box.expense .stat-number {
+            color: #dc3545;
+        }
+        .stat-box.salary .stat-number {
+            color: #28a745;
+        }
+        .stat-box.grand .stat-number {
+            color: #ffc107;
+        }
+        .stat-box.perkg .stat-number {
+            color: #6f42c1;
+        }
+        .costing-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .costing-item:hover {
+            background: #f8f9fa;
+        }
+        .costing-amount {
+            font-weight: 600;
+        }
+        .costing-amount.expense {
+            color: #dc3545;
+        }
+        .costing-amount.salary {
+            color: #28a745;
+        }
+        .phase-badge {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: #d4edda;
+            color: #155724;
+        }
+        .grand-total-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .perkg-highlight {
+            background: #e7f1ff;
+            border: 2px solid #0d6efd;
+            border-radius: 8px;
+            padding: 10px 15px;
+            text-align: center;
+        }
+        .perkg-highlight .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .prize-form-box {
+            background: #e7f1ff;
+            border: 2px solid #0d6efd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR placeholder (dummy) -->
+    <div id="sidebar-container"></div>
+
+    <div class="main-wrapper">
+        <main class="container-fluid p-4">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1"><i class="bi bi-calculator text-primary me-2"></i>Find Costing</h3>
+                    <p class="text-muted mb-0">View project-wise expense and phase wise salary costing</p>
+                </div>
+            </div>
+
+            <!-- FILTER SECTION -->
+            <div class="card costing-card mb-4">
+                <div class="card-header bg-white"><i class="bi bi-funnel me-2 text-secondary"></i>Filter Costing</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold"><i class="bi bi-folder me-1"></i>Project</label>
+                            <select id="costingProject" class="form-select">
+                                <option value="">-- Select Project --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i>From Date</label>
+                            <input type="date" id="costingFromDate" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i>To Date</label>
+                            <input type="date" id="costingToDate" class="form-control">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" id="loadCostingBtn"><i class="bi bi-search me-1"></i> Load</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUMMARY -->
+            <div class="row g-3 mb-4" id="summarySection" style="display:none;">
+                <div class="col-md-3 col-6">
+                    <div class="stat-box"><div class="stat-number" id="totalExpenses">0</div><div class="stat-label"><i class="bi bi-currency-rupee stat-icon"></i>Total Expenses</div></div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-box salary"><div class="stat-number" id="totalSalary">0</div><div class="stat-label"><i class="bi bi-people stat-icon"></i>Phase Wise Salary</div></div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-box grand"><div class="stat-number" id="grandTotal">0</div><div class="stat-label"><i class="bi bi-currency-rupee stat-icon"></i>Grand Total</div></div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-box perkg"><div class="stat-number" id="perKgCost">0</div><div class="stat-label"><i class="bi bi-tag stat-icon"></i>Per Kg Cost</div></div>
+                </div>
+            </div>
+
+            <!-- PRIZE FORM CARD -->
+            <div class="card costing-card mb-4" id="prizeFormCard" style="display:none;">
+                <div class="card-header bg-white"><i class="bi bi-trophy me-2 text-warning"></i>Prize Form</div>
+                <div class="card-body">
+                    <div class="prize-form-box">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-calendar3 me-1"></i>Date</label>
+                                <input type="date" id="prizeDate" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-folder me-1"></i>Project</label>
+                                <input type="text" id="prizeProjectName" class="form-control" readonly placeholder="Project name">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-tag me-1"></i>Per kg Prize (Setting)</label>
+                                <input type="number" id="prizePerKgSetting" class="form-control" readonly step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-calculator me-1"></i>Per Kg Costing</label>
+                                <input type="number" id="prizePerKgCosting" class="form-control" readonly step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-arrow-right me-1"></i>Total Per Kg</label>
+                                <input type="number" id="prizeTotalPerKg" class="form-control" readonly step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-box me-1"></i>Total Collected kg</label>
+                                <input type="number" id="prizeTotalKg" class="form-control" readonly step="0.001">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-currency-rupee me-1"></i>Total Prize Amount</label>
+                                <input type="number" id="prizeTotalAmount" class="form-control" readonly step="0.01">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-success w-100" id="savePrizeBtn"><i class="bi bi-save me-1"></i> Save Prize</button>
+                            </div>
+                        </div>
+                        <div id="prizeFormError" class="text-danger small mt-2"></div>
+                        <div id="prizeFormSuccess" class="text-success small mt-2" style="display:none;"><i class="bi bi-check-circle me-1"></i> Prize saved successfully!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COSTING DETAILS -->
+            <div class="card costing-card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-list-ul me-2"></i>Costing Details</span>
+                    <span><span class="badge bg-primary" id="costingCount">0</span> <span class="badge bg-secondary ms-2" id="costingDateRange">-</span></span>
+                </div>
+                <div class="card-body p-0" id="costingContainer">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                        <h5>No Data</h5>
+                        <p>Select a project and date range to load costing data.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Bootstrap JS (needed for some interactions) -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ============================================================
+        // FIND COSTING – Uses central db.js (STORES, openDB, etc.)
+        // ============================================================
+
+        // Ensure STORES is available from db.js
+        const PROJECT_STORE = STORES.PROJECTS;
+        const EXPENSE_STORE = STORES.EXPENSES;
+        const ATTENDANCE_STORE = STORES.ATTENDANCE;
+        const PRIZE_SETTINGS_STORE = STORES.PRIZE_SETTINGS;
+        const COMPANY_PRIZE_STORE = STORES.COMPANY_PRIZE;
+
+        let currentCostingData = {};
+        let currentTotals = {}; // Store totals for checkbox toggle
+
+        // ============================================================
+        // HELPERS (using central db.js functions)
+        // ============================================================
+
+        async function getProjects() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(PROJECT_STORE, 'readonly');
+                const req = tx.objectStore(PROJECT_STORE).getAll();
+                req.onsuccess = () => { db.close(); resolve(req.result); };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        async function getAllExpenses() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(EXPENSE_STORE, 'readonly');
+                const req = tx.objectStore(EXPENSE_STORE).getAll();
+                req.onsuccess = () => { db.close(); resolve(req.result); };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        async function getAllAttendance() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(ATTENDANCE_STORE, 'readonly');
+                const req = tx.objectStore(ATTENDANCE_STORE).getAll();
+                req.onsuccess = () => { db.close(); resolve(req.result); };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        async function getPrizeSetting(projectId) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(PRIZE_SETTINGS_STORE, 'readonly');
+                const index = tx.objectStore(PRIZE_SETTINGS_STORE).index('projectId');
+                const req = index.get(parseInt(projectId));
+                req.onsuccess = () => { db.close(); resolve(req.result || null); };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        async function saveCompanyPrize(data) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(COMPANY_PRIZE_STORE, 'readwrite');
+                const req = tx.objectStore(COMPANY_PRIZE_STORE).add(data);
+                req.onsuccess = () => { db.close(); resolve(req.result); };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        async function getCompanyPrizeByDateProject(projectId, date) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(COMPANY_PRIZE_STORE, 'readonly');
+                const index = tx.objectStore(COMPANY_PRIZE_STORE).index('projectDate');
+                const req = index.getAll([parseInt(projectId), date]);
+                req.onsuccess = () => {
+                    db.close();
+                    resolve(req.result || []);
+                };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        async function deleteCompanyPrize(id) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(COMPANY_PRIZE_STORE, 'readwrite');
+                const req = tx.objectStore(COMPANY_PRIZE_STORE).delete(id);
+                req.onsuccess = () => { db.close(); resolve(); };
+                req.onerror = () => { db.close(); reject(req.error); };
+            });
+        }
+
+        // ============================================================
+        // APP LOGIC
+        // ============================================================
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('costingFromDate').value = today;
+            document.getElementById('costingToDate').value = today;
+        }
+
+        async function loadProjects() {
+            try {
+                const projects = await getProjects();
+                const select = document.getElementById('costingProject');
+                select.innerHTML = '<option value="">-- Select Project --</option>';
+                projects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('Error loading projects:', e);
+            }
+        }
+
+        async function updatePrizeForm(projectId, fromDate, toDate, totalCollectedValue, perKgCost, includeExpenses) {
+            const formCard = document.getElementById('prizeFormCard');
+            const errorEl = document.getElementById('prizeFormError');
+            const successEl = document.getElementById('prizeFormSuccess');
+            successEl.style.display = 'none';
+            errorEl.textContent = '';
+
+            // Only show if same date
+            if (fromDate !== toDate || !projectId) {
+                formCard.style.display = 'none';
+                return;
+            }
+            formCard.style.display = 'block';
+
+            document.getElementById('prizeDate').value = fromDate;
+
+            // Get project name
+            const projects = await getProjects();
+            const proj = projects.find(p => p.id == projectId);
+            document.getElementById('prizeProjectName').value = proj ? proj.name : '';
+
+            // Get prize setting
+            const prizeSetting = await getPrizeSetting(projectId);
+            const perKgSetting = prizeSetting ? prizeSetting.rate : 0;
+
+            // Use the perKgCost passed (which already accounts for includeExpenses)
+            document.getElementById('prizePerKgSetting').value = perKgSetting.toFixed(2);
+            document.getElementById('prizePerKgCosting').value = perKgCost.toFixed(2);
+            const totalPerKg = perKgSetting + perKgCost;
+            document.getElementById('prizeTotalPerKg').value = totalPerKg.toFixed(2);
+            document.getElementById('prizeTotalKg').value = totalCollectedValue.toFixed(3);
+            const totalAmount = totalPerKg * totalCollectedValue;
+            document.getElementById('prizeTotalAmount').value = totalAmount.toFixed(2);
+
+            currentCostingData = {
+                projectId: parseInt(projectId),
+                date: fromDate,
+                perKgSetting,
+                perKgCosting: perKgCost,
+                totalPerKg,
+                totalKg: totalCollectedValue,
+                totalAmount,
+                includeExpenses: includeExpenses
+            };
+        }
+
+        async function savePrize() {
+            const errorEl = document.getElementById('prizeFormError');
+            const successEl = document.getElementById('prizeFormSuccess');
+            errorEl.textContent = '';
+            successEl.style.display = 'none';
+
+            if (!currentCostingData.projectId) {
+                errorEl.textContent = 'No costing data. Load first.';
+                return;
+            }
+            if (currentCostingData.totalKg <= 0) {
+                errorEl.textContent = 'Total collected kg is zero.';
+                return;
+            }
+
+            const { projectId, date, perKgSetting, perKgCosting, totalPerKg, totalKg, totalAmount } = currentCostingData;
+
+            try {
+                // Check existing
+                const existing = await getCompanyPrizeByDateProject(projectId, date);
+                if (existing.length > 0) {
+                    if (!confirm(`Already have a Company Prize on ${date}. Overwrite?`)) {
+                        return;
+                    }
+                    for (let e of existing) {
+                        await deleteCompanyPrize(e.id);
+                    }
+                }
+
+                await saveCompanyPrize({
+                    projectId,
+                    date,
+                    perKgSetting,
+                    perKgCosting,
+                    totalPerKg,
+                    totalKg,
+                    totalAmount,
+                    createdAt: new Date().toISOString()
+                });
+
+                successEl.style.display = 'block';
+                successEl.innerHTML = `<i class="bi bi-check-circle me-1"></i> Prize saved! ₹${totalAmount.toFixed(2)}`;
+            } catch (e) {
+                errorEl.textContent = 'Error saving prize: ' + e.message;
+            }
+        }
+
+        async function loadCosting() {
+            const projectId = document.getElementById('costingProject').value;
+            const fromDate = document.getElementById('costingFromDate').value;
+            const toDate = document.getElementById('costingToDate').value;
+            const container = document.getElementById('costingContainer');
+            const summary = document.getElementById('summarySection');
+            const prizeCard = document.getElementById('prizeFormCard');
+            prizeCard.style.display = 'none';
+
+            if (!projectId || !fromDate || !toDate) {
+                container.innerHTML =
+                    `<div class="text-center py-5 text-muted"><i class="bi bi-inbox display-4 d-block mb-3"></i><h5>Missing filter</h5></div>`;
+                summary.style.display = 'none';
+                return;
+            }
+
+            try {
+                const allExpenses = await getAllExpenses();
+                const projectExpenses = allExpenses.filter(e =>
+                    e.projectId == projectId && e.date >= fromDate && e.date <= toDate
+                );
+
+                const allAttendance = await getAllAttendance();
+                const projectAttendance = allAttendance.filter(a =>
+                    a.projectId == projectId && a.date >= fromDate && a.date <= toDate
+                );
+
+                let totalExpenses = projectExpenses.reduce((s, e) => s + e.amount, 0);
+                let totalSalary = 0,
+                    totalCollectedValue = 0;
+                let attendanceDetails = [];
+
+                projectAttendance.forEach(record => {
+                    if (record.records && Array.isArray(record.records)) {
+                        record.records.forEach(r => {
+                            // Only Phase Wise
+                            if (r.employeeType === 'Phase Wise' && r.status === 'present') {
+                                const salary = r.salaryAmount || 0;
+                                const progress = parseFloat(r.progressValue) || 0;
+                                totalSalary += salary;
+                                totalCollectedValue += progress;
+                                attendanceDetails.push({
+                                    date: record.date,
+                                    phaseId: record.phaseId,
+                                    employeeName: r.employeeName,
+                                    employeeCode: r.employeeCode,
+                                    employeeType: 'Phase Wise',
+                                    progressValue: progress,
+                                    salaryAmount: salary,
+                                    status: r.status
+                                });
+                            }
+                        });
+                    }
+                });
+
+                // Store totals for checkbox toggle
+                currentTotals = {
+                    totalExpenses,
+                    totalSalary,
+                    totalCollectedValue,
+                    attendanceDetails,
+                    projectExpenses,
+                    projectId,
+                    fromDate,
+                    toDate
+                };
+
+                const grandTotal = totalExpenses + totalSalary;
+                const perKgCost = totalCollectedValue > 0 ? grandTotal / totalCollectedValue : 0;
+
+                document.getElementById('totalExpenses').textContent = totalExpenses.toFixed(2);
+                document.getElementById('totalSalary').textContent = totalSalary.toFixed(2);
+                document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
+                document.getElementById('perKgCost').textContent = perKgCost.toFixed(2);
+                summary.style.display = 'flex';
+                document.getElementById('costingDateRange').textContent = `${fromDate} to ${toDate}`;
+
+                // Render details with includeExpenses = true (default)
+                renderCostingDetails(projectExpenses, attendanceDetails, totalExpenses, totalSalary, grandTotal,
+                    totalCollectedValue, perKgCost, true);
+
+                // Update prize form with includeExpenses = true
+                await updatePrizeForm(projectId, fromDate, toDate, totalCollectedValue, perKgCost, true);
+
+            } catch (e) {
+                console.error('Error loading costing:', e);
+                container.innerHTML = `<div class="text-center py-5 text-danger">${e.message || 'Error loading data'}</div>`;
+                summary.style.display = 'none';
+            }
+        }
+
+        function renderCostingDetails(expenses, attendance, totalExp, totalSal, grand, totalKg, perKg, includeExpenses) {
+            const container = document.getElementById('costingContainer');
+            document.getElementById('costingCount').textContent = expenses.length + attendance.length;
+
+            if (expenses.length === 0 && attendance.length === 0) {
+                container.innerHTML =
+                    `<div class="text-center py-5 text-muted"><i class="bi bi-inbox display-4 d-block mb-3"></i><h5>No Data</h5></div>`;
+                return;
+            }
+
+            let html = '<div class="list-group list-group-flush">';
+
+            // Expenses
+            if (expenses.length) {
+                html +=
+                    `<div class="list-group-item bg-light fw-semibold"><i class="bi bi-wallet2 me-2 text-danger"></i>Expenses (${expenses.length}) <span class="float-end text-danger">₹${totalExp.toFixed(2)}</span></div>`;
+                expenses.forEach(e => {
+                    html +=
+                        `<div class="list-group-item costing-item d-flex justify-content-between"><span><span class="badge bg-danger me-2">Expense</span> ${e.date} ${e.description||''}</span><span class="costing-amount expense">₹${e.amount.toFixed(2)}</span></div>`;
+                });
+            }
+
+            // Attendance (Phase Wise)
+            if (attendance.length) {
+                html +=
+                    `<div class="list-group-item bg-light fw-semibold mt-2"><i class="bi bi-people me-2 text-success"></i>Phase Wise Salaries (${attendance.length}) <span class="float-end text-success">₹${totalSal.toFixed(2)}</span></div>`;
+
+                const groups = {};
+                attendance.forEach(a => { groups[a.date] = groups[a.date] || [];
+                    groups[a.date].push(a); });
+                Object.keys(groups).sort().forEach(date => {
+                    const items = groups[date];
+                    const dateTotal = items.reduce((s, i) => s + i.salaryAmount, 0);
+                    const dateKg = items.reduce((s, i) => s + i.progressValue, 0);
+                    html +=
+                        `<div class="list-group-item bg-light bg-opacity-25 d-flex justify-content-between"><span><i class="bi bi-calendar3 me-1"></i>${date}</span><span>${dateKg.toFixed(3)} kg <span class="text-success fw-semibold">₹${dateTotal.toFixed(2)}</span></span></div>`;
+                    items.forEach(i => {
+                        html +=
+                            `<div class="list-group-item costing-item d-flex justify-content-between"><span><span class="badge bg-success me-2">Salary</span> ${i.employeeName} <span class="phase-badge">Phase Wise</span> ${i.progressValue>0?`<span class="badge bg-info ms-1">${i.progressValue.toFixed(3)} kg</span>`:''}</span><span class="costing-amount salary">₹${i.salaryAmount.toFixed(2)}</span></div>`;
+                    });
+                });
+            }
+
+            // Determine which grand total and per kg to show based on includeExpenses
+            const displayGrand = includeExpenses ? grand : totalSal;
+            const displayPerKg = includeExpenses ? perKg : (totalKg > 0 ? totalSal / totalKg : 0);
+
+            // Grand total with checkbox
+            html += `<div class="list-group-item grand-total-box">
+                <div class="row g-2">
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeExpenseCheck" ${includeExpenses ? 'checked' : ''}>
+                            <label class="form-check-label fw-semibold" for="includeExpenseCheck">Include Expenses</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="label">Total Expenses</div>
+                        <div class="value expense" id="displayExpenses">${includeExpenses ? `₹${totalExp.toFixed(2)}` : '₹0.00'}</div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="label">Total Collected Value</div>
+                        <div class="value" style="color:#6f42c1;">${totalKg.toFixed(3)} kg</div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="label">Total Salary</div>
+                        <div class="value salary">₹${totalSal.toFixed(2)}</div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="label">Grand Total</div>
+                        <div class="value total" id="displayGrandTotal">₹${displayGrand.toFixed(2)}</div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="perkg-highlight">
+                            <div class="label">Per Kg Costing</div>
+                            <div class="value" id="displayPerKgCost">₹${displayPerKg.toFixed(2)} / kg</div>
+                        </div>
+                    </div>
+                </div>
+            </div></div>`;
+
+            container.innerHTML = html;
+
+            // Checkbox event - THIS NOW UPDATES THE FORM
+            document.getElementById('includeExpenseCheck')?.addEventListener('change', async function() {
+                const include = this.checked;
+                
+                // Calculate new totals
+                const exp = currentTotals.totalExpenses;
+                const sal = currentTotals.totalSalary;
+                const kg = currentTotals.totalCollectedValue;
+                
+                const newGrand = include ? exp + sal : sal;
+                const newPerKg = kg > 0 ? newGrand / kg : 0;
+                
+                // Update display
+                const displayExp = document.getElementById('displayExpenses');
+                const displayGrand = document.getElementById('displayGrandTotal');
+                const displayPerKg = document.getElementById('displayPerKgCost');
+                
+                displayExp.textContent = include ? `₹${exp.toFixed(2)}` : '₹0.00';
+                displayGrand.textContent = `₹${newGrand.toFixed(2)}`;
+                displayPerKg.textContent = `₹${newPerKg.toFixed(2)} / kg`;
+                
+                // IMPORTANT: Update the prize form with new per kg cost
+                const projectId = currentTotals.projectId;
+                const fromDate = currentTotals.fromDate;
+                const toDate = currentTotals.toDate;
+                const totalCollectedValue = currentTotals.totalCollectedValue;
+                
+                // Update prize form with new per kg cost
+                await updatePrizeForm(projectId, fromDate, toDate, totalCollectedValue, newPerKg, include);
+            });
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Load settings from db.js
+                if (typeof loadSettings === 'function') {
+                    await loadSettings();
+                }
+
+                // Ensure DB is open (db.js handles version/upgrade)
+                await openDB();
+
+                await loadProjects();
+                setDefaultDates();
+
+                document.getElementById('loadCostingBtn').addEventListener('click', loadCosting);
+                document.getElementById('savePrizeBtn').addEventListener('click', savePrize);
+
+                // Auto-load on change
+                document.getElementById('costingProject').addEventListener('change', loadCosting);
+                document.getElementById('costingFromDate').addEventListener('change', loadCosting);
+                document.getElementById('costingToDate').addEventListener('change', loadCosting);
+
+                // Initial load
+                await loadCosting();
+            } catch (e) {
+                console.error('Init error:', e);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

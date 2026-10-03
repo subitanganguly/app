@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Report • Tea Estate</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .filter-bar {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 18px 22px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 15px;
+            max-width: 1300px;
+            margin: 0 auto 20px auto;
+        }
+        .filter-bar .filter-item {
+            flex: 1 1 160px;
+            min-width: 140px;
+        }
+        .filter-bar .filter-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .filter-bar .filter-item select,
+        .filter-bar .filter-item input {
+            font-size: 14px;
+            padding: 7px 12px;
+            border-radius: 10px;
+            border: 1px solid #ced4da;
+            width: 100%;
+            background: white;
+        }
+        .filter-bar .filter-item select:focus,
+        .filter-bar .filter-item input:focus {
+            border-color: #0d6efd;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+        }
+
+        .monthly-settings {
+            background: #fff3cd;
+            border: 1px solid #ffe69c;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin: 0 auto 20px auto;
+            max-width: 1300px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+        }
+        .monthly-settings .ms-item {
+            flex: 0 0 auto;
+        }
+        .monthly-settings .ms-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #664d03;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .monthly-settings .ms-item input[type="text"] {
+            font-size: 14px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            min-width: 200px;
+            background: white;
+        }
+        .monthly-settings .form-check {
+            padding-top: 4px;
+        }
+        .monthly-settings .form-check-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #664d03;
+        }
+        .monthly-settings .form-check-input {
+            width: 15px;
+            margin-right: 6px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #e9ecef;
+            transition: transform 0.1s;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        }
+        .stat-card .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0d6efd;
+            line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        .stat-card .stat-icon {
+            font-size: 22px;
+            color: #adb5bd;
+            margin-bottom: 6px;
+        }
+        .table-salary th {
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            background: #f8f9fa;
+            white-space: nowrap;
+        }
+        .table-salary td {
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        .badge-phase {
+            background: #d1e7dd;
+            color: #0a3622;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-without {
+            background: #cfe2ff;
+            color: #084298;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-daily {
+            background: #fff3cd;
+            color: #664d03;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-monthly {
+            background: #f8d7da;
+            color: #842029;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-count {
+            background: #e7f1ff;
+            color: #0d6efd;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .date-list {
+            font-size: 12px;
+            color: #495057;
+            max-width: 260px;
+            display: inline-block;
+            line-height: 1.4;
+        }
+        .date-chip {
+            display: inline-block;
+            background: #f1f3f5;
+            color: #343a40;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin: 1px 2px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .no-data-icon {
+            font-size: 48px;
+            color: #dee2e6;
+        }
+        @media (max-width: 768px) {
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-bar .filter-item {
+                min-width: 100%;
+            }
+            .monthly-settings {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+        .filter-hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="sidebar-container"></div>
+
+    <div class="main-wrapper">
+        <main class="container-fluid p-4">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h3 class="mb-0">
+                        <i class="bi bi-cash-stack text-primary me-2"></i>Salary Report
+                    </h3>
+                    <p class="text-muted small mb-0">
+                        Daily &amp; Monthly → fixed salary from employee record &nbsp;•&nbsp; Phase Wise → from attendance scan
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" id="refreshSalaryBtn">
+                        <i class="bi bi-arrow-repeat me-1"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-success" id="exportSalaryBtn">
+                        <i class="bi bi-download me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <label><i class="bi bi-folder me-1"></i>Project</label>
+                    <select id="salaryProjectSelect">
+                        <option value="">-- Select Project --</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label><i class="bi bi-tag me-1"></i>Salary Type</label>
+                    <select id="filterType" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="Daily">Daily</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Phase Wise">Phase Wise</option>
+                    </select>
+                </div>
+
+                <div class="filter-item" id="fromDateItem">
+                    <label><i class="bi bi-calendar3 me-1"></i>From Date</label>
+                    <input type="date" id="salaryFromDate">
+                </div>
+
+                <div class="filter-item" id="toDateItem">
+                    <label><i class="bi bi-calendar3 me-1"></i>To Date</label>
+                    <input type="date" id="salaryToDate">
+                </div>
+
+                <div class="filter-item filter-hidden" id="monthItem">
+                    <label><i class="bi bi-calendar-month me-1"></i>Select Month</label>
+                    <input type="month" id="salaryMonth">
+                </div>
+
+                <div class="filter-item" style="flex:0 0 auto; min-width:auto;">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary w-100" id="applySalaryFilterBtn">
+                        <i class="bi bi-search me-1"></i> Generate
+                    </button>
+                </div>
+            </div>
+
+            <!-- MONTHLY SETTINGS -->
+            <div class="monthly-settings filter-hidden" id="monthlySettings">
+                <div class="ms-item">
+                    <label><i class="bi bi-calendar-x me-1"></i>Holidays</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="satHoliday">
+                            <label class="form-check-label" for="satHoliday">Saturday Holiday</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sunHoliday">
+                            <label class="form-check-label" for="sunHoliday">Sunday Holiday</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ms-item">
+                    <label><i class="bi bi-calendar-event me-1"></i>Extra Holiday Dates</label>
+                    <input type="text" id="extraHolidays" placeholder="e.g. 15,17,25" />
+                </div>
+
+                <div class="ms-item">
+                    <label><i class="bi bi-scissors me-1"></i>Deduction</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="salaryCut">
+                        <label class="form-check-label" for="salaryCut">Salary Cut for Absent Days</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUMMARY CARDS -->
+            <div class="row g-3 mb-4" id="salarySummaryRow">
+                <div class="col-md-3 col-6">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon"><i class="bi bi-people"></i></div>
+                        <div class="stat-value" id="summaryEmployees">0</div>
+                        <div class="stat-label">Employees Present</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon"><i class="bi bi-currency-rupee"></i></div>
+                        <div class="stat-value" id="summaryTotalSalary">₹0</div>
+                        <div class="stat-label">Total Salary</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div class="stat-value" id="summaryDays">0</div>
+                        <div class="stat-label" id="summaryDaysLabel">Working Days</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+                        <div class="stat-value" id="summaryAvg">₹0</div>
+                        <div class="stat-label">Avg / Employee</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SALARY TABLE -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-table me-2"></i>Salary Details</span>
+                    <span class="badge bg-primary" id="salaryRecordCount">0 records</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-salary mb-0" id="salaryTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Employee ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Phase / Mode</th>
+                                    <th>Days / Phases</th>
+                                    <th>Value</th>
+                                    <th>Salary (₹)</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salaryTableBody">
+                                <tr>
+                                    <td colspan="9" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox no-data-icon d-block mb-3"></i>
+                                        <h6>Select a project and date range</h6>
+                                        <p class="small">Then click "Generate" to view salary report</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+    <script>
+        // =====================================================
+        // SALARY REPORT
+        // -----------------------------------------------------
+        // Daily / Monthly  -> salary = employee.salary
+        // Phase Wise       -> salary = attendance.salaryAmount
+        //
+        // Phase Wise:
+        //   - one row per employee
+        //   - Date column shows ALL dates the employee worked
+        //     (comma-separated chips)
+        // =====================================================
+
+        const ATTENDANCE_STORE = STORES.ATTENDANCE;
+        const PROJECT_STORE = STORES.PROJECTS;
+        const PHASE_STORE = STORES.PHASES;
+        const EMPLOYEE_STORE = STORES.EMPLOYEES;
+
+        let salaryProjectId = null;
+        let salaryFromDate = null;
+        let salaryToDate = null;
+        let salaryMonthValue = null;
+
+        let salaryRecords = [];
+        let salaryEmployees = [];
+        let salaryPhases = [];
+        let salaryProjects = [];
+
+        const projectSelect = document.getElementById('salaryProjectSelect');
+        const filterTypeSelect = document.getElementById('filterType');
+        const fromDateInput = document.getElementById('salaryFromDate');
+        const toDateInput = document.getElementById('salaryToDate');
+        const monthInput = document.getElementById('salaryMonth');
+
+        const fromDateItem = document.getElementById('fromDateItem');
+        const toDateItem = document.getElementById('toDateItem');
+        const monthItem = document.getElementById('monthItem');
+        const monthlySettings = document.getElementById('monthlySettings');
+
+        const satHoliday = document.getElementById('satHoliday');
+        const sunHoliday = document.getElementById('sunHoliday');
+        const extraHolidays = document.getElementById('extraHolidays');
+        const salaryCut = document.getElementById('salaryCut');
+
+        const applyBtn = document.getElementById('applySalaryFilterBtn');
+        const refreshBtn = document.getElementById('refreshSalaryBtn');
+        const exportBtn = document.getElementById('exportSalaryBtn');
+        const tableBody = document.getElementById('salaryTableBody');
+
+        const summaryEmployees = document.getElementById('summaryEmployees');
+        const summaryTotalSalary = document.getElementById('summaryTotalSalary');
+        const summaryDays = document.getElementById('summaryDays');
+        const summaryDaysLabel = document.getElementById('summaryDaysLabel');
+        const summaryAvg = document.getElementById('summaryAvg');
+        const salaryRecordCount = document.getElementById('salaryRecordCount');
+
+        // =====================================================
+        // Filter toggle based on type
+        // =====================================================
+        function toggleFilterInputs() {
+            const type = filterTypeSelect.value;
+
+            if (type === 'Monthly') {
+                fromDateItem.classList.add('filter-hidden');
+                toDateItem.classList.add('filter-hidden');
+                monthItem.classList.remove('filter-hidden');
+                monthlySettings.classList.remove('filter-hidden');
+            } else {
+                fromDateItem.classList.remove('filter-hidden');
+                toDateItem.classList.remove('filter-hidden');
+                monthItem.classList.add('filter-hidden');
+                monthlySettings.classList.add('filter-hidden');
+            }
+        }
+
+        filterTypeSelect.addEventListener('change', toggleFilterInputs);
+
+        // =====================================================
+        // DB helpers
+        // =====================================================
+        async function getAllProjects() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(PROJECT_STORE, 'readonly');
+                const store = tx.objectStore(PROJECT_STORE);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function getAllPhases() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(PHASE_STORE, 'readonly');
+                const store = tx.objectStore(PHASE_STORE);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function getAllEmployees() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(EMPLOYEE_STORE, 'readonly');
+                const store = tx.objectStore(EMPLOYEE_STORE);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function getAttendanceByProjectAndDateRange(projectId, fromDate, toDate, phaseId = 0) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(ATTENDANCE_STORE, 'readonly');
+                const store = tx.objectStore(ATTENDANCE_STORE);
+                const index = store.index('projectDatePhase');
+                const range = IDBKeyRange.bound(
+                    [parseInt(projectId), fromDate, phaseId],
+                    [parseInt(projectId), toDate, phaseId]
+                );
+                const req = index.getAll(range);
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+                tx.oncomplete = () => db.close();
+            });
+        }
+
+        async function loadSalaryProjects() {
+            try {
+                salaryProjects = await getAllProjects();
+                projectSelect.innerHTML = '<option value="">-- Select Project --</option>';
+                salaryProjects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    projectSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('Error loading projects:', e);
+            }
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const past = new Date();
+            past.setDate(today.getDate() - 7);
+
+            const toStr = today.toISOString().split('T')[0];
+            const fromStr = past.toISOString().split('T')[0];
+
+            fromDateInput.value = fromStr;
+            toDateInput.value = toStr;
+
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            monthInput.value = `${yyyy}-${mm}`;
+        }
+
+        function monthToRange(monthStr) {
+            const [yyyy, mm] = monthStr.split('-').map(Number);
+            const firstDay = `${yyyy}-${String(mm).padStart(2, '0')}-01`;
+            const lastDayDate = new Date(yyyy, mm, 0);
+            const lastDay = `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+            return { from: firstDay, to: lastDay, daysInMonth: lastDayDate.getDate() };
+        }
+
+        function parseExtraHolidays(str) {
+            if (!str) return new Set();
+            const parts = str.split(',').map(s => s.trim()).filter(Boolean);
+            const set = new Set();
+            parts.forEach(p => {
+                const n = parseInt(p, 10);
+                if (!isNaN(n) && n >= 1 && n <= 31) set.add(n);
+            });
+            return set;
+        }
+
+        function countWorkingDays(monthStr, options) {
+            const { daysInMonth } = monthToRange(monthStr);
+            const extraSet = options.extraHolidaySet || new Set();
+
+            let workingDays = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${monthStr}-${String(d).padStart(2, '0')}`;
+                const dateObj = new Date(dateStr + 'T00:00:00');
+                const dow = dateObj.getDay();
+
+                const isSat = dow === 6;
+                const isSun = dow === 0;
+                const isExtra = extraSet.has(d);
+
+                const isHoliday =
+                    (options.satHoliday && isSat) ||
+                    (options.sunHoliday && isSun) ||
+                    isExtra;
+
+                if (!isHoliday) workingDays++;
+            }
+            return workingDays;
+        }
+
+        // =====================================================
+        // Generate salary report
+        // =====================================================
+        async function generateSalaryReport() {
+            const projectId = projectSelect.value;
+            const typeFilter = filterTypeSelect.value;
+
+            if (!projectId) { alert('Please select a project.'); return; }
+
+            let fromDate, toDate;
+            let isMonthly = (typeFilter === 'Monthly');
+            let monthWorkingDays = 0;
+
+            if (isMonthly) {
+                const month = monthInput.value;
+                if (!month) { alert('Please select a month.'); return; }
+                const range = monthToRange(month);
+                fromDate = range.from;
+                toDate = range.to;
+                salaryMonthValue = month;
+
+                const extraSet = parseExtraHolidays(extraHolidays.value);
+                monthWorkingDays = countWorkingDays(month, {
+                    satHoliday: satHoliday.checked,
+                    sunHoliday: sunHoliday.checked,
+                    extraHolidaySet: extraSet
+                });
+            } else {
+                fromDate = fromDateInput.value;
+                toDate = toDateInput.value;
+                if (!fromDate || !toDate) { alert('Please select both From and To dates.'); return; }
+                if (fromDate > toDate) { alert('From date cannot be after To date.'); return; }
+            }
+
+            salaryProjectId = parseInt(projectId);
+            salaryFromDate = fromDate;
+            salaryToDate = toDate;
+
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading salary data...</p></td></tr>`;
+
+            try {
+                salaryEmployees = await getAllEmployees();
+                salaryPhases = await getAllPhases();
+
+                const withoutRecords = await getAttendanceByProjectAndDateRange(
+                    salaryProjectId, fromDate, toDate, 0
+                );
+
+                let phaseRecords = [];
+                for (const phase of salaryPhases) {
+                    if (phase.projectId && phase.projectId !== salaryProjectId) continue;
+                    const recs = await getAttendanceByProjectAndDateRange(
+                        salaryProjectId, fromDate, toDate, phase.id
+                    );
+                    phaseRecords = phaseRecords.concat(recs);
+                }
+
+                salaryRecords = [];
+
+                // ==========================================
+                // WITHOUT PHASE
+                // ==========================================
+                const monthlyMap = new Map();
+
+                const sortedWithout = withoutRecords.slice().sort((a, b) =>
+                    a.date.localeCompare(b.date)
+                );
+
+                sortedWithout.forEach(att => {
+                    const date = att.date;
+                    att.records.forEach(r => {
+                        if (r.status !== 'present') return;
+
+                        const emp = salaryEmployees.find(e => e.id === r.employeeId) || {};
+                        const empType = r.employeeType || emp.type || 'Daily';
+
+                        if (empType === 'Phase Wise') return;
+
+                        const baseSalary = parseFloat(emp.salary) || 0;
+
+                        if (empType === 'Monthly') {
+                            if (!monthlyMap.has(r.employeeId)) {
+                                monthlyMap.set(r.employeeId, {
+                                    employeeId: r.employeeId,
+                                    employeeCode: r.employeeCode || emp.employeeId || 'N/A',
+                                    name: r.employeeName || emp.name || 'Unknown',
+                                    type: 'Monthly',
+                                    mode: 'Without Phase',
+                                    phaseName: '—',
+                                    progressValue: '',
+                                    baseSalary: baseSalary,
+                                    salaryAmount: baseSalary,
+                                    date: date,
+                                    dates: [date],
+                                    phaseId: 0,
+                                    dayCount: 1
+                                });
+                            } else {
+                                const existing = monthlyMap.get(r.employeeId);
+                                existing.dayCount += 1;
+                                if (date > existing.date) existing.date = date;
+                                if (!existing.dates.includes(date)) existing.dates.push(date);
+                            }
+                        } else {
+                            // Daily -> one row per present day
+                            salaryRecords.push({
+                                employeeId: r.employeeId,
+                                employeeCode: r.employeeCode || emp.employeeId || 'N/A',
+                                name: r.employeeName || emp.name || 'Unknown',
+                                type: empType,
+                                mode: 'Without Phase',
+                                phaseName: '—',
+                                progressValue: '',
+                                salaryAmount: baseSalary,
+                                date: date,
+                                dates: [date],
+                                phaseId: 0,
+                                dayCount: 1
+                            });
+                        }
+                    });
+                });
+
+                monthlyMap.forEach(entry => {
+                    if (isMonthly && salaryCut.checked && monthWorkingDays > 0) {
+                        const perDay = entry.baseSalary / monthWorkingDays;
+                        const effectiveDays = Math.min(entry.dayCount, monthWorkingDays);
+                        entry.salaryAmount = perDay * effectiveDays;
+                    } else {
+                        entry.salaryAmount = entry.baseSalary;
+                    }
+                    salaryRecords.push(entry);
+                });
+
+                // ==========================================
+                // PHASE WISE — one row per employee
+                // Date column collects ALL dates
+                // ==========================================
+                const phaseMap = new Map();
+                const seenKeys = new Set();
+
+                phaseRecords.forEach(att => {
+                    const date = att.date;
+                    const phase = salaryPhases.find(p => p.id === att.phaseId);
+                    const phaseName = phase ? phase.name : 'Unknown';
+
+                    att.records.forEach(r => {
+                        if (r.status !== 'present') return;
+
+                        const emp = salaryEmployees.find(e => e.id === r.employeeId) || {};
+                        const empType = r.employeeType || emp.type || 'Phase Wise';
+
+                        if (empType !== 'Phase Wise') return;
+
+                        const dedupKey = `${r.employeeId}|${date}|${att.phaseId}`;
+                        if (seenKeys.has(dedupKey)) return;
+                        seenKeys.add(dedupKey);
+
+                        const salaryAmount = parseFloat(r.salaryAmount) || 0;
+                        const progressValue = parseFloat(r.progressValue) || 0;
+
+                        if (!phaseMap.has(r.employeeId)) {
+                            phaseMap.set(r.employeeId, {
+                                employeeId: r.employeeId,
+                                employeeCode: r.employeeCode || emp.employeeId || 'N/A',
+                                name: r.employeeName || emp.name || 'Unknown',
+                                type: 'Phase Wise',
+                                mode: 'Phase Wise',
+                                phaseName: 'All Phases',
+                                progressValue: '',
+                                salaryAmount: 0,
+                                date: date,
+                                dates: [date],
+                                phaseId: 0,
+                                dayCount: 0,
+                                totalValue: 0,
+                                phaseNames: new Set()
+                            });
+                        }
+
+                        const entry = phaseMap.get(r.employeeId);
+                        entry.dayCount += 1;
+                        entry.totalValue += progressValue;
+                        entry.salaryAmount += salaryAmount;
+                        entry.phaseNames.add(phaseName);
+
+                        // Collect unique dates
+                        if (!entry.dates.includes(date)) {
+                            entry.dates.push(date);
+                        }
+                        if (date > entry.date) entry.date = date;
+                    });
+                });
+
+                phaseMap.forEach(entry => {
+                    entry.progressValue = entry.totalValue > 0 ? entry.totalValue.toString() : '';
+                    // Sort dates ascending for display
+                    entry.dates.sort();
+                    salaryRecords.push(entry);
+                });
+
+                // ---- Apply Type filter ----
+                let filtered = salaryRecords;
+                if (typeFilter) {
+                    filtered = filtered.filter(r => r.type === typeFilter);
+                }
+
+                filtered.sort((a, b) => {
+                    const d = b.date.localeCompare(a.date);
+                    if (d !== 0) return d;
+                    return a.name.localeCompare(b.name);
+                });
+
+                renderSalaryTable(filtered);
+                updateSalarySummary(filtered, isMonthly, monthWorkingDays);
+
+            } catch (error) {
+                console.error('Error generating salary report:', error);
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error loading data: ${escapeHTML(error.message)}</td></tr>`;
+            }
+        }
+
+        function renderSalaryTable(records) {
+            if (!records.length) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox no-data-icon d-block mb-3"></i>
+                            <h6>No salary records found</h6>
+                            <p class="small">Try changing the date range or type filter</p>
+                        </td>
+                    </tr>
+                `;
+                salaryRecordCount.textContent = '0 records';
+                return;
+            }
+
+            let html = '';
+            records.forEach((r, index) => {
+                let modeBadge;
+                if (r.mode === 'Phase Wise') {
+                    const phaseList = r.phaseNames ? Array.from(r.phaseNames).join(', ') : 'Phase';
+                    modeBadge = `<span class="badge-phase">${escapeHTML(phaseList)}</span>`;
+                } else if (r.type === 'Daily') {
+                    modeBadge = `<span class="badge-without">Without Phase</span> <span class="badge-daily">Daily</span>`;
+                } else if (r.type === 'Monthly') {
+                    modeBadge = `<span class="badge-without">Without Phase</span> <span class="badge-monthly">Monthly</span>`;
+                } else {
+                    modeBadge = `<span class="badge-without">Without Phase</span>`;
+                }
+
+                let countBadge = '';
+                if (r.type === 'Monthly') {
+                    countBadge = `<span class="badge-count">${r.dayCount} day${r.dayCount !== 1 ? 's' : ''}</span>`;
+                } else if (r.type === 'Daily') {
+                    countBadge = `<span class="badge-count">1 day</span>`;
+                } else if (r.type === 'Phase Wise') {
+                    countBadge = `<span class="badge-count">${r.dayCount} phase${r.dayCount !== 1 ? 's' : ''}</span>`;
+                } else {
+                    countBadge = `<span class="text-muted">—</span>`;
+                }
+
+                const valueDisplay = r.progressValue ? escapeHTML(r.progressValue) : '—';
+                const salaryDisplay = r.salaryAmount > 0
+                    ? '₹' + r.salaryAmount.toFixed(2)
+                    : '₹0.00';
+
+                // ---- Date column ----
+                let dateDisplay;
+                if (r.type === 'Phase Wise' && r.dates && r.dates.length > 0) {
+                    // Show all dates as chips
+                    dateDisplay = r.dates.map(d => 
+                        `<span class="date-chip">${formatDate(d)}</span>`
+                    ).join('');
+                } else {
+                    // Daily / Monthly -> single date
+                    dateDisplay = formatDate(r.date);
+                }
+
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${escapeHTML(r.employeeCode)}</strong></td>
+                        <td>${escapeHTML(r.name)}</td>
+                        <td><span class="badge bg-secondary">${escapeHTML(r.type)}</span></td>
+                        <td>${modeBadge}</td>
+                        <td>${countBadge}</td>
+                        <td>${valueDisplay}</td>
+                        <td class="fw-semibold">${salaryDisplay}</td>
+                        <td><div class="date-list">${dateDisplay}</div></td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+            salaryRecordCount.textContent = `${records.length} record${records.length !== 1 ? 's' : ''}`;
+        }
+
+        function updateSalarySummary(records, isMonthly = false, monthWorkingDays = 0) {
+            const totalSalary = records.reduce((sum, r) => sum + r.salaryAmount, 0);
+            const uniqueEmployees = new Set(records.map(r => r.employeeId)).size;
+
+            summaryEmployees.textContent = uniqueEmployees;
+            summaryTotalSalary.textContent = '₹' + totalSalary.toFixed(2);
+            summaryAvg.textContent = uniqueEmployees > 0
+                ? '₹' + (totalSalary / uniqueEmployees).toFixed(2)
+                : '₹0.00';
+
+            if (isMonthly && monthWorkingDays > 0) {
+                summaryDays.textContent = monthWorkingDays;
+                summaryDaysLabel.textContent = 'Working Days (Month)';
+            } else {
+                const uniqueDates = new Set(records.map(r => r.date)).size;
+                summaryDays.textContent = uniqueDates;
+                summaryDaysLabel.textContent = 'Working Days';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function escapeHTML(value) {
+            const div = document.createElement('div');
+            div.textContent = value ?? '';
+            return div.innerHTML;
+        }
+
+        function exportSalaryCSV() {
+            if (!salaryRecords.length) {
+                alert('No data to export. Generate a report first.');
+                return;
+            }
+
+            const typeFilter = filterTypeSelect.value;
+            let filtered = salaryRecords;
+            if (typeFilter) {
+                filtered = filtered.filter(r => r.type === typeFilter);
+            }
+
+            if (!filtered.length) {
+                alert('No records for the selected type.');
+                return;
+            }
+
+            const headers = ['Employee ID', 'Name', 'Type', 'Mode', 'Phase', 'Days/Phases', 'Value', 'Salary (₹)', 'Date'];
+            const rows = filtered.map(r => {
+                let countText = '';
+                if (r.type === 'Monthly') countText = r.dayCount + ' days';
+                else if (r.type === 'Daily') countText = '1 day';
+                else if (r.type === 'Phase Wise') countText = r.dayCount + ' phases';
+
+                const phaseText = r.phaseNames ? Array.from(r.phaseNames).join(', ') : r.phaseName;
+
+                // For CSV, dates as comma-separated plain text
+                let dateText;
+                if (r.type === 'Phase Wise' && r.dates && r.dates.length > 0) {
+                    dateText = r.dates.map(d => formatDate(d)).join(' | ');
+                } else {
+                    dateText = formatDate(r.date);
+                }
+
+                return [
+                    r.employeeCode,
+                    r.name,
+                    r.type,
+                    r.mode,
+                    phaseText,
+                    countText,
+                    r.progressValue,
+                    r.salaryAmount.toFixed(2),
+                    dateText
+                ];
+            });
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Salary_Report_${salaryFromDate}_to_${salaryToDate}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await loadSettings();
+
+                setDefaultDates();
+                await loadSalaryProjects();
+
+                if (salaryProjects.length > 0) {
+                    projectSelect.value = salaryProjects[0].id;
+                }
+
+                toggleFilterInputs();
+
+                applyBtn.addEventListener('click', generateSalaryReport);
+                refreshBtn.addEventListener('click', generateSalaryReport);
+                exportBtn.addEventListener('click', exportSalaryCSV);
+
+                if (projectSelect.value) {
+                    await generateSalaryReport();
+                }
+
+            } catch (error) {
+                console.error('Salary page initialization error:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>

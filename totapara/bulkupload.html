@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Upload - Employees</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- SheetJS for Excel support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+    </script>
+
+    <style>
+        .upload-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .upload-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eef2f6;
+            font-weight: 600;
+        }
+        .drop-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: #f8f9fa;
+        }
+        .drop-zone:hover {
+            border-color: #0d6efd;
+            background: #e7f1ff;
+        }
+        .drop-zone.dragover {
+            border-color: #0d6efd;
+            background: #cfe2ff;
+        }
+        .drop-zone .icon {
+            font-size: 48px;
+            color: #6c757d;
+            margin-bottom: 16px;
+        }
+        .drop-zone .text {
+            font-size: 16px;
+            color: #6c757d;
+        }
+        .drop-zone .text strong {
+            color: #0d6efd;
+        }
+        .preview-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .preview-table table {
+            font-size: 13px;
+        }
+        .preview-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .template-table {
+            font-size: 13px;
+        }
+        .template-table th {
+            background: #e7f1ff;
+            font-weight: 600;
+        }
+        .required-star {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .example-row {
+            background: #f8f9fa;
+        }
+        .upload-progress {
+            height: 6px;
+            border-radius: 3px;
+        }
+        .upload-progress .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .file-info {
+            display: none;
+        }
+        .file-info.show {
+            display: block;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+    <div class="main-wrapper">
+        <main class="container-fluid p-4">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1">
+                        <i class="bi bi-upload text-primary me-2"></i>Bulk Upload Employees
+                    </h3>
+                    <p class="text-muted mb-0">
+                        Upload multiple employees at once using Excel or CSV files
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-success" id="downloadTemplateBtn">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Download Template
+                    </button>
+                    <a href="employees.html" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Employees
+                    </a>
+                </div>
+            </div>
+
+            <!-- STATISTICS BOXES -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 col-6">
+                    <div class="info-box text-center">
+                        <div class="info-number" id="totalCount">0</div>
+                        <div class="info-label"><i class="bi bi-people me-1"></i>Total Employees</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box text-center">
+                        <div class="info-number" id="uploadedCount">0</div>
+                        <div class="info-label"><i class="bi bi-check-circle me-1"></i>Uploaded</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box text-center">
+                        <div class="info-number" id="failedCount">0</div>
+                        <div class="info-label"><i class="bi bi-x-circle me-1"></i>Failed</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box text-center">
+                        <div class="info-number" id="pendingCount">0</div>
+                        <div class="info-label"><i class="bi bi-clock me-1"></i>Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPLOAD SECTION -->
+            <div class="card upload-card mb-4">
+                <div class="card-header bg-white">
+                    <i class="bi bi-cloud-upload me-2 text-primary"></i>Upload File
+                </div>
+                <div class="card-body">
+                    <div class="drop-zone" id="dropZone">
+                        <div class="icon">
+                            <i class="bi bi-file-earmark-excel"></i>
+                        </div>
+                        <div class="text">
+                            <strong>Click</strong> to select file or <strong>drag & drop</strong> here
+                            <br>
+                            <small class="text-muted">Supports .xlsx, .xls, .csv files</small>
+                        </div>
+                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+                    </div>
+
+                    <!-- File Info -->
+                    <div class="file-info mt-3" id="fileInfo">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="bi bi-file-earmark-excel text-success me-2 fs-4"></i>
+                                <span class="fw-semibold" id="fileName">file.xlsx</span>
+                                <span class="text-muted ms-2" id="fileSize">(0 KB)</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary" id="rowCount">0 rows</span>
+                                <button class="btn btn-sm btn-outline-danger ms-2" id="removeFileBtn">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Progress -->
+                    <div class="mt-3" id="progressContainer" style="display:none;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small" id="progressText">Uploading...</span>
+                            <span class="text-muted small" id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress upload-progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="uploadProgressBar" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="btn btn-primary" id="uploadBtn" disabled>
+                            <i class="bi bi-upload me-1"></i> Upload Employees
+                        </button>
+                        <button class="btn btn-outline-secondary" id="clearBtn">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Clear
+                        </button>
+                    </div>
+
+                    <div id="uploadStatus" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- PREVIEW SECTION -->
+            <div class="card upload-card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-table me-2"></i>Preview Data</span>
+                    <span class="badge bg-primary" id="previewCount">0 rows</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="preview-table" id="previewContainer">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                            <h5>No Data to Preview</h5>
+                            <p>Upload an Excel or CSV file to preview data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEMPLATE SECTION -->
+            <div class="card upload-card mt-4">
+                <div class="card-header bg-white">
+                    <i class="bi bi-file-earmark-text me-2 text-info"></i>Excel Template Format
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Download the template and fill it with employee data. Required fields are marked with <span class="required-star">*</span>.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered template-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID <span class="required-star">*</span></th>
+                                    <th>Name <span class="required-star">*</span></th>
+                                    <th>Mobile <span class="required-star">*</span></th>
+                                    <th>Sex <span class="required-star">*</span></th>
+                                    <th>Designation <span class="required-star">*</span></th>
+                                    <th>Salary Type <span class="required-star">*</span></th>
+                                    <th>Salary Amount <span class="required-star">*</span></th>
+                                    <th>Working Projects</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>EMP001</code></td>
+                                    <td>John Doe</td>
+                                    <td>9876543210</td>
+                                    <td>Male</td>
+                                    <td>Manager</td>
+                                    <td>Monthly</td>
+                                    <td>50000</td>
+                                    <td>Project A, Project B</td>
+                                </tr>
+                                <tr class="example-row">
+                                    <td><code>EMP002</code></td>
+                                    <td>Jane Smith</td>
+                                    <td>9876543211</td>
+                                    <td>Female</td>
+                                    <td>Supervisor</td>
+                                    <td>Daily</td>
+                                    <td>800</td>
+                                    <td>Project A</td>
+                                </tr>
+                                <tr>
+                                    <td><code>EMP003</code></td>
+                                    <td>Robert Wilson</td>
+                                    <td>9876543212</td>
+                                    <td>Male</td>
+                                    <td>Worker</td>
+                                    <td>Phase Wise</td>
+                                    <td>600</td>
+                                    <td>Project B, Project C</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="mb-2"><i class="bi bi-check-circle text-success me-1"></i> Salary Types</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><span class="badge bg-info">Daily</span> - Daily wage employees</li>
+                                    <li><span class="badge bg-primary">Monthly</span> - Monthly salary employees</li>
+                                    <li><span class="badge bg-success">Phase Wise</span> - Phase based employees</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="mb-2"><i class="bi bi-info-circle text-info me-1"></i> Working Projects</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li>Separate multiple projects with <strong>comma</strong> (<code>,</code>)</li>
+                                    <li>Project names must match existing projects</li>
+                                    <li>Leave empty if no projects assigned</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <button class="btn btn-info" id="downloadTemplateBtn2">
+                            <i class="bi bi-download me-1"></i> Download Template Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!-- Include -->
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+    <script>
+     // =====================================================
+// BULK UPLOAD - EMPLOYEE MANAGEMENT
+// =====================================================
+
+let currentUser = null;
+let uploadedData = [];
+let allProjects = [];
+let allDesignations = [];
+let uploadResults = {
+    success: 0,
+    failed: 0,
+    pending: 0
+};
+
+// =====================================================
+// CHECK AUTHENTICATION
+// =====================================================
+
+function checkAuth() {
+    const user = requireAuth();
+    if (!user) return;
+    currentUser = user;
+
+    if (!currentUser.isAdmin) {
+        checkBulkUploadPermission();
+    }
+}
+
+async function checkBulkUploadPermission() {
+    const hasPermission = await canAccessPage(currentUser.userId, 'employees');
+    if (!hasPermission) {
+        alert('Access Denied: You do not have permission to access Bulk Upload.');
+        window.location.href = 'index.html';
+    }
+}
+
+// =====================================================
+// GET DATA FROM STORE
+// =====================================================
+
+async function getDataFromStore(storeName) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        if (!db.objectStoreNames.contains(storeName)) {
+            db.close();
+            resolve([]);
+            return;
+        }
+        const transaction = db.transaction(storeName, 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+        request.onsuccess = function() {
+            db.close();
+            resolve(request.result);
+        };
+        request.onerror = function() {
+            db.close();
+            reject(request.error);
+        };
+    });
+}
+
+// =====================================================
+// ADD EMPLOYEE
+// =====================================================
+
+async function addEmployee(employee) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction('employees', 'readwrite');
+        const store = transaction.objectStore('employees');
+        const request = store.add(employee);
+        request.onsuccess = function() {
+            db.close();
+            resolve(request.result);
+        };
+        request.onerror = function() {
+            db.close();
+            reject(request.error);
+        };
+    });
+}
+
+// =====================================================
+// LOAD DATA
+// =====================================================
+
+async function loadData() {
+    try {
+        allProjects = await getDataFromStore('projects');
+        allDesignations = await getDataFromStore('designations');
+        const employees = await getDataFromStore('employees');
+        document.getElementById('totalCount').textContent = employees.length;
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+// =====================================================
+// GENERATE EMPLOYEE ID
+// =====================================================
+
+function generateEmployeeId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// =====================================================
+// SAFE STRING CONVERSION
+// =====================================================
+
+function safeString(value) {
+    if (value === null || value === undefined) return '';
+    return String(value).trim();
+}
+
+// =====================================================
+// VALIDATE EMPLOYEE DATA
+// =====================================================
+
+function validateEmployee(row, index) {
+    const errors = [];
+    const warnings = [];
+
+    // Get values safely
+    const name = safeString(row.Name);
+    const mobile = safeString(row.Mobile);
+    const sex = safeString(row.Sex);
+    const designation = safeString(row.Designation);
+    const salaryType = safeString(row['Salary Type']);
+    const salaryAmount = safeString(row['Salary Amount']);
+    const workingProjects = safeString(row['Working Projects']);
+
+    // Required fields
+    if (!name) {
+        errors.push('Name is required');
+    }
+
+    if (!mobile) {
+        errors.push('Mobile is required');
+    } else if (!/^[0-9]{10}$/.test(mobile)) {
+        errors.push('Mobile must be 10 digits');
+    }
+
+    if (!sex) {
+        errors.push('Sex is required');
+    } else if (!['Male', 'Female', 'Other'].includes(sex)) {
+        errors.push('Sex must be Male, Female, or Other');
+    }
+
+    if (!designation) {
+        errors.push('Designation is required');
+    } else {
+        const designationExists = allDesignations.some(d => d.name === designation);
+        if (!designationExists) {
+            warnings.push(`Designation "${designation}" doesn't exist in the system`);
+        }
+    }
+
+    if (!salaryType) {
+        errors.push('Salary Type is required');
+    } else if (!['Daily', 'Monthly', 'Phase Wise'].includes(salaryType)) {
+        errors.push('Salary Type must be Daily, Monthly, or Phase Wise');
+    }
+
+    if (salaryAmount === '') {
+        errors.push('Salary Amount is required');
+    } else if (isNaN(parseFloat(salaryAmount)) || parseFloat(salaryAmount) < 0) {
+        errors.push('Salary Amount must be a positive number');
+    }
+
+    // Working Projects validation
+    if (workingProjects) {
+        const projectNames = workingProjects.split(',').map(p => p.trim()).filter(p => p);
+        const invalidProjects = projectNames.filter(p => !allProjects.some(pr => pr.name === p));
+        if (invalidProjects.length > 0) {
+            warnings.push(`Projects not found: ${invalidProjects.join(', ')}`);
+        }
+    }
+
+    // Store cleaned values back to row for consistent processing
+    row._cleaned = {
+        name: name,
+        mobile: mobile,
+        sex: sex,
+        designation: designation,
+        salaryType: salaryType,
+        salaryAmount: salaryAmount,
+        workingProjects: workingProjects
+    };
+
+    return { errors, warnings, isValid: errors.length === 0 };
+}
+
+// =====================================================
+// PROCESS UPLOADED DATA
+// =====================================================
+
+async function processUpload() {
+    if (uploadedData.length === 0) {
+        alert('No data to upload. Please select a file first.');
+        return;
+    }
+
+    const confirmMsg = `You are about to upload ${uploadedData.length} employees. Continue?`;
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const statusDiv = document.getElementById('uploadStatus');
+
+    uploadBtn.disabled = true;
+    progressContainer.style.display = 'block';
+    statusDiv.innerHTML = '';
+
+    uploadResults = { success: 0, failed: 0, pending: 0 };
+    const total = uploadedData.length;
+    let processed = 0;
+
+    for (const row of uploadedData) {
+        const validation = validateEmployee(row, processed);
+
+        if (validation.isValid) {
+            try {
+                const cleaned = row._cleaned;
+                
+                // Create employee object
+                const employee = {
+                    employeeId: safeString(row['Employee ID']) || generateEmployeeId(),
+                    name: cleaned.name,
+                    mobile: cleaned.mobile,
+                    sex: cleaned.sex,
+                    designation: cleaned.designation,
+                    type: cleaned.salaryType,
+                    salary: parseFloat(cleaned.salaryAmount),
+                    projects: [],
+                    createdAt: new Date().toISOString()
+                };
+
+                // Add working projects
+                if (cleaned.workingProjects) {
+                    const projectNames = cleaned.workingProjects.split(',').map(p => p.trim()).filter(p => p);
+                    employee.projects = allProjects
+                        .filter(p => projectNames.includes(p.name))
+                        .map(p => ({ id: p.id, name: p.name }));
+                }
+
+                await addEmployee(employee);
+                uploadResults.success++;
+                row._status = 'success';
+                row._message = 'Uploaded successfully';
+            } catch (error) {
+                uploadResults.failed++;
+                row._status = 'error';
+                row._message = error.message || 'Database error';
+                console.error('Error adding employee:', error);
+            }
+        } else {
+            uploadResults.failed++;
+            row._status = 'error';
+            row._message = validation.errors.join('; ');
+        }
+
+        processed++;
+        const percent = Math.round((processed / total) * 100);
+        progressBar.style.width = percent + '%';
+        progressBar.textContent = percent + '%';
+        progressPercent.textContent = percent + '%';
+        progressText.textContent = `Processing ${processed}/${total}...`;
+
+        // Update stats
+        document.getElementById('uploadedCount').textContent = uploadResults.success;
+        document.getElementById('failedCount').textContent = uploadResults.failed;
+        document.getElementById('pendingCount').textContent = total - processed;
+    }
+
+    // Show final status
+    progressBar.classList.remove('progress-bar-animated');
+    progressText.textContent = '✅ Upload completed!';
+
+    let statusHtml = `
+        <div class="alert alert-success">
+            <strong>Upload Complete!</strong>
+            <div class="mt-2">
+                <span class="badge bg-success">${uploadResults.success} Uploaded</span>
+                <span class="badge bg-danger">${uploadResults.failed} Failed</span>
+            </div>
+        </div>
+    `;
+
+    // Show failed details
+    const failedRows = uploadedData.filter(r => r._status === 'error');
+    if (failedRows.length > 0) {
+        statusHtml += `
+            <div class="alert alert-warning mt-2">
+                <strong>Failed Rows:</strong>
+                <div class="mt-2" style="max-height:200px;overflow-y:auto;">
+                    <ul class="list-unstyled mb-0">
+                        ${failedRows.map((row, i) => {
+                            const name = safeString(row.Name) || 'Unknown';
+                            return `
+                                <li class="small">
+                                    <strong>Row ${i + 1}:</strong>
+                                    ${escapeHTML(name)} - ${escapeHTML(row._message || 'Unknown error')}
+                                </li>
+                            `;
+                        }).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    statusDiv.innerHTML = statusHtml;
+    uploadBtn.disabled = false;
+
+    // Refresh total count
+    const employees = await getDataFromStore('employees');
+    document.getElementById('totalCount').textContent = employees.length;
+
+    // Update preview with status
+    renderPreview();
+}
+
+// =====================================================
+// RENDER PREVIEW
+// =====================================================
+
+function renderPreview() {
+    const container = document.getElementById('previewContainer');
+    const countBadge = document.getElementById('previewCount');
+
+    if (uploadedData.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                <h5>No Data to Preview</h5>
+                <p>Upload an Excel or CSV file to preview data.</p>
+            </div>
+        `;
+        countBadge.textContent = '0 rows';
+        return;
+    }
+
+    countBadge.textContent = uploadedData.length + ' rows';
+
+    let html = '<div class="table-responsive">';
+    html += `
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Sex</th>
+                    <th>Designation</th>
+                    <th>Salary Type</th>
+                    <th>Salary</th>
+                    <th>Projects</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    uploadedData.forEach((row, index) => {
+        const status = row._status || 'pending';
+        const statusClass = status === 'success' ? 'success' : status === 'error' ? 'error' : 'info';
+        const statusText = status === 'success' ? '✅ Uploaded' : status === 'error' ? '❌ Failed' : '⏳ Pending';
+
+        const employeeId = safeString(row['Employee ID']) || 'Auto';
+        const name = safeString(row.Name);
+        const mobile = safeString(row.Mobile);
+        const sex = safeString(row.Sex);
+        const designation = safeString(row.Designation);
+        const salaryType = safeString(row['Salary Type']);
+        const salaryAmount = safeString(row['Salary Amount']);
+        const workingProjects = safeString(row['Working Projects']);
+
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td><code>${escapeHTML(employeeId)}</code></td>
+                <td><strong>${escapeHTML(name)}</strong></td>
+                <td>${escapeHTML(mobile)}</td>
+                <td>${escapeHTML(sex)}</td>
+                <td>${escapeHTML(designation)}</td>
+                <td>
+                    <span class="badge ${salaryType === 'Daily' ? 'bg-info' : salaryType === 'Phase Wise' ? 'bg-success' : 'bg-primary'}">
+                        ${escapeHTML(salaryType)}
+                    </span>
+                </td>
+                <td>₹${escapeHTML(salaryAmount || '0')}</td>
+                <td>
+                    ${workingProjects ? 
+                        workingProjects.split(',').map(p => 
+                            `<span class="badge bg-light border me-1 mb-1">${escapeHTML(p.trim())}</span>`
+                        ).join('') : 
+                        '<span class="text-muted">None</span>'
+                    }
+                </td>
+                <td>
+                    <span class="status-badge ${statusClass}">
+                        ${statusText}
+                    </span>
+                    ${row._message ? `<br><small class="text-muted">${escapeHTML(row._message)}</small>` : ''}
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+
+    // Update stats
+    const successCount = uploadedData.filter(r => r._status === 'success').length;
+    const failedCount = uploadedData.filter(r => r._status === 'error').length;
+    const pendingCount = uploadedData.filter(r => !r._status || r._status === 'pending').length;
+
+    document.getElementById('uploadedCount').textContent = successCount;
+    document.getElementById('failedCount').textContent = failedCount;
+    document.getElementById('pendingCount').textContent = pendingCount;
+}
+
+// =====================================================
+// READ EXCEL FILE
+// =====================================================
+
+function readExcelFile(file) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+            if (jsonData.length === 0) {
+                alert('The file is empty. Please provide data in the correct format.');
+                return;
+            }
+
+            // Check required columns
+            const requiredColumns = ['Name', 'Mobile', 'Sex', 'Designation', 'Salary Type', 'Salary Amount'];
+            const firstRow = jsonData[0];
+            const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+
+            if (missingColumns.length > 0) {
+                alert(`Missing required columns: ${missingColumns.join(', ')}\n\nPlease download the template for correct format.`);
+                return;
+            }
+
+            uploadedData = jsonData.map(row => {
+                // Convert all values to strings and trim
+                const cleanedRow = {};
+                for (const key in row) {
+                    cleanedRow[key] = safeString(row[key]);
+                }
+                cleanedRow._status = 'pending';
+                cleanedRow._message = '';
+                return cleanedRow;
+            });
+
+            // Show file info
+            document.getElementById('fileInfo').classList.add('show');
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+            document.getElementById('rowCount').textContent = `${uploadedData.length} rows`;
+
+            document.getElementById('uploadBtn').disabled = false;
+            renderPreview();
+
+        } catch (error) {
+            console.error('Error reading file:', error);
+            alert('Error reading file. Please make sure it\'s a valid Excel or CSV file.');
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+// =====================================================
+// DOWNLOAD TEMPLATE
+// =====================================================
+
+function downloadTemplate() {
+    const templateData = [
+        {
+            'Employee ID': 'EMP001',
+            'Name': 'John Doe',
+            'Mobile': 9876543210,
+            'Sex': 'Male',
+            'Designation': 'Manager',
+            'Salary Type': 'Monthly',
+            'Salary Amount': 50000,
+            'Working Projects': 'Project A, Project B'
+        },
+        {
+            'Employee ID': 'EMP002',
+            'Name': 'Jane Smith',
+            'Mobile': 9876543211,
+            'Sex': 'Female',
+            'Designation': 'Supervisor',
+            'Salary Type': 'Daily',
+            'Salary Amount': 800,
+            'Working Projects': 'Project A'
+        },
+        {
+            'Employee ID': 'EMP003',
+            'Name': 'Robert Wilson',
+            'Mobile': 9876543212,
+            'Sex': 'Male',
+            'Designation': 'Worker',
+            'Salary Type': 'Phase Wise',
+            'Salary Amount': 600,
+            'Working Projects': 'Project B, Project C'
+        }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(templateData);
+
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 15 }, // Employee ID
+        { wch: 20 }, // Name
+        { wch: 15 }, // Mobile
+        { wch: 10 }, // Sex
+        { wch: 20 }, // Designation
+        { wch: 15 }, // Salary Type
+        { wch: 15 }, // Salary Amount
+        { wch: 30 }  // Working Projects
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Employees');
+    
+    // Generate Excel file
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Employee_Template_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// =====================================================
+// CLEAR ALL
+// =====================================================
+
+function clearAll() {
+    uploadedData = [];
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileInfo').classList.remove('show');
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadStatus').innerHTML = '';
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('uploadProgressBar').style.width = '0%';
+    document.getElementById('uploadProgressBar').textContent = '0%';
+    
+    uploadResults = { success: 0, failed: 0, pending: 0 };
+    document.getElementById('uploadedCount').textContent = '0';
+    document.getElementById('failedCount').textContent = '0';
+    document.getElementById('pendingCount').textContent = '0';
+    
+    renderPreview();
+}
+
+// =====================================================
+// HTML ESCAPE
+// =====================================================
+
+function escapeHTML(value) {
+    if (!value && value !== 0) return '';
+    const div = document.createElement('div');
+    div.textContent = value;
+    return div.innerHTML;
+}
+
+// =====================================================
+// INITIALIZE
+// =====================================================
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        await loadSettings();
+        await openDB();
+
+        checkAuth();
+        await loadData();
+
+        // Setup info boxes (reuse employee page style)
+        const style = document.createElement('style');
+        style.textContent = `
+            .info-box {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                padding: 15px;
+                background: #f8f9fa;
+            }
+            .info-box .info-number {
+                font-size: 28px;
+                font-weight: bold;
+                color: #0d6efd;
+            }
+            .info-box .info-label {
+                font-size: 14px;
+                color: #6c757d;
+                margin-top: 5px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Drop zone events
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                readExcelFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                readExcelFile(this.files[0]);
+            }
+        });
+
+        // Upload button
+        document.getElementById('uploadBtn').addEventListener('click', processUpload);
+
+        // Clear button
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+        // Remove file button
+        document.getElementById('removeFileBtn').addEventListener('click', clearAll);
+
+        // Download template buttons
+        document.getElementById('downloadTemplateBtn').addEventListener('click', downloadTemplate);
+        document.getElementById('downloadTemplateBtn2').addEventListener('click', downloadTemplate);
+
+    } catch (error) {
+        console.error('Bulk upload initialization error:', error);
+    }
+});
+    </script>
+
+</body>
+
+</html>

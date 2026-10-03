@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+
+    <div class="main-wrapper">
+
+
+        <!-- PAGE CONTENT -->
+
+        <main class="container-fluid p-4">
+
+
+            <!-- HEADER -->
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+                    <h3 class="mb-1">
+                        <i class="bi bi-folder text-primary me-2"></i>Projects
+                    </h3>
+                    <p class="text-muted mb-0">
+                        Manage your projects
+                    </p>
+                </div>
+
+                <button
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#projectModal">
+
+                    <i class="bi bi-plus-lg me-1"></i> Add Project
+
+                </button>
+
+            </div>
+
+
+            <!-- PROJECTS -->
+
+            <div id="projectsContainer" class="row g-4">
+
+                <!-- Projects load here -->
+
+            </div>
+
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         ADD PROJECT MODAL
+    ===================================================== -->
+
+    <div class="modal fade" id="projectModal" tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <!-- HEADER -->
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        <i class="bi bi-folder-plus me-2"></i>Add Project
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <!-- BODY -->
+
+                <div class="modal-body">
+
+                    <label class="form-label">
+                        Project Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="projectName"
+                        class="form-control"
+                        placeholder="Enter project name"
+                        autocomplete="off">
+
+                    <div id="projectError" class="text-danger small mt-2"></div>
+
+                </div>
+
+                <!-- FOOTER -->
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="saveProjectBtn">
+
+                        <i class="bi bi-save me-1"></i> Save Project
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- Include -->
+    <script src="js/include.js"></script>
+    <script src="js/db.js"></script>
+
+    <script>
+        // =====================================================
+        // PROJECT MANAGEMENT
+        // =====================================================
+
+
+        // =====================================================
+        // PROJECT STORE
+        // =====================================================
+
+        const PROJECT_STORE = "projects";
+
+
+        // =====================================================
+        // ADD PROJECT
+        // =====================================================
+
+        async function addProject(projectName) {
+
+            const db = await openDB();
+
+            return new Promise((resolve, reject) => {
+
+                const transaction = db.transaction(PROJECT_STORE, "readwrite");
+                const store = transaction.objectStore(PROJECT_STORE);
+
+                const project = {
+                    name: projectName.trim(),
+                    createdAt: new Date().toISOString()
+                };
+
+                const request = store.add(project);
+
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+
+                request.onerror = function() {
+                    reject(request.error);
+                };
+
+                transaction.oncomplete = function() {
+                    db.close();
+                };
+
+            });
+
+        }
+
+
+        // =====================================================
+        // GET ALL PROJECTS
+        // =====================================================
+
+        async function getAllProjects() {
+
+            const db = await openDB();
+
+            return new Promise((resolve, reject) => {
+
+                const transaction = db.transaction(PROJECT_STORE, "readonly");
+                const store = transaction.objectStore(PROJECT_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+
+                request.onerror = function() {
+                    reject(request.error);
+                };
+
+                transaction.oncomplete = function() {
+                    db.close();
+                };
+
+            });
+
+        }
+
+
+        // =====================================================
+        // DELETE PROJECT
+        // =====================================================
+
+        async function deleteProject(id) {
+
+            const db = await openDB();
+
+            return new Promise((resolve, reject) => {
+
+                const transaction = db.transaction(PROJECT_STORE, "readwrite");
+                const store = transaction.objectStore(PROJECT_STORE);
+
+                store.delete(id);
+
+                transaction.oncomplete = function() {
+                    db.close();
+                    resolve();
+                };
+
+                transaction.onerror = function() {
+                    reject(transaction.error);
+                };
+
+            });
+
+        }
+
+
+        // =====================================================
+        // RENDER PROJECTS
+        // =====================================================
+
+        async function renderProjects() {
+
+            const container = document.getElementById("projectsContainer");
+
+            if (!container) {
+                return;
+            }
+
+            try {
+
+                const projects = await getAllProjects();
+
+                // NO PROJECTS
+                if (!projects.length) {
+
+                    container.innerHTML = `
+
+                        <div class="col-12">
+
+                            <div class="text-center text-muted py-5">
+
+                                <i class="bi bi-folder display-1 d-block mb-3 opacity-50"></i>
+
+                                <h5 class="mt-3">No Projects</h5>
+
+                                <p>Add your first project.</p>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                    return;
+
+                }
+
+                // PROJECT CARDS
+                container.innerHTML = projects.map(project => `
+
+                    <div class="col-12 col-md-6 col-lg-4">
+
+                        <div class="card h-100 shadow-sm">
+
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between align-items-start">
+
+                                    <!-- PROJECT INFO -->
+                                    <div class="d-flex align-items-center">
+
+                                        <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+
+                                            <i class="bi bi-folder fs-4 text-primary"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <h5 class="mb-1">${escapeHTML(project.name)}</h5>
+
+                                            <small class="text-muted">Project #${project.id}</small>
+
+                                        </div>
+
+                                    </div>
+
+                                    <!-- DELETE -->
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"
+                                        onclick="removeProject(${project.id})"
+                                        title="Delete Project">
+
+                                        <i class="bi bi-trash"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `).join("");
+
+            } catch (error) {
+
+                console.error("Unable to load projects:", error);
+
+                container.innerHTML = `
+
+                    <div class="col-12">
+
+                        <div class="alert alert-danger">
+
+                            <i class="bi bi-exclamation-triangle me-2"></i> Unable to load projects.
+
+                            <br>
+
+                            <small>${escapeHTML(error.message)}</small>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+        // =====================================================
+        // REMOVE PROJECT
+        // =====================================================
+
+        async function removeProject(id) {
+
+            if (!confirm("Delete this project?")) {
+                return;
+            }
+
+            try {
+
+                await deleteProject(id);
+                await renderProjects();
+
+            } catch (error) {
+
+                console.error("Delete project error:", error);
+
+            }
+
+        }
+
+
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
+
+        function escapeHTML(value) {
+
+            const div = document.createElement("div");
+            div.textContent = value ?? "";
+            return div.innerHTML;
+
+        }
+
+
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
+
+        document.addEventListener("DOMContentLoaded", async function() {
+
+            try {
+
+                // Load settings FIRST
+                await loadSettings();
+
+                // Open database
+                await openDB();
+
+                // Load projects
+                await renderProjects();
+
+                // SAVE BUTTON
+                const saveButton = document.getElementById("saveProjectBtn");
+                const projectInput = document.getElementById("projectName");
+                const projectError = document.getElementById("projectError");
+
+                saveButton.addEventListener("click", async function() {
+
+                    const name = projectInput.value.trim();
+                    projectError.textContent = "";
+
+                    // Validation
+                    if (!name) {
+                        projectError.textContent = "Please enter a project name.";
+                        projectInput.focus();
+                        return;
+                    }
+
+                    try {
+
+                        // Save
+                        await addProject(name);
+
+                        // Clear
+                        projectInput.value = "";
+
+                        // Close modal
+                        const modalElement = document.getElementById("projectModal");
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        modal.hide();
+
+                        // Refresh
+                        await renderProjects();
+
+                    } catch (error) {
+
+                        console.error("Add project error:", error);
+                        projectError.textContent = "Unable to save project.";
+
+                    }
+
+                });
+
+                // Enter key on input
+                projectInput.addEventListener("keypress", function(e) {
+                    if (e.key === "Enter") {
+                        saveButton.click();
+                    }
+                });
+
+                // Reset error on modal close
+                document.getElementById("projectModal").addEventListener("hidden.bs.modal", function() {
+                    projectError.textContent = "";
+                    projectInput.value = "";
+                });
+
+            } catch (error) {
+
+                console.error("Project initialization error:", error);
+
+            }
+
+        });
+    </script>
+
+</body>
+
+</html>
