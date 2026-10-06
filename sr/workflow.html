@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Workflow - SR Group</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="sidebar/sidebar.css">
+
+    <style>
+        body { background: #f5f6f8; }
+
+        #sidebar-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 250px; height: 100vh;
+            z-index: 1000;
+        }
+
+        #main-content {
+            margin-left: 250px;
+            padding: 25px;
+        }
+
+        @media (max-width: 767px) {
+            #sidebar-container { width: 0; }
+            #main-content { margin-left: 0; padding: 15px; }
+        }
+
+        .project-badge-construction {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffe69c;
+        }
+
+        .boq-table th {
+            white-space: nowrap;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .boq-table td {
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .row-fully-resolved > td {
+            background-color: rgba(25, 135, 84, 0.10) !important;
+        }
+
+        .row-fully-resolved:hover > td {
+            background-color: rgba(25, 135, 84, 0.16) !important;
+        }
+
+        .row-partial-resolved > td {
+            background-color: rgba(255, 193, 7, 0.10) !important;
+        }
+
+        .row-partial-resolved:hover > td {
+            background-color: rgba(255, 193, 7, 0.18) !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6c757d;
+            padding: 40px 16px;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            opacity: 0.4;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .resolved-badge {
+            font-size: 0.72rem;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(25, 135, 84, 0.12);
+            color: #198754;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .phase-badge {
+            font-size: 0.75rem;
+            padding: 4px 11px;
+            border-radius: 999px;
+            background: rgba(13, 110, 253, 0.12);
+            color: #0d6efd;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Phase group header row */
+        .phase-group-row > td {
+            background: #eef4ff !important;
+            font-weight: 700;
+            color: #0d6efd;
+            border-top: 2px solid #cfe2ff;
+            border-bottom: 1px solid #cfe2ff;
+        }
+
+        .phase-group-row .phase-group-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .phase-group-row .phase-group-stats {
+            margin-left: auto;
+            font-weight: 500;
+            color: #495057;
+            font-size: 0.82rem;
+        }
+
+        .phase-group-row .bi {
+            font-size: 0.95rem;
+        }
+
+        .qty-input {
+            max-width: 150px;
+        }
+
+        .resolve-btn {
+            white-space: nowrap;
+        }
+
+        .qty-strong {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+
+        .merged-count {
+            font-size: 0.68rem;
+            color: #6c757d;
+            display: block;
+            font-weight: 400;
+        }
+
+        /* Costing column styling */
+        .costing-badge {
+            font-size: 0.78rem;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(13, 202, 240, 0.12);
+            color: #0aa2c0;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .costing-text {
+            font-variant-numeric: tabular-nums;
+            color: #0aa2c0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<main id="main-content">
+    <div class="container-fluid p-4">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+            <div>
+                <h3 class="mb-1">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    Workflow
+                </h3>
+                <p class="text-muted mb-0">
+                    Track Bill of Quantity resolution per construction project.
+                </p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" id="refreshBtn" disabled>
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- STATUS -->
+        <div id="statusMessage" class="alert d-none"></div>
+
+        <!-- USER -->
+        <div class="alert alert-light border mb-4">
+            <i class="bi bi-person-circle me-2"></i>
+            <strong id="currentUserName">Loading...</strong>
+            <span class="badge bg-primary ms-2" id="currentUserRole">Loading...</span>
+        </div>
+
+        <!-- SELECTORS -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+
+                    <!-- BUSINESS -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-cone-striped me-1 text-warning"></i>
+                            Construction Business
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <select id="businessSelect" class="form-select" disabled>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+
+                    <!-- PROJECT -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-diagram-3 me-1"></i>
+                            Project
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <select id="projectSelect" class="form-select" disabled>
+                            <option value="">Select a business first</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div id="tabsWrapper" class="d-none">
+
+            <ul class="nav nav-tabs mb-4" id="workflowTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            id="pendingTabBtn"
+                            data-bs-toggle="tab"
+                            data-bs-target="#pendingTab"
+                            type="button"
+                            role="tab">
+
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        Pending
+                        <span class="badge bg-warning text-dark ms-1" id="pendingCountBadge">0</span>
+                    </button>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="resolvedTabBtn"
+                            data-bs-toggle="tab"
+                            data-bs-target="#resolvedTab"
+                            type="button"
+                            role="tab">
+
+                        <i class="bi bi-check2-circle me-1"></i>
+                        Resolved
+                        <span class="badge bg-success ms-1" id="resolvedCountBadge">0</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="workflowTabContent">
+
+                <!-- ===================================================== -->
+                <!-- PENDING TAB -->
+                <!-- ===================================================== -->
+                <div class="tab-pane fade show active" id="pendingTab" role="tabpanel">
+
+                    <div class="card border-0 shadow-sm">
+
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <strong>
+                                    <i class="bi bi-list-ul me-2"></i>
+                                    Bill of Quantity — Pending Items
+                                </strong>
+                                <div class="small text-muted">
+                                    <span id="pendingItemCount">0</span> item(s) —
+                                    click <strong>Resolve</strong> to record a resolved quantity.
+                                </div>
+                            </div>
+
+                            <div class="small text-muted" id="pendingSummary"></div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 boq-table" id="pendingTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:48px;">#</th>
+                                        <th>Title</th>
+                                        <th class="text-end" style="width:110px;">Quantity</th>
+                                        <th style="width:100px;">Unit</th>
+                                        <th class="text-end" style="width:120px;">Amount</th>
+                                        <th class="text-end" style="width:130px;">Costing</th> <!-- NEW COSTING COLUMN -->
+                                        <th class="text-end" style="width:150px;">Resolved Qty</th>
+                                        <th class="text-end" style="width:140px;">Remaining</th>
+                                        <th class="text-end" style="width:110px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingTableBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="pendingEmpty" class="empty-state d-none">
+                            <i class="bi bi-check2-circle"></i>
+                            <div>All items have been resolved.</div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ===================================================== -->
+                <!-- RESOLVED TAB -->
+                <!-- ===================================================== -->
+                <div class="tab-pane fade" id="resolvedTab" role="tabpanel">
+
+                    <div class="card border-0 shadow-sm">
+
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <strong>
+                                    <i class="bi bi-check2-circle me-2"></i>
+                                    Resolved Records — Phase Wise
+                                </strong>
+                                <div class="small text-muted">
+                                    <span id="resolvedItemCount">0</span> record(s) grouped by phase.
+                                </div>
+                            </div>
+
+                            <div class="small text-muted" id="resolvedSummary"></div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 boq-table" id="resolvedTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:48px;">#</th>
+                                        <th>Title</th>
+                                        <th class="text-end" style="width:140px;">Resolved Qty</th>
+                                        <th style="width:100px;">Unit</th>
+                                        <th class="text-end" style="width:140px;">Resolved Amount</th>
+                                        <th class="text-end" style="width:110px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resolvedTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="resolvedEmpty" class="empty-state d-none">
+                            <i class="bi bi-inbox"></i>
+                            <div>No resolved records yet.</div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Initial empty state -->
+        <div id="globalEmpty" class="empty-state">
+            <i class="bi bi-cone-striped"></i>
+            <div>Select a construction business and a project to begin.</div>
+        </div>
+
+    </div>
+</main>
+
+
+<!-- ===================================================== -->
+<!-- RESOLVE MODAL -->
+<!-- ===================================================== -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form id="resolveForm">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-check2-square me-2"></i>
+                        Resolve Bill of Quantity Item
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden" id="resolvePushId">
+
+                    <div class="alert alert-light border small mb-3" id="resolveItemInfo">
+                        Loading item...
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Phase
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select id="resolvePhase" class="form-select">
+                            <option value="">-- Select Phase --</option>
+                            <option value="Phase 1">Phase 1</option>
+                            <option value="Phase 2">Phase 2</option>
+                            <option value="Phase 3">Phase 3</option>
+                            <option value="Phase 4">Phase 4</option>
+                            <option value="Phase 5">Phase 5</option>
+                            <option value="Phase 6">Phase 6</option>
+                            <option value="Phase 7">Phase 7</option>
+                            <option value="Phase 8">Phase 8</option>
+                            <option value="Phase 9">Phase 9</option>
+                            <option value="Phase 10">Phase 10</option>
+                            <option value="__custom__">+ Custom Phase</option>
+                        </select>
+
+                        <input type="text"
+                            id="resolveCustomPhase"
+                            class="form-control mt-2 d-none"
+                            placeholder="Enter custom phase name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Resolved Quantity
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="number"
+                            id="resolveQuantity"
+                            class="form-control qty-input"
+                            step="any"
+                            min="0"
+                            placeholder="Enter quantity to resolve">
+                        <div class="form-text" id="resolveQtyHint">
+                            Remaining quantity will be shown here.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="confirmResolveBtn">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Confirm Resolve
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="sidebar/sidebar.js"></script>
+
+<script type="module">
+
+    import { auth, db } from "./firebase-config.js";
+
+    import {
+        onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+    import {
+        ref, get, set, remove, push
+    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+
+    // =====================================================
+    // CONSTANTS
+    // =====================================================
+
+    const SETTING_KEY = "bill-of-quantity";
+    const GLOBAL_ADMIN_ROLES = ["main-admin", "dev-admin", "owner"];
+
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    let currentUser = null;
+    let currentUserData = null;
+    let currentRole = "";
+
+    let availableBusinesses = [];
+    let availableProjects = [];
+
+    let selectedBusinessId = "";
+    let selectedBusinessName = "";
+    let selectedProjectId = "";
+    let selectedProjectLabel = "";
+
+    let boqFieldMap = {};
+    let boqRecords = {};
+    let resolvedRecords = {};
+
+
+    // =====================================================
+    // ELEMENTS
+    // =====================================================
+
+    const statusMessage         = document.getElementById("statusMessage");
+    const businessSelect        = document.getElementById("businessSelect");
+    const projectSelect         = document.getElementById("projectSelect");
+    const tabsWrapper           = document.getElementById("tabsWrapper");
+    const globalEmpty           = document.getElementById("globalEmpty");
+    const refreshBtn            = document.getElementById("refreshBtn");
+
+    const pendingTableBody      = document.getElementById("pendingTableBody");
+    const pendingEmpty          = document.getElementById("pendingEmpty");
+    const pendingTable          = document.getElementById("pendingTable");
+    const pendingCountBadge     = document.getElementById("pendingCountBadge");
+    const pendingItemCount      = document.getElementById("pendingItemCount");
+    const pendingSummary        = document.getElementById("pendingSummary");
+
+    const resolvedTableBody     = document.getElementById("resolvedTableBody");
+    const resolvedEmpty         = document.getElementById("resolvedEmpty");
+    const resolvedTable         = document.getElementById("resolvedTable");
+    const resolvedCountBadge    = document.getElementById("resolvedCountBadge");
+    const resolvedItemCount     = document.getElementById("resolvedItemCount");
+    const resolvedSummary       = document.getElementById("resolvedSummary");
+
+    const resolveModalEl        = document.getElementById("resolveModal");
+    const resolveModal          = new bootstrap.Modal(resolveModalEl);
+    const resolveForm           = document.getElementById("resolveForm");
+    const resolvePushIdInput    = document.getElementById("resolvePushId");
+    const resolveItemInfo       = document.getElementById("resolveItemInfo");
+    const resolvePhase          = document.getElementById("resolvePhase");
+    const resolveCustomPhase    = document.getElementById("resolveCustomPhase");
+    const resolveQuantity       = document.getElementById("resolveQuantity");
+    const resolveQtyHint        = document.getElementById("resolveQtyHint");
+    const confirmResolveBtn     = document.getElementById("confirmResolveBtn");
+
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+
+    function showStatus(message, type = "danger") {
+        statusMessage.className = `alert alert-${type}`;
+        statusMessage.textContent = message;
+        statusMessage.classList.remove("d-none");
+
+        clearTimeout(showStatus._timer);
+        showStatus._timer = setTimeout(() => {
+            statusMessage.classList.add("d-none");
+        }, 4000);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function formatNumber(n) {
+        const v = Number(n) || 0;
+        try {
+            return v.toLocaleString("en-IN", {
+                maximumFractionDigits: 2
+            });
+        }
+        catch {
+            return v.toFixed(2);
+        }
+    }
+
+    function isSuperAdmin() {
+        return GLOBAL_ADMIN_ROLES.includes(currentRole);
+    }
+
+    function isBusinessAdmin() {
+        return currentRole === "business-admin";
+    }
+
+    function isProjectAdmin() {
+        return currentRole === "project-admin";
+    }
+
+    function getAssignedBusinessIds() {
+        const raw = currentUserData?.businessAccess;
+        if (!raw || typeof raw !== "object") return [];
+        return Object.keys(raw).filter(k => raw[k]);
+    }
+
+    function getAssignedProjectBusinessIds() {
+        const raw = currentUserData?.projectAccess;
+        if (!raw || typeof raw !== "object") return [];
+        return Object.keys(raw).filter(k => raw[k] && typeof raw[k] === "object");
+    }
+
+    function userHasBusinessAccess(businessId) {
+        if (isSuperAdmin()) return true;
+        if (isBusinessAdmin()) return getAssignedBusinessIds().includes(businessId);
+        if (isProjectAdmin()) return getAssignedProjectBusinessIds().includes(businessId);
+        return false;
+    }
+
+
+    // =====================================================
+    // AUTH
+    // =====================================================
+
+    onAuthStateChanged(auth, async user => {
+
+        if (!user) {
+            location.href = "login.html";
+            return;
+        }
+
+        currentUser = user;
+
+        const snap = await get(ref(db, `sr_group/users/${user.uid}`));
+
+        if (!snap.exists()) {
+            location.href = "login.html";
+            return;
+        }
+
+        currentUserData = snap.val();
+        currentRole = currentUserData.role || "";
+
+        document.getElementById("currentUserName").textContent =
+            currentUserData.name || user.email || "User";
+
+        document.getElementById("currentUserRole").textContent =
+            currentRole;
+
+        await loadBusinesses();
+    });
+
+
+    // =====================================================
+    // LOAD BUSINESSES (only construction)
+    // =====================================================
+
+    async function loadBusinesses() {
+
+        businessSelect.innerHTML = `<option value="">Loading...</option>`;
+        businessSelect.disabled = true;
+
+        try {
+
+            let raw = {};
+
+            if (isSuperAdmin()) {
+
+                const snap = await get(ref(db, "sr_group/businesses"));
+                raw = snap.exists() ? (snap.val() || {}) : {};
+
+            }
+            else if (isBusinessAdmin()) {
+
+                for (const id of getAssignedBusinessIds()) {
+                    try {
+                        const s = await get(ref(db, `sr_group/businesses/${id}`));
+                        if (s.exists()) raw[id] = s.val();
+                    }
+                    catch { /* ignore */ }
+                }
+
+            }
+            else if (isProjectAdmin()) {
+
+                for (const id of getAssignedProjectBusinessIds()) {
+                    try {
+                        const s = await get(ref(db, `sr_group/businesses/${id}`));
+                        if (s.exists()) raw[id] = s.val();
+                    }
+                    catch { /* ignore */ }
+                }
+
+            }
+            else {
+                throw new Error("You do not have permission to view workflow.");
+            }
+
+            availableBusinesses =
+                Object.entries(raw)
+                    .filter(([, b]) => b && b.construction === true)
+                    .map(([id, b]) => ({
+                        id,
+                        name: b.name || id,
+                        construction: true
+                    }))
+                    .sort((a, b) => a.id.localeCompare(b.id));
+
+        }
+        catch (err) {
+            console.error("Load businesses error:", err);
+            businessSelect.innerHTML =
+                `<option value="">Error loading businesses</option>`;
+            return;
+        }
+
+        if (!availableBusinesses.length) {
+            businessSelect.innerHTML =
+                `<option value="">No construction businesses available</option>`;
+            return;
+        }
+
+        businessSelect.innerHTML =
+            `<option value="">-- Select business --</option>`;
+
+        availableBusinesses.forEach(b => {
+            const opt = document.createElement("option");
+            opt.value = b.id;
+            opt.textContent = `${b.name} (${b.id})`;
+            businessSelect.appendChild(opt);
+        });
+
+        businessSelect.disabled = false;
+    }
+
+
+    // =====================================================
+    // BUSINESS CHANGE → LOAD PROJECTS
+    // =====================================================
+
+    businessSelect.addEventListener("change", async () => {
+
+        selectedBusinessId = businessSelect.value;
+
+        selectedBusinessName =
+            availableBusinesses.find(b => b.id === selectedBusinessId)?.name ||
+            selectedBusinessId;
+
+        selectedProjectId = "";
+        selectedProjectLabel = "";
+
+        projectSelect.innerHTML = `<option value="">Loading projects...</option>`;
+        projectSelect.disabled = true;
+
+        tabsWrapper.classList.add("d-none");
+        globalEmpty.classList.remove("d-none");
+        refreshBtn.disabled = true;
+
+        if (!selectedBusinessId) {
+            projectSelect.innerHTML =
+                `<option value="">Select a business first</option>`;
+            return;
+        }
+
+        if (!userHasBusinessAccess(selectedBusinessId)) {
+            showStatus("You do not have access to this business.");
+            businessSelect.value = "";
+            selectedBusinessId = "";
+            return;
+        }
+
+        await loadProjectsForBusiness(selectedBusinessId);
+    });
+
+
+    async function loadProjectsForBusiness(businessId) {
+
+        availableProjects = [];
+
+        let raw = {};
+
+        try {
+            const snap = await get(
+                ref(db, `sr_group/businesses/${businessId}/projects`)
+            );
+            raw = snap.exists() ? (snap.val() || {}) : {};
+        }
+        catch (err) {
+            console.warn("Could not load projects:", err);
+        }
+
+        Object.entries(raw).forEach(([pushId, p]) => {
+
+            if (pushId === "_placeholder") return;
+            if (!p || typeof p !== "object") return;
+
+            if (isProjectAdmin()) {
+                const assigned =
+                    currentUserData?.projectAccess?.[businessId] || {};
+                if (!assigned[pushId]) return;
+            }
+
+            availableProjects.push({
+                pushId,
+                projectId: p.projectId || "",
+                projectName: p.projectName || p.name || pushId
+            });
+        });
+
+        availableProjects.sort((a, b) =>
+            (a.projectId || "").localeCompare(b.projectId || "")
+        );
+
+        if (!availableProjects.length) {
+            projectSelect.innerHTML =
+                `<option value="">No projects available</option>`;
+            projectSelect.disabled = true;
+            return;
+        }
+
+        projectSelect.innerHTML =
+            `<option value="">-- Select project --</option>`;
+
+        availableProjects.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.pushId;
+            opt.textContent =
+                `${p.projectId || "—"} — ${p.projectName || ""}`;
+            projectSelect.appendChild(opt);
+        });
+
+        projectSelect.disabled = false;
+    }
+
+
+    // =====================================================
+    // PROJECT CHANGE → LOAD DATA
+    // =====================================================
+
+    projectSelect.addEventListener("change", async () => {
+
+        selectedProjectId = projectSelect.value;
+
+        const p = availableProjects.find(x => x.pushId === selectedProjectId);
+        selectedProjectLabel = p
+            ? `${p.projectId || "—"} — ${p.projectName || ""}`
+            : "";
+
+        if (!selectedProjectId) {
+            tabsWrapper.classList.add("d-none");
+            globalEmpty.classList.remove("d-none");
+            refreshBtn.disabled = true;
+            return;
+        }
+
+        // Reset tabs to "Pending" active
+        const pendingTabBtn = document.getElementById("pendingTabBtn");
+        const pendingTab = document.getElementById("pendingTab");
+        const resolvedTabBtn = document.getElementById("resolvedTabBtn");
+        const resolvedTab = document.getElementById("resolvedTab");
+
+        pendingTabBtn.classList.add("active");
+        pendingTab.classList.add("show", "active");
+        resolvedTabBtn.classList.remove("active");
+        resolvedTab.classList.remove("show", "active");
+
+        tabsWrapper.classList.remove("d-none");
+        globalEmpty.classList.add("d-none");
+        refreshBtn.disabled = false;
+
+        await loadAllData();
+    });
+
+
+    // =====================================================
+    // LOAD BOQ + RESOLVED
+    // =====================================================
+
+    async function loadAllData() {
+
+        pendingTableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    Loading...
+                </td>
+            </tr>
+        `;
+
+        resolvedTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    Loading...
+                </td>
+            </tr>
+        `;
+
+        await Promise.all([
+            loadBoqFieldMap(),
+            loadBoqRecords(),
+            loadResolvedRecords()
+        ]);
+
+        renderPending();
+        renderResolved();
+    }
+
+
+    async function loadBoqFieldMap() {
+
+        boqFieldMap = {};
+
+        try {
+            const snap = await get(
+                ref(db, `sr_group/settings/${selectedBusinessId}/${SETTING_KEY}`)
+            );
+
+            if (!snap.exists()) return;
+
+            const data = snap.val() || {};
+
+            Object.entries(data).forEach(([fieldId, def]) => {
+                if (fieldId === "meta") return;
+                if (!def || typeof def !== "object") return;
+                const title = def.title;
+                if (title) boqFieldMap[title] = fieldId;
+            });
+        }
+        catch (err) {
+            console.warn("Could not load BOQ field map:", err);
+        }
+    }
+
+
+    async function loadBoqRecords() {
+
+        boqRecords = {};
+
+        try {
+            const snap = await get(
+                ref(db, `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/records/${SETTING_KEY}`)
+            );
+
+            if (snap.exists()) {
+                boqRecords = snap.val() || {};
+            }
+        }
+        catch (err) {
+            console.warn("Could not load BOQ records:", err);
+        }
+    }
+
+
+    async function loadResolvedRecords() {
+
+        resolvedRecords = {};
+
+        try {
+            const snap = await get(
+                ref(db, `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/resolved`)
+            );
+
+            if (snap.exists()) {
+                resolvedRecords = snap.val() || {};
+            }
+        }
+        catch (err) {
+            console.warn("Could not load resolved records:", err);
+        }
+    }
+
+
+    // =====================================================
+    // FIELD VALUE HELPERS
+    // =====================================================
+
+    function getBoqValue(record, title) {
+        const fieldId = boqFieldMap[title];
+        if (!fieldId) return "";
+        return record?.[fieldId] ?? "";
+    }
+
+    function getResolvedTotalForPushId(pushId) {
+        let total = 0;
+        Object.values(resolvedRecords).forEach(r => {
+            if (r && r.boqPushId === pushId) {
+                total += Number(r.resolvedQuantity) || 0;
+            }
+        });
+        return total;
+    }
+
+
+    // =====================================================
+    // RENDER — PENDING TABLE
+    // =====================================================
+
+    function renderPending() {
+
+        pendingTableBody.innerHTML = "";
+
+        const boqIds = Object.keys(boqRecords);
+
+        boqIds.sort((a, b) => {
+            const ta = String(getBoqValue(boqRecords[a], "Title") || "").toLowerCase();
+            const tb = String(getBoqValue(boqRecords[b], "Title") || "").toLowerCase();
+            return ta.localeCompare(tb);
+        });
+
+        const rows = [];
+
+        boqIds.forEach(pushId => {
+
+            const rec = boqRecords[pushId] || {};
+
+            const title = String(getBoqValue(rec, "Title") || "").trim();
+            const quantity = Number(getBoqValue(rec, "Quantity")) || 0;
+            const unit = String(getBoqValue(rec, "Unit") || "");
+            const amount = Number(getBoqValue(rec, "Amount")) || 0;
+            const costing = Number(getBoqValue(rec, "Costing")) || 0; // NEW: Costing
+
+            const resolvedTotal = getResolvedTotalForPushId(pushId);
+            const remaining = Math.max(0, quantity - resolvedTotal);
+
+            if (remaining <= 0) return;
+
+            rows.push({
+                pushId,
+                title,
+                quantity,
+                unit,
+                amount,
+                costing, // NEW
+                resolvedTotal,
+                remaining
+            });
+        });
+
+        pendingCountBadge.textContent = rows.length;
+        pendingItemCount.textContent = rows.length;
+
+        const totalRemaining = rows.reduce((s, r) => s + r.remaining, 0);
+
+        pendingSummary.textContent =
+            totalRemaining > 0
+                ? `Total remaining: ${formatNumber(totalRemaining)}`
+                : "";
+
+        if (!rows.length) {
+            pendingTable.classList.add("d-none");
+            pendingEmpty.classList.remove("d-none");
+            return;
+        }
+
+        pendingTable.classList.remove("d-none");
+        pendingEmpty.classList.add("d-none");
+
+        rows.forEach((r, index) => {
+
+            const tr = document.createElement("tr");
+
+            if (r.resolvedTotal > 0 && r.remaining > 0) {
+                tr.classList.add("row-partial-resolved");
+            }
+
+            // Build the costing cell (always show, with fallback if 0)
+            const costingCell = r.costing > 0
+                ? `<span class="costing-text">${formatNumber(r.costing)}</span>`
+                : `<span class="text-muted small">—</span>`;
+
+            tr.innerHTML = `
+                <td class="text-muted">${index + 1}</td>
+                <td class="fw-semibold">${escapeHtml(r.title || "—")}</td>
+                <td class="text-end qty-strong">${formatNumber(r.quantity)}</td>
+                <td>${escapeHtml(r.unit || "—")}</td>
+                <td class="text-end">${formatNumber(r.amount)}</td>
+                <td class="text-end">${costingCell}</td> <!-- COSTING COLUMN -->
+                <td class="text-end">
+                    ${r.resolvedTotal > 0
+                        ? `<span class="resolved-badge">
+                             ${formatNumber(r.resolvedTotal)} / ${formatNumber(r.quantity)}
+                           </span>`
+                        : `<span class="text-muted small">—</span>`}
+                </td>
+                <td class="text-end qty-strong">
+                    ${formatNumber(r.remaining)}
+                </td>
+                <td class="text-end">
+                    <button type="button"
+                        class="btn btn-sm btn-success resolve-btn"
+                        data-push-id="${escapeHtml(r.pushId)}">
+                        <i class="bi bi-check2-square me-1"></i>
+                        Resolve
+                    </button>
+                </td>
+            `;
+
+            tr.querySelector(".resolve-btn").addEventListener("click", () => {
+                openResolveModal(r.pushId);
+            });
+
+            pendingTableBody.appendChild(tr);
+        });
+    }
+
+
+    // =====================================================
+    // GROUP RESOLVED RECORDS BY PHASE + TITLE
+    // =====================================================
+
+    function groupResolvedByPhaseAndTitle() {
+
+        const phaseMap = new Map(); // phase -> Map(title -> group)
+
+        Object.entries(resolvedRecords).forEach(([id, r]) => {
+
+            if (!r || typeof r !== "object") return;
+
+            const phase = String(r.phase || "Unassigned").trim() || "Unassigned";
+            const title = String(r.title || "—").trim() || "—";
+
+            if (!phaseMap.has(phase)) {
+                phaseMap.set(phase, new Map());
+            }
+
+            const titleMap = phaseMap.get(phase);
+
+            if (!titleMap.has(title)) {
+                titleMap.set(title, {
+                    phase,
+                    title,
+                    unit: String(r.unit || "—"),
+                    resolvedQuantity: 0,
+                    resolvedAmount: 0,
+                    recordIds: [],
+                    firstCreatedAt: Number(r.createdAt) || 0
+                });
+            }
+
+            const group = titleMap.get(title);
+
+            group.resolvedQuantity += Number(r.resolvedQuantity) || 0;
+            group.resolvedAmount += Number(r.resolvedAmount) || 0;
+            group.recordIds.push(id);
+
+            if (!group.unit || group.unit === "—") {
+                if (r.unit) group.unit = String(r.unit);
+            }
+
+            const cAt = Number(r.createdAt) || 0;
+            if (cAt && (!group.firstCreatedAt || cAt < group.firstCreatedAt)) {
+                group.firstCreatedAt = cAt;
+            }
+        });
+
+        // Sort phases: numeric phase numbers first, then alpha
+        const phases = Array.from(phaseMap.keys());
+
+        phases.sort((a, b) => {
+            const na = parseInt(String(a).replace(/\D/g, "")) || 0;
+            const nb = parseInt(String(b).replace(/\D/g, "")) || 0;
+            if (na !== nb) return na - nb;
+            return String(a).localeCompare(String(b));
+        });
+
+        // Build ordered structure
+        const ordered = [];
+
+        phases.forEach(phase => {
+
+            const titleMap = phaseMap.get(phase);
+
+            const items = Array.from(titleMap.values());
+
+            items.sort((a, b) => a.title.localeCompare(b.title));
+
+            ordered.push({
+                phase,
+                items
+            });
+        });
+
+        return ordered;
+    }
+
+
+    // =====================================================
+    // RENDER — RESOLVED TABLE (PHASE WISE GROUPED)
+    // =====================================================
+
+    function renderResolved() {
+
+        resolvedTableBody.innerHTML = "";
+
+        const grouped = groupResolvedByPhaseAndTitle();
+
+        // Counts
+        const totalRecords = Object.keys(resolvedRecords).length;
+        const totalGroups = grouped.reduce((s, g) => s + g.items.length, 0);
+
+        resolvedCountBadge.textContent = totalGroups;
+        resolvedItemCount.textContent = totalGroups;
+
+        let sumQty = 0;
+        let sumAmt = 0;
+
+        grouped.forEach(g => {
+            g.items.forEach(it => {
+                sumQty += it.resolvedQuantity;
+                sumAmt += it.resolvedAmount;
+            });
+        });
+
+        resolvedSummary.textContent =
+            totalGroups > 0
+                ? `Total resolved qty: ${formatNumber(sumQty)} · Amount: ${formatNumber(sumAmt)}`
+                : "";
+
+        if (!grouped.length) {
+            resolvedTable.classList.add("d-none");
+            resolvedEmpty.classList.remove("d-none");
+            return;
+        }
+
+        resolvedTable.classList.remove("d-none");
+        resolvedEmpty.classList.add("d-none");
+
+        let rowIndex = 0;
+
+        grouped.forEach(group => {
+
+            const phaseQty = group.items.reduce((s, i) => s + i.resolvedQuantity, 0);
+            const phaseAmt = group.items.reduce((s, i) => s + i.resolvedAmount, 0);
+
+            // Phase group header row
+            const headerTr = document.createElement("tr");
+            headerTr.className = "phase-group-row";
+            headerTr.innerHTML = `
+                <td colspan="6">
+                    <div class="phase-group-title">
+                        <span class="phase-badge">
+                            <i class="bi bi-layers-half me-1"></i>
+                            ${escapeHtml(group.phase)}
+                        </span>
+                        <span>
+                            ${group.items.length} item(s)
+                        </span>
+                        <span class="phase-group-stats">
+                            Qty: <strong>${formatNumber(phaseQty)}</strong>
+                            · Amount: <strong>${formatNumber(phaseAmt)}</strong>
+                        </span>
+                    </div>
+                </td>
+            `;
+
+            resolvedTableBody.appendChild(headerTr);
+
+            // Item rows
+            group.items.forEach(item => {
+
+                rowIndex += 1;
+
+                const tr = document.createElement("tr");
+
+                const mergedCount = item.recordIds.length;
+
+                tr.innerHTML = `
+                    <td class="text-muted">${rowIndex}</td>
+                    <td class="fw-semibold">
+                        ${escapeHtml(item.title)}
+                        ${mergedCount > 1
+                            ? `<span class="merged-count">
+                                 (merged from ${mergedCount} entries)
+                               </span>`
+                            : ``}
+                    </td>
+                    <td class="text-end qty-strong">${formatNumber(item.resolvedQuantity)}</td>
+                    <td>${escapeHtml(item.unit || "—")}</td>
+                    <td class="text-end">${formatNumber(item.resolvedAmount)}</td>
+                    <td class="text-end">
+                        <button type="button"
+                            class="btn btn-sm btn-outline-danger delete-group-btn"
+                            data-ids="${escapeHtml(item.recordIds.join(","))}"
+                            data-title="${escapeHtml(item.title)}"
+                            data-phase="${escapeHtml(item.phase)}"
+                            data-qty="${item.resolvedQuantity}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+
+                tr.querySelector(".delete-group-btn")
+                    .addEventListener("click", () => deleteResolvedGroup(item));
+
+                resolvedTableBody.appendChild(tr);
+            });
+        });
+    }
+
+
+    // =====================================================
+    // PHASE CUSTOM INPUT TOGGLE
+    // =====================================================
+
+    resolvePhase.addEventListener("change", () => {
+        if (resolvePhase.value === "__custom__") {
+            resolveCustomPhase.classList.remove("d-none");
+            resolveCustomPhase.focus();
+        }
+        else {
+            resolveCustomPhase.classList.add("d-none");
+            resolveCustomPhase.value = "";
+        }
+    });
+
+
+    // =====================================================
+    // OPEN RESOLVE MODAL
+    // =====================================================
+
+    function openResolveModal(boqPushId) {
+
+        const rec = boqRecords[boqPushId];
+
+        if (!rec) {
+            showStatus("Item not found.");
+            return;
+        }
+
+        const title = String(getBoqValue(rec, "Title") || "").trim();
+        const quantity = Number(getBoqValue(rec, "Quantity")) || 0;
+        const unit = String(getBoqValue(rec, "Unit") || "");
+        const amount = Number(getBoqValue(rec, "Amount")) || 0;
+        const costing = Number(getBoqValue(rec, "Costing")) || 0; // NEW
+
+        const resolvedTotal = getResolvedTotalForPushId(boqPushId);
+        const remaining = Math.max(0, quantity - resolvedTotal);
+
+        resolvePushIdInput.value = boqPushId;
+
+        // Include costing in modal info if it exists
+        const costingInfo = costing > 0
+            ? ` · Costing: <strong>${formatNumber(costing)}</strong>`
+            : '';
+
+        resolveItemInfo.innerHTML = `
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+                <div>
+                    <strong>${escapeHtml(title || "—")}</strong>
+                </div>
+                <div class="text-muted">
+                    Total: <strong>${formatNumber(quantity)}</strong> ${escapeHtml(unit)}
+                    · Amount: <strong>${formatNumber(amount)}</strong>${costingInfo}
+                </div>
+            </div>
+            <div class="mt-1 text-muted">
+                Already resolved: <strong>${formatNumber(resolvedTotal)}</strong>
+                · Remaining: <strong>${formatNumber(remaining)}</strong>
+            </div>
+        `;
+
+        resolvePhase.value = "";
+        resolveCustomPhase.value = "";
+        resolveCustomPhase.classList.add("d-none");
+
+        resolveQuantity.value = "";
+        resolveQuantity.max = remaining;
+        resolveQuantity.step = "any";
+
+        resolveQtyHint.textContent =
+            `Enter a quantity between 0 and ${formatNumber(remaining)}.`;
+
+        resolveModal.show();
+
+        setTimeout(() => {
+            try { resolvePhase.focus(); } catch (err) {}
+        }, 200);
+    }
+
+
+    // =====================================================
+    // SUBMIT RESOLVE
+    // =====================================================
+
+    resolveForm.addEventListener("submit", async event => {
+
+        event.preventDefault();
+
+        const boqPushId = resolvePushIdInput.value;
+
+        if (!boqPushId) return;
+
+        const rec = boqRecords[boqPushId];
+
+        if (!rec) {
+            showStatus("Item not found.");
+            return;
+        }
+
+        // Determine phase
+        let phase = resolvePhase.value;
+
+        if (phase === "__custom__") {
+            phase = resolveCustomPhase.value.trim();
+        }
+
+        if (!phase) {
+            showStatus("Please select or enter a phase.", "warning");
+            resolvePhase.focus();
+            return;
+        }
+
+        const title = String(getBoqValue(rec, "Title") || "").trim();
+        const quantity = Number(getBoqValue(rec, "Quantity")) || 0;
+        const unit = String(getBoqValue(rec, "Unit") || "");
+        const amount = Number(getBoqValue(rec, "Amount")) || 0;
+        const costing = Number(getBoqValue(rec, "Costing")) || 0; // NEW
+
+        const resolvedTotal = getResolvedTotalForPushId(boqPushId);
+        const remaining = Math.max(0, quantity - resolvedTotal);
+
+        const resolvedQuantity = Number(resolveQuantity.value);
+
+        if (!Number.isFinite(resolvedQuantity) || resolvedQuantity <= 0) {
+            showStatus("Please enter a resolved quantity greater than 0.", "warning");
+            return;
+        }
+
+        if (resolvedQuantity > remaining) {
+            showStatus(
+                `Resolved quantity cannot exceed remaining (${formatNumber(remaining)}).`,
+                "warning"
+            );
+            return;
+        }
+
+        // ✅ Resolved Amount = Amount × Resolved Quantity
+        const resolvedAmount = Number(
+            ((Number(amount) || 0) * (Number(resolvedQuantity) || 0)).toFixed(2)
+        );
+
+        confirmResolveBtn.disabled = true;
+
+        const oldHtml = confirmResolveBtn.innerHTML;
+
+        confirmResolveBtn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-1"></span>
+            Saving...
+        `;
+
+        try {
+
+            const resolvedRef = push(
+                ref(db, `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/resolved`)
+            );
+
+            await set(resolvedRef, {
+                boqPushId,
+                title,
+                unit,
+                phase,
+
+                boqQuantity: quantity,
+                boqAmount: amount,
+                boqCosting: costing, // NEW: store costing if needed
+
+                resolvedQuantity,
+                resolvedAmount,
+
+                createdAt: Date.now()
+            });
+
+            resolveModal.hide();
+
+            showStatus("Item resolved successfully.", "success");
+
+            await loadAllData();
+
+            const newTotal = resolvedTotal + resolvedQuantity;
+
+            if (newTotal >= quantity) {
+                const resolvedTabBtn = document.getElementById("resolvedTabBtn");
+                if (resolvedTabBtn) resolvedTabBtn.click();
+            }
+
+        }
+        catch (err) {
+            console.error("Resolve save error:", err);
+            showStatus("Failed to save resolution. Please try again.");
+        }
+        finally {
+            confirmResolveBtn.disabled = false;
+            confirmResolveBtn.innerHTML = oldHtml;
+        }
+    });
+
+
+    // =====================================================
+    // DELETE RESOLVED GROUP (all entries for phase+title)
+    // =====================================================
+
+    async function deleteResolvedGroup(item) {
+
+        if (!item || !item.recordIds || !item.recordIds.length) return;
+
+        const preview =
+            `${item.title} — ${item.phase} — ${formatNumber(item.resolvedQuantity)} ${item.unit || ""}`;
+
+        const mergedText = item.recordIds.length > 1
+            ? `\n(Includes ${item.recordIds.length} merged entries)`
+            : "";
+
+        if (!confirm(
+            `Delete this resolved group?\n\n${preview}${mergedText}\n\nThis will remove all entries for this phase + title and the BOQ item will return to Pending.`
+        )) {
+            return;
+        }
+
+        try {
+
+            const basePath =
+                `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/resolved`;
+
+            await Promise.all(
+                item.recordIds.map(id =>
+                    remove(ref(db, `${basePath}/${id}`))
+                )
+            );
+
+            showStatus("Resolved records deleted.", "success");
+
+            await loadAllData();
+
+        }
+        catch (err) {
+            console.error("Delete resolved group error:", err);
+            showStatus("Failed to delete resolved records.");
+        }
+    }
+
+
+    // =====================================================
+    // REFRESH BUTTON
+    // =====================================================
+
+    refreshBtn.addEventListener("click", async () => {
+
+        if (!selectedBusinessId) {
+            showStatus("Please select a business first.", "warning");
+            return;
+        }
+
+        if (!selectedProjectId) {
+            showStatus("Please select a project first.", "warning");
+            return;
+        }
+
+        await loadAllData();
+        showStatus("Reloaded.", "success");
+    });
+
+
+    // =====================================================
+    // RESET ON MODAL CLOSE
+    // =====================================================
+
+    resolveModalEl.addEventListener("hidden.bs.modal", () => {
+        resolveForm.reset();
+        resolvePushIdInput.value = "";
+        resolveCustomPhase.classList.add("d-none");
+        resolveCustomPhase.value = "";
+    });
+
+</script>
+
+</body>
+
+</html>

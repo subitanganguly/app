@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Data - SR Group</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="sidebar/sidebar.css">
+
+    <style>
+        .field-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .table th {
+            white-space: nowrap;
+            font-size: 0.85rem;
+        }
+
+        .table td {
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .summary-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #fff;
+            height: 100%;
+        }
+
+        .summary-card .summary-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .summary-card .summary-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0d6efd;
+            line-height: 1.1;
+        }
+
+        .qty-preview {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Length / Breadth / Height: green = needed for the unit, red = not used */
+        .form-control.dim-field.dim-on {
+            border-color: #198754;
+            background-color: rgba(25, 135, 84, 0.08);
+        }
+
+        .form-control.dim-field.dim-on:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+
+        .form-control.dim-field.dim-off {
+            border-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.10);
+            cursor: not-allowed;
+        }
+
+        .field-label.dim-label-on {
+            color: #198754;
+        }
+
+        .field-label.dim-label-off {
+            color: #dc3545;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 0.7rem;
+            height: 0.7rem;
+            border-radius: 50%;
+            margin-right: 0.25rem;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<main id="main-content">
+    <div class="container-fluid p-4">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+            <div>
+                <h3 class="mb-1">
+                    <i class="bi bi-rulers me-2"></i>
+                    <span id="pageTitle">Measurement Data</span>
+                </h3>
+                <p class="text-muted mb-0">
+                    Business: <strong id="businessLabel">-</strong>
+                </p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="measurement-sheet.html" class="btn btn-outline-secondary" id="backBtn">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <button class="btn btn-outline-success" id="downloadBtn" disabled>
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </button>
+                <button class="btn btn-primary" id="addEntryBtn" disabled>
+                    <i class="bi bi-plus-lg me-1"></i> Add Entry
+                </button>
+            </div>
+        </div>
+
+        <!-- USER -->
+        <div class="alert alert-light border mb-4">
+            <i class="bi bi-person-circle me-2"></i>
+            <strong id="currentUserName">Loading...</strong>
+            <span class="badge bg-primary ms-2" id="currentUserRole">Loading...</span>
+        </div>
+
+        <!-- SUMMARY CARDS -->
+        <div class="row g-3 mb-4" id="summaryRow"></div>
+
+        <!-- ENTRIES -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <strong><i class="bi bi-list-ul me-2"></i> Entries</strong>
+                    <div class="small text-muted">
+                        <span id="entryCount">0</span> of
+                        <span id="entryTotal">0</span> entr(ies)
+                    </div>
+                </div>
+
+                <div class="input-group input-group-sm" style="width: 260px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search entries...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="entriesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th class="num">Nos</th>
+                            <th class="num">Length</th>
+                            <th class="num">Breadth</th>
+                            <th class="num">Height</th>
+                            <th class="num">Quantity</th>
+                            <th>Unit</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entriesBody">
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- EMPTY -->
+        <div id="emptyState" class="text-center text-muted py-5 d-none">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            <span id="emptyStateText">No entries yet. Click “Add Entry” to record the first measurement.</span>
+        </div>
+
+    </div>
+</main>
+
+<!-- ENTRY MODAL -->
+<div class="modal fade" id="entryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form id="entryForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        <span id="entryModalTitle">Add Entry</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="entryId">
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="field-label" for="f_title">Title</label>
+                            <input type="text" class="form-control" id="f_title" list="titleList"
+                                   maxlength="200" autocomplete="off" required>
+                            <datalist id="titleList"></datalist>
+                        </div>
+
+                        <div class="col-12 col-md-8">
+                            <label class="field-label" for="f_unit">Unit</label>
+                            <select class="form-select" id="f_unit"></select>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="field-label">Quantity</label>
+                            <div class="form-control bg-light qty-preview" id="qtyPreview">0</div>
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label class="field-label" for="f_nos">Nos</label>
+                            <input type="number" step="any" class="form-control calc" id="f_nos">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="field-label" for="f_length">Length</label>
+                            <input type="number" step="any" class="form-control dim-field calc" id="f_length">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="field-label" for="f_breadth">Breadth</label>
+                            <input type="number" step="any" class="form-control dim-field calc" id="f_breadth">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="field-label" for="f_height">Height / Depth</label>
+                            <input type="number" step="any" class="form-control dim-field calc" id="f_height">
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-text" id="formulaHint"></div>
+                            <div class="form-text">
+                                <span class="legend-dot bg-success"></span> Needed for this unit
+                                <span class="legend-dot bg-danger ms-3"></span> Not used for this unit
+                                <span class="ms-3">Use a negative value for a deduction.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-danger small mt-3 d-none" id="entryError"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-primary" id="saveAddBtn">
+                        <i class="bi bi-plus-lg me-1"></i> Save &amp; Add Another
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveEntryBtn">
+                        <i class="bi bi-check-lg me-1"></i> Save Entry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module" src="sidebar/sidebar.js"></script>
+
+<script type="module">
+
+    import { auth, db } from "./firebase-config.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { ref, get, set, remove, push } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+    // =====================================================
+    // CONSTANTS
+    // =====================================================
+
+    const GLOBAL_ADMIN_ROLES = ["main-admin", "dev-admin"];
+    // dims = which of Length / Breadth / Height are used for that unit
+    const UNITS = [
+        { value: "Cu.m",  label: "Cubic Meter (Cu.m)",   dims: ["length", "breadth", "height"] },
+        { value: "C.ft",  label: "Cubic Feet (C.ft)",    dims: ["length", "breadth", "height"] },
+        { value: "Sq.m",  label: "Square Meter (Sq.m)",  dims: ["length", "breadth"] },
+        { value: "Sq.ft", label: "Square Feet (Sq.ft)",  dims: ["length", "breadth"] },
+        { value: "Rmt",   label: "Running Meter (Rmt)",  dims: ["length"] }
+        // { value: "Nos",   label: "Numbers (Nos)",        dims: [] },
+        // { value: "Kg",    label: "Kilogram (Kg)",        dims: [] },
+        // { value: "Ton",   label: "Metric Tonne (Ton)",   dims: [] }
+    ];
+
+    const DIMS = ["length", "breadth", "height"];
+    const DIM_NAMES = { length: "Length", breadth: "Breadth", height: "Height / Depth" };
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    let currentUser = null;
+    let currentRole = "";
+    let currentUserData = null;
+    let businessId = "";
+    let sheetId = "";
+    let sheetTitle = "";
+    let entries = {};
+    let searchQuery = "";
+    let lastUnit = UNITS[0].value;
+
+    const entryModal = new bootstrap.Modal(document.getElementById("entryModal"));
+
+    // =====================================================
+    // PATHS  (saved under the business → sheet id)
+    // =====================================================
+
+    function sheetPath() {
+        return `sr_group/businesses/${businessId}/measurement-sheets/${sheetId}`;
+    }
+
+    function entriesPath() {
+        return `sr_group/businesses/${businessId}/measurement-sheet-data/${sheetId}`;
+    }
+
+    // =====================================================
+    // AUTH
+    // =====================================================
+
+    onAuthStateChanged(auth, async user => {
+        if (!user) {
+            location.href = "login.html";
+            return;
+        }
+
+        currentUser = user;
+
+        let snapshot;
+        try {
+            snapshot = await get(ref(db, `sr_group/users/${user.uid}`));
+        }
+        catch (err) {
+            console.error("Failed to load user profile:", err);
+            location.href = "login.html";
+            return;
+        }
+
+        if (!snapshot.exists()) {
+            location.href = "login.html";
+            return;
+        }
+
+        currentUserData = snapshot.val();
+        currentRole = currentUserData.role || "";
+
+        document.getElementById("currentUserName").textContent =
+            currentUserData.name || user.email;
+        document.getElementById("currentUserRole").textContent = currentRole;
+
+        const params = new URLSearchParams(location.search);
+        businessId = params.get("business") || "";
+        sheetId = params.get("sheet") || "";
+
+        if (businessId) {
+            document.getElementById("backBtn").href =
+                `measurement-sheet.html?business=${encodeURIComponent(businessId)}`;
+        }
+
+        if (!businessId || !sheetId) {
+            showFatal("Missing business or sheet in the URL. Open a sheet from the Measurement Sheets page.");
+            return;
+        }
+
+        if (!hasMeasurementAccess()) {
+            showFatal("You do not have access to measurement sheets.");
+            return;
+        }
+
+        if (!userHasBusinessAccess(businessId)) {
+            showFatal("You do not have access to this business.");
+            return;
+        }
+
+        await loadSheet();
+    });
+
+    // =====================================================
+    // ACCESS HELPERS
+    // =====================================================
+
+    function isGlobalAdmin() {
+        return GLOBAL_ADMIN_ROLES.includes(currentRole);
+    }
+
+    function hasMeasurementAccess() {
+        return isGlobalAdmin() || currentUserData?.measurementSheetAccess === true;
+    }
+
+    function userHasBusinessAccess(id) {
+        if (isGlobalAdmin()) return true;
+
+        const access = currentUserData?.businessAccess;
+        if (!access || typeof access !== "object") return false;
+
+        return Object.prototype.hasOwnProperty.call(access, id);
+    }
+
+    // =====================================================
+    // LOAD SHEET (title) + ENTRIES
+    // =====================================================
+
+    async function loadSheet() {
+        let snap;
+        try {
+            snap = await get(ref(db, sheetPath()));
+        }
+        catch (err) {
+            console.error("Failed to load sheet:", err);
+            showFatal("Unable to load this measurement sheet.");
+            return;
+        }
+
+        if (!snap.exists()) {
+            showFatal("This measurement sheet no longer exists. It may have been deleted.");
+            return;
+        }
+
+        sheetTitle = snap.val().title || "Measurement Sheet";
+
+        document.getElementById("pageTitle").textContent = sheetTitle;
+        document.title = `${sheetTitle} - SR Group`;
+
+        let label = businessId;
+        try {
+            const nameSnap = await get(ref(db, `sr_group/businesses/${businessId}/name`));
+            if (nameSnap.exists()) label = `${nameSnap.val()} (${businessId})`;
+        }
+        catch (err) {
+            console.warn("Could not read business name:", err);
+        }
+        document.getElementById("businessLabel").textContent = label;
+
+        document.getElementById("addEntryBtn").disabled = false;
+
+        await loadEntries();
+    }
+
+    async function loadEntries() {
+        let snapshot;
+        try {
+            snapshot = await get(ref(db, entriesPath()));
+        }
+        catch (err) {
+            console.error("Failed to load entries:", err);
+            showFatal("Unable to load entries.");
+            return;
+        }
+
+        entries = snapshot.exists() ? snapshot.val() : {};
+        renderEntries();
+    }
+
+    // =====================================================
+    // QUANTITY
+    // =====================================================
+
+    function round3(n) {
+        return Math.round(n * 1000) / 1000;
+    }
+
+    // Nos × Length × Breadth × Height, skipping blank fields
+    function calcQty(nos, length, breadth, height) {
+        const values = [nos, length, breadth, height]
+            .map(v => (v === "" || v === null || v === undefined) ? null : Number(v))
+            .filter(v => v !== null && Number.isFinite(v));
+
+        if (!values.length) return 0;
+
+        return round3(values.reduce((product, v) => product * v, 1));
+    }
+
+    // =====================================================
+    // FILTER + RENDER
+    // =====================================================
+
+    function getSortedEntries() {
+        return Object.entries(entries).sort((a, b) => {
+            const ca = a[1].createdAt || 0;
+            const cb = b[1].createdAt || 0;
+            if (ca !== cb) return ca - cb;
+            return a[0] < b[0] ? -1 : 1;
+        });
+    }
+
+    function getFilteredEntries() {
+        const q = searchQuery.trim().toLowerCase();
+        const sorted = getSortedEntries();
+
+        if (!q) return sorted;
+
+        return sorted.filter(([, e]) =>
+            ["title", "description", "nos", "length", "breadth", "height", "quantity", "unit"]
+                .some(key => String(e[key] ?? "").toLowerCase().includes(q))
+        );
+    }
+
+    function renderEntries() {
+        const tbody = document.getElementById("entriesBody");
+        const table = document.getElementById("entriesTable");
+        const empty = document.getElementById("emptyState");
+
+        tbody.innerHTML = "";
+
+        const total = Object.keys(entries).length;
+        const filtered = getFilteredEntries();
+
+        document.getElementById("entryTotal").textContent = total;
+        document.getElementById("entryCount").textContent = filtered.length;
+
+        updateSummary(filtered);
+        refreshTitleList();
+
+        document.getElementById("downloadBtn").disabled = filtered.length === 0;
+
+        if (!filtered.length) {
+            table.classList.add("d-none");
+            empty.classList.remove("d-none");
+            document.getElementById("emptyStateText").textContent =
+                total === 0
+                    ? "No entries yet. Click “Add Entry” to record the first measurement."
+                    : "No entries match your search.";
+            return;
+        }
+
+        table.classList.remove("d-none");
+        empty.classList.add("d-none");
+
+        filtered.forEach(([id, e], index) => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${escapeHtml(entryTitle(e))}</td>
+                <td class="num">${escapeHtml(show(e.nos))}</td>
+                <td class="num">${escapeHtml(show(e.length))}</td>
+                <td class="num">${escapeHtml(show(e.breadth))}</td>
+                <td class="num">${escapeHtml(show(e.height))}</td>
+                <td class="num fw-semibold ${Number(e.quantity) < 0 ? "text-danger" : ""}">${escapeHtml(formatNumber(Number(e.quantity) || 0))}</td>
+                <td>${escapeHtml(e.unit || "")}</td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary edit-entry" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger delete-entry" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tr.querySelector(".edit-entry").addEventListener("click", () => openEntryModal(id, e));
+            tr.querySelector(".delete-entry").addEventListener("click", () => deleteEntry(id, e));
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // =====================================================
+    // SUMMARY  (entries + total quantity per unit)
+    // =====================================================
+
+    function totalsByUnit(list) {
+        const totals = {};
+
+        list.forEach(([, e]) => {
+            const unit = e.unit || "—";
+            const q = Number(e.quantity);
+            totals[unit] = (totals[unit] || 0) + (Number.isFinite(q) ? q : 0);
+        });
+
+        return totals;
+    }
+
+    function updateSummary(filtered) {
+        const row = document.getElementById("summaryRow");
+        row.innerHTML = "";
+
+        const addCard = (label, value) => {
+            const col = document.createElement("div");
+            col.className = "col-6 col-md-4 col-lg-3";
+            col.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">${escapeHtml(label)}</div>
+                    <div class="summary-value">${escapeHtml(value)}</div>
+                </div>
+            `;
+            row.appendChild(col);
+        };
+
+        addCard("Entries found", String(filtered.length));
+
+        const totals = totalsByUnit(filtered);
+        Object.keys(totals)
+            .sort((a, b) => a.localeCompare(b))
+            .forEach(unit => addCard(`Total (${unit})`, formatNumber(round3(totals[unit]))));
+    }
+
+    function entryTitle(e) {
+        // "description" = older entries saved before the field was renamed
+        return String(e.title ?? e.description ?? "");
+    }
+
+    function refreshTitleList() {
+        const list = document.getElementById("titleList");
+        const seen = new Set(
+            Object.values(entries)
+                .map(e => entryTitle(e).trim())
+                .filter(Boolean)
+        );
+
+        list.innerHTML = "";
+        Array.from(seen)
+            .sort((a, b) => a.localeCompare(b))
+            .forEach(text => {
+                const opt = document.createElement("option");
+                opt.value = text;
+                list.appendChild(opt);
+            });
+    }
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    const searchInput = document.getElementById("searchInput");
+
+    searchInput.addEventListener("input", () => {
+        searchQuery = searchInput.value;
+        renderEntries();
+    });
+
+    document.getElementById("clearSearchBtn").addEventListener("click", () => {
+        searchInput.value = "";
+        searchQuery = "";
+        renderEntries();
+    });
+
+    // =====================================================
+    // MODAL
+    // =====================================================
+
+    const unitSelect = document.getElementById("f_unit");
+    UNITS.forEach(u => {
+        const o = document.createElement("option");
+        o.value = u.value;
+        o.textContent = u.label;
+        unitSelect.appendChild(o);
+    });
+
+    document.getElementById("addEntryBtn").addEventListener("click", () => {
+        openEntryModal(null, null);
+    });
+
+    function openEntryModal(id, entry) {
+        const isEdit = !!id;
+
+        document.getElementById("entryModalTitle").textContent = isEdit ? "Edit Entry" : "Add Entry";
+        document.getElementById("entryId").value = isEdit ? id : "";
+
+        fillForm(isEdit ? entry : null);
+        hideError();
+
+        entryModal.show();
+    }
+
+    function fillForm(entry) {
+        const set_ = (id, v) => { document.getElementById(id).value = v ?? ""; };
+
+        const knownUnit = entry && UNITS.some(u => u.value === entry.unit) ? entry.unit : null;
+
+        set_("f_title", entry ? entryTitle(entry) : "");
+        set_("f_unit", knownUnit || (entry ? UNITS[0].value : lastUnit));
+        set_("f_nos", entry ? entry.nos : "");
+        set_("f_length", entry ? entry.length : "");
+        set_("f_breadth", entry ? entry.breadth : "");
+        set_("f_height", entry ? entry.height : "");
+
+        applyUnitRules();
+    }
+
+    function getUnitDef() {
+        return UNITS.find(u => u.value === document.getElementById("f_unit").value) || UNITS[0];
+    }
+
+    // Green = field needed for the chosen unit, red = disabled / not used
+    function applyUnitRules() {
+        const unitDef = getUnitDef();
+
+        DIMS.forEach(dim => {
+            const input = document.getElementById(`f_${dim}`);
+            const label = document.querySelector(`label[for="f_${dim}"]`);
+            const enabled = unitDef.dims.includes(dim);
+
+            input.disabled = !enabled;
+            if (!enabled) input.value = "";
+
+            input.classList.toggle("dim-on", enabled);
+            input.classList.toggle("dim-off", !enabled);
+            label.classList.toggle("dim-label-on", enabled);
+            label.classList.toggle("dim-label-off", !enabled);
+        });
+
+        const hint = document.getElementById("formulaHint");
+        if (unitDef.dims.length) {
+            const parts = ["Nos", ...unitDef.dims.map(d => DIM_NAMES[d])];
+            hint.textContent = `Quantity = ${parts.join(" × ")}. Leave Nos blank to count it as 1.`;
+        }
+        else {
+            hint.textContent = `Quantity = Nos. Enter the total ${unitDef.value} in the Nos field.`;
+        }
+
+        updateQtyPreview();
+    }
+
+    document.getElementById("f_unit").addEventListener("change", applyUnitRules);
+
+    function readNumber(id) {
+        const raw = document.getElementById(id).value;
+        if (raw === "") return "";
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : "";
+    }
+
+    function updateQtyPreview() {
+        const qty = calcQty(
+            readNumber("f_nos"),
+            readNumber("f_length"),
+            readNumber("f_breadth"),
+            readNumber("f_height")
+        );
+        document.getElementById("qtyPreview").textContent = formatNumber(qty);
+    }
+
+    document.querySelectorAll("#entryForm .calc").forEach(input => {
+        input.addEventListener("input", updateQtyPreview);
+    });
+
+    document.getElementById("entryModal").addEventListener("shown.bs.modal", () => {
+        document.getElementById("f_title").focus();
+    });
+
+    function showError(msg) {
+        const el = document.getElementById("entryError");
+        el.textContent = msg;
+        el.classList.remove("d-none");
+    }
+
+    function hideError() {
+        document.getElementById("entryError").classList.add("d-none");
+    }
+
+    // =====================================================
+    // SAVE
+    // =====================================================
+
+    document.getElementById("entryForm").addEventListener("submit", event => {
+        event.preventDefault();
+        saveEntry(false);
+    });
+
+    document.getElementById("saveAddBtn").addEventListener("click", () => {
+        if (!document.getElementById("entryForm").reportValidity()) return;
+        saveEntry(true);
+    });
+
+    async function saveEntry(keepOpen) {
+        hideError();
+
+        const id = document.getElementById("entryId").value;
+        const isEdit = !!id;
+
+        const nos = readNumber("f_nos");
+        const length = readNumber("f_length");
+        const breadth = readNumber("f_breadth");
+        const height = readNumber("f_height");
+        const title = document.getElementById("f_title").value.trim();
+        const unitDef = getUnitDef();
+
+        if (!title) {
+            showError("Enter a title.");
+            return;
+        }
+
+        const values = { length, breadth, height };
+        const missing = unitDef.dims.filter(d => values[d] === "");
+
+        if (missing.length) {
+            showError(`Enter ${missing.map(d => DIM_NAMES[d]).join(", ")} for ${unitDef.value}.`);
+            return;
+        }
+
+        if (!unitDef.dims.length && nos === "") {
+            showError(`Enter the quantity in Nos for ${unitDef.value}.`);
+            return;
+        }
+
+        const unit = unitDef.value;
+
+        const payload = {
+            title,
+            nos,
+            length,
+            breadth,
+            height,
+            unit,
+            quantity: calcQty(nos, length, breadth, height)
+        };
+
+        if (isEdit) {
+            payload.createdAt = entries[id]?.createdAt || Date.now();
+            payload.createdBy = entries[id]?.createdBy || currentUser.uid;
+            payload.updatedAt = Date.now();
+        }
+        else {
+            payload.createdAt = Date.now();
+            payload.createdBy = currentUser.uid;
+        }
+
+        const buttons = [
+            document.getElementById("saveEntryBtn"),
+            document.getElementById("saveAddBtn")
+        ];
+        buttons.forEach(b => b.disabled = true);
+
+        try {
+            if (isEdit) {
+                await set(ref(db, `${entriesPath()}/${id}`), payload);
+                entries[id] = payload;
+            }
+            else {
+                const newRef = push(ref(db, entriesPath()));
+                await set(newRef, payload);
+                entries[newRef.key] = payload;
+            }
+
+            lastUnit = unit;
+            renderEntries();
+
+            if (keepOpen && !isEdit) {
+                fillForm(null);   // keeps the last-used unit
+                document.getElementById("f_title").focus();
+            }
+            else {
+                entryModal.hide();
+            }
+        }
+        catch (err) {
+            console.error("Failed to save entry:", err);
+            showError("Failed to save the entry. Check your connection and try again.");
+        }
+        finally {
+            buttons.forEach(b => b.disabled = false);
+        }
+    }
+
+    // =====================================================
+    // DELETE
+    // =====================================================
+
+    async function deleteEntry(id, entry) {
+        if (!confirm(`Delete this entry?\n\n${entryTitle(entry)}\nQuantity: ${formatNumber(Number(entry.quantity) || 0)} ${entry.unit || ""}`)) {
+            return;
+        }
+
+        try {
+            await remove(ref(db, `${entriesPath()}/${id}`));
+            delete entries[id];
+            renderEntries();
+        }
+        catch (err) {
+            console.error("Failed to delete entry:", err);
+            alert("Failed to delete the entry. Please try again.");
+        }
+    }
+
+    // =====================================================
+    // EXCEL DOWNLOAD
+    // =====================================================
+
+    document.getElementById("downloadBtn").addEventListener("click", downloadExcel);
+
+    function downloadExcel() {
+        const filtered = getFilteredEntries();
+
+        if (!filtered.length) {
+            alert("There are no entries to download.");
+            return;
+        }
+
+        const msg = [`Download ${filtered.length} of ${Object.keys(entries).length} entr(ies) as Excel?`];
+        if (searchQuery.trim()) msg.push(`Search: "${searchQuery.trim()}"`);
+        if (!confirm(msg.join("\n"))) return;
+
+        const aoa = [
+            [sheetTitle],
+            [],
+            ["#", "Title", "Nos", "Length", "Breadth", "Height", "Quantity", "Unit"]
+        ];
+
+        filtered.forEach(([, e], i) => {
+            aoa.push([
+                i + 1,
+                entryTitle(e),
+                e.nos === "" ? "" : (e.nos ?? ""),
+                e.length === "" ? "" : (e.length ?? ""),
+                e.breadth === "" ? "" : (e.breadth ?? ""),
+                e.height === "" ? "" : (e.height ?? ""),
+                Number(e.quantity) || 0,
+                e.unit || ""
+            ]);
+        });
+
+        aoa.push([]);
+
+        const totals = totalsByUnit(filtered);
+        Object.keys(totals)
+            .sort((a, b) => a.localeCompare(b))
+            .forEach(unit => {
+                aoa.push(["", `Total (${unit})`, "", "", "", "", round3(totals[unit]), unit]);
+            });
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws["!cols"] = [
+            { wch: 5 }, { wch: 40 }, { wch: 8 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 8 }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        const sheetName = sheetTitle.replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Measurements";
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+        XLSX.writeFile(wb, `${sanitizeFilename(sheetTitle)}_${timestampForFilename()}.xlsx`);
+    }
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+
+    function show(v) {
+        return v === "" || v === null || v === undefined ? "" : String(v);
+    }
+
+    function formatNumber(n) {
+        if (!Number.isFinite(n)) return "0";
+        return n.toLocaleString("en-IN", { maximumFractionDigits: 3 });
+    }
+
+    function timestampForFilename() {
+        const d = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_` +
+               `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    }
+
+    function sanitizeFilename(name) {
+        return String(name)
+            .trim()
+            .replace(/[\\/:*?"<>|]+/g, "_")
+            .replace(/\s+/g, "_")
+            .slice(0, 60) || "measurement_sheet";
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function showFatal(message) {
+        document.getElementById("pageTitle").textContent = "Error";
+        document.getElementById("entriesBody").innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${escapeHtml(message)}
+                </td>
+            </tr>
+        `;
+        document.getElementById("entriesTable").classList.remove("d-none");
+        document.getElementById("emptyState").classList.add("d-none");
+        document.getElementById("downloadBtn").disabled = true;
+        document.getElementById("addEntryBtn").disabled = true;
+    }
+
+</script>
+
+</body>
+</html>
