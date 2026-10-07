@@ -274,7 +274,7 @@
         .totals-wrap {
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 14px;
+            margin-bottom: 6px;
         }
 
         .totals-box {
@@ -309,6 +309,24 @@
 
         .totals-row.grand .label,
         .totals-row.grand .value { color: #fff; }
+
+        /* Grand total in words */
+
+        .grand-words {
+            text-align: right;
+            font-size: 11px;
+            color: #334155;
+            margin-bottom: 14px;
+            font-style: italic;
+            font-weight: 600;
+            padding-right: 2px;
+        }
+
+        .grand-words .words-label {
+            color: var(--muted);
+            font-weight: 500;
+            font-style: normal;
+        }
 
 
         /* =====================================================
@@ -607,6 +625,14 @@
             </div>
 
 
+            <!-- GRAND TOTAL IN WORDS -->
+
+            <div class="grand-words">
+                <span class="words-label">Amount in words:</span>
+                <span id="grandTotalWords">-</span>
+            </div>
+
+
             <!-- FOOTER — no signature -->
 
             <div class="bill-footer">
@@ -664,6 +690,72 @@
 
         function hideLoading() {
             document.getElementById("loadingMsg").classList.add("d-none");
+        }
+
+
+        // =====================================================
+        // NUMBER TO WORDS (Indian Numbering System)
+        // =====================================================
+
+        const ONES = [
+            "", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
+            "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen",
+            "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen",
+            "Nineteen"
+        ];
+
+        const TENS = [
+            "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty",
+            "Seventy", "Eighty", "Ninety"
+        ];
+
+        function twoDigits(n) {
+            if (n < 20) return ONES[n];
+            return TENS[Math.floor(n / 10)] + (n % 10 ? " " + ONES[n % 10] : "");
+        }
+
+        function threeDigits(n) {
+            if (n < 100) return twoDigits(n);
+            const h = Math.floor(n / 100);
+            const rest = n % 100;
+            return ONES[h] + " Hundred" + (rest ? " " + twoDigits(rest) : "");
+        }
+
+        function integerToWords(num) {
+            if (num === 0) return "Zero";
+
+            const crore = Math.floor(num / 10000000);
+            const lakh = Math.floor((num % 10000000) / 100000);
+            const thousand = Math.floor((num % 100000) / 1000);
+            const hundred = num % 1000;
+
+            const parts = [];
+
+            if (crore) parts.push(threeDigits(crore) + " Crore");
+            if (lakh) parts.push(threeDigits(lakh) + " Lakh");
+            if (thousand) parts.push(threeDigits(thousand) + " Thousand");
+            if (hundred) parts.push(threeDigits(hundred));
+
+            return parts.join(" ").trim();
+        }
+
+        function numberToWords(amount) {
+            const num = Number(amount) || 0;
+
+            const rupees = Math.floor(Math.abs(num));
+            const paise = Math.round((Math.abs(num) - rupees) * 100);
+
+            let words = integerToWords(rupees) + " Rupees";
+
+            if (paise > 0) {
+                words += " and " + twoDigits(paise) + " Paise";
+            }
+
+            words += " Only";
+
+            if (num < 0) words = "Minus " + words;
+
+            return words;
         }
 
 
@@ -1003,7 +1095,7 @@
 
 
         // =====================================================
-        // RENDER — ITEMS
+        // RENDER — ITEMS  (badge removed)
         // =====================================================
 
         function renderItems(bill) {
@@ -1024,17 +1116,10 @@
             }
 
             items.forEach((item, idx) => {
-                const type = item.itemType
-                    ? `<span class="item-type-badge ${item.itemType}">${item.itemType}</span>`
-                    : "";
-
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td class="text-center">${idx + 1}</td>
-                    <td>
-                        ${escapeHtml(item.name || "-")}
-                        ${type}
-                    </td>
+                    <td>${escapeHtml(item.name || "-")}</td>
                     <td class="text-center">${item.quantity ?? ""}</td>
                     <td class="text-center">${escapeHtml(item.unit || "")}</td>
                     <td class="text-end">${formatMoney(item.price)}</td>
@@ -1127,8 +1212,14 @@
                 }
             }
 
+            const grandTotal = Number(t.grandTotal) || 0;
+
             document.getElementById("grandTotal").textContent =
-                formatMoney(t.grandTotal);
+                formatMoney(grandTotal);
+
+            // Grand total in words
+            document.getElementById("grandTotalWords").textContent =
+                numberToWords(grandTotal);
         }
 
 

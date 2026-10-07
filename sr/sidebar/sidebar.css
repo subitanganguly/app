@@ -29,7 +29,7 @@ border-bottom: 1px solid rgba(255,255,255,.1);
 }
 
 .sidebar-menu {
-padding: 15px 10px;
+padding: 5px 5px;
 }
 
 .menu-title {
@@ -43,13 +43,13 @@ letter-spacing: .5px;
 .sidebar-link {
 display: flex;
 align-items: center;
-gap: 10px;
+gap: 5px;
 
 
-color: #adb5bd;
+color: #d7e3f0;
 text-decoration: none;
 
-padding: 12px 13px;
+padding: 5px 8px;
 margin: 4px 0;
 
 border-radius: 8px;

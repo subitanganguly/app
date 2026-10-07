@@ -2557,8 +2557,17 @@
         }
 
 
+        // ✅ Track whether any field in this setting is locked
+        let hasLockedField = false;
+
+
         entries.forEach(
             ([id, item], index) => {
+
+                // ✅ A field is locked when editable === false
+                const isLocked = item.editable === false;
+                if (isLocked) hasLockedField = true;
+
 
                 const tr =
                     document.createElement("tr");
@@ -2648,6 +2657,23 @@
                 }
 
 
+                // ✅ Locked fields show a lock badge instead of buttons
+                const actionsHtml = isLocked
+                    ? `<span
+                            class="badge text-bg-light border"
+                            title="Protected field — cannot be edited or deleted">
+                            <i class="bi bi-lock-fill me-1"></i>Locked
+                       </span>`
+                    : `<div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-field">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-field">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                       </div>`;
+
+
                 tr.innerHTML = `
 
                     <td class="text-center">
@@ -2666,6 +2692,7 @@
                                 item.title || ""
                             )}
                         </strong>
+                        ${isLocked ? '<i class="bi bi-lock-fill text-secondary ms-1" title="Locked"></i>' : ""}
                     </td>
 
                     <td>
@@ -2701,58 +2728,45 @@
                     </td>
 
                     <td class="text-end">
-
-                        <div class="btn-group btn-group-sm">
-
-                            <button
-                                class="btn btn-outline-primary edit-field">
-
-                                <i class="bi bi-pencil"></i>
-
-                            </button>
-
-                            <button
-                                class="btn btn-outline-danger delete-field">
-
-                                <i class="bi bi-trash"></i>
-
-                            </button>
-
-                        </div>
-
+                        ${actionsHtml}
                     </td>
 
                 `;
 
 
-                tr.querySelector(
-                    ".edit-field"
-                ).addEventListener(
-                    "click",
-                    () => {
+                // ✅ Only attach edit / delete handlers for non-locked fields
+                if (!isLocked) {
 
-                        editField(
-                            settingName,
-                            id
-                        );
+                    tr.querySelector(
+                        ".edit-field"
+                    ).addEventListener(
+                        "click",
+                        () => {
 
-                    }
-                );
+                            editField(
+                                settingName,
+                                id
+                            );
+
+                        }
+                    );
 
 
-                tr.querySelector(
-                    ".delete-field"
-                ).addEventListener(
-                    "click",
-                    () => {
+                    tr.querySelector(
+                        ".delete-field"
+                    ).addEventListener(
+                        "click",
+                        () => {
 
-                        deleteField(
-                            settingName,
-                            id
-                        );
+                            deleteField(
+                                settingName,
+                                id
+                            );
 
-                    }
-                );
+                        }
+                    );
+
+                }
 
 
                 // Enable dragging from the handle only
@@ -2779,6 +2793,38 @@
 
             }
         );
+
+
+        // ✅ If any field is locked, disable the "Edit Setting" button
+        //    (delete still works).
+        const owningPane = document.getElementById(safeId);
+
+        if (owningPane) {
+
+            const editSettingBtn =
+                owningPane.querySelector(".edit-setting-btn");
+
+            if (editSettingBtn) {
+
+                if (hasLockedField) {
+
+                    editSettingBtn.disabled = true;
+                    editSettingBtn.classList.add("disabled");
+                    editSettingBtn.title =
+                        "Locked — this setting contains protected fields.";
+
+                }
+                else {
+
+                    editSettingBtn.disabled = false;
+                    editSettingBtn.classList.remove("disabled");
+                    editSettingBtn.title = "Edit setting";
+
+                }
+
+            }
+
+        }
 
     }
 
@@ -2893,6 +2939,48 @@
     async function openEditSettingModal(
         settingName
     ) {
+
+        // ✅ Block renaming if any field in this setting is locked
+        try {
+
+            const fullSnap = await get(
+                ref(
+                    db,
+                    `sr_group/settings/${selectedBusinessId}/${settingName}`
+                )
+            );
+
+            if (fullSnap.exists()) {
+
+                const data = fullSnap.val() || {};
+
+                const hasLocked = Object.entries(data).some(
+                    ([k, v]) =>
+                        k !== "meta" &&
+                        v &&
+                        typeof v === "object" &&
+                        v.editable === false
+                );
+
+                if (hasLocked) {
+
+                    alert(
+                        "This setting contains protected fields and cannot be renamed."
+                    );
+
+                    return;
+
+                }
+
+            }
+
+        }
+        catch (err) {
+
+            console.warn("openEditSettingModal guard failed:", err);
+
+        }
+
 
         const snapshot =
             await get(
@@ -3067,6 +3155,14 @@
         data = null,
         id = ""
     ) {
+
+        // ✅ Block editing locked fields
+        if (id && data && data.editable === false) {
+
+            alert("This field is protected and cannot be edited.");
+            return;
+
+        }
 
         currentSetting =
             settingName;
@@ -3727,6 +3823,15 @@
             snapshot.val();
 
 
+        // ✅ Guard against locked fields
+        if (data.editable === false) {
+
+            alert("This field is protected and cannot be edited.");
+            return;
+
+        }
+
+
         if (
             data.type === "select" &&
             !data.options
@@ -3754,6 +3859,34 @@
         settingName,
         id
     ) {
+
+        // ✅ Re-check from DB in case UI state is stale
+        try {
+
+            const snap = await get(
+                ref(
+                    db,
+                    `sr_group/settings/${selectedBusinessId}/${settingName}/${id}`
+                )
+            );
+
+            if (
+                snap.exists() &&
+                snap.val()?.editable === false
+            ) {
+
+                alert("This field is protected and cannot be deleted.");
+                return;
+
+            }
+
+        }
+        catch (err) {
+
+            console.warn("deleteField guard check failed:", err);
+
+        }
+
 
         if (
             !confirm(

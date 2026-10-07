@@ -1942,15 +1942,31 @@
                 }
 
 
+                // const users = snapshot.val();
+
+
+                // allUsers = Object.entries(users).map(
+                //     ([uid, user]) => ({
+                //         uid,
+                //         ...user
+                //     })
+                // );
+
+
+                // applySearchAndRender();
+
                 const users = snapshot.val();
 
 
-                allUsers = Object.entries(users).map(
-                    ([uid, user]) => ({
-                        uid,
-                        ...user
-                    })
-                );
+                // ✅ Hide dev-admin users from the list
+                allUsers = Object.entries(users)
+                    .map(
+                        ([uid, user]) => ({
+                            uid,
+                            ...user
+                        })
+                    )
+                    .filter(user => user.role !== "dev-admin");
 
 
                 applySearchAndRender();

@@ -98,7 +98,6 @@
             white-space: nowrap;
         }
 
-        /* Phase group header row */
         .phase-group-row > td {
             background: #eef4ff !important;
             font-weight: 700;
@@ -145,22 +144,36 @@
             font-weight: 400;
         }
 
-        /* Costing column styling */
-        .costing-badge {
-            font-size: 0.78rem;
-            padding: 3px 10px;
-            border-radius: 999px;
-            background: rgba(13, 202, 240, 0.12);
-            color: #0aa2c0;
-            font-weight: 600;
-            white-space: nowrap;
-            display: inline-block;
+        /* Rate input styling */
+        .rate-input {
+            min-width: 110px;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
         }
 
-        .costing-text {
-            font-variant-numeric: tabular-nums;
-            color: #0aa2c0;
+        .rate-input.is-dirty {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 0.15rem rgba(255, 193, 7, 0.25);
+        }
+
+        .rate-input.is-invalid-rate {
+            border-color: #dc3545;
+        }
+
+        /* Phase filter select */
+        #phaseFilter {
+            min-width: 180px;
+            max-width: 220px;
+        }
+
+        .filter-active-badge {
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(255, 193, 7, 0.18);
+            color: #856404;
             font-weight: 600;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -207,7 +220,6 @@
             <div class="card-body">
                 <div class="row g-3">
 
-                    <!-- BUSINESS -->
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-cone-striped me-1 text-warning"></i>
@@ -220,7 +232,6 @@
                         </select>
                     </div>
 
-                    <!-- PROJECT -->
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-diagram-3 me-1"></i>
@@ -287,7 +298,7 @@
                                 </strong>
                                 <div class="small text-muted">
                                     <span id="pendingItemCount">0</span> item(s) —
-                                    click <strong>Resolve</strong> to record a resolved quantity.
+                                    enter <strong>Unit/Price</strong> &amp; <strong>Unit/Costing</strong>, save, then click <strong>Resolve</strong>.
                                 </div>
                             </div>
 
@@ -300,13 +311,13 @@
                                     <tr>
                                         <th style="width:48px;">#</th>
                                         <th>Title</th>
-                                        <th class="text-end" style="width:110px;">Quantity</th>
-                                        <th style="width:100px;">Unit</th>
-                                        <th class="text-end" style="width:120px;">Amount</th>
-                                        <th class="text-end" style="width:130px;">Costing</th> <!-- NEW COSTING COLUMN -->
-                                        <th class="text-end" style="width:150px;">Resolved Qty</th>
-                                        <th class="text-end" style="width:140px;">Remaining</th>
-                                        <th class="text-end" style="width:110px;">Action</th>
+                                        <th class="text-end" style="width:100px;">Quantity</th>
+                                        <th style="width:80px;">Unit</th>
+                                        <th style="width:150px;">Unit / Price</th>
+                                        <th style="width:150px;">Unit / Costing</th>
+                                        <th class="text-end" style="width:130px;">Resolved Qty</th>
+                                        <th class="text-end" style="width:110px;">Remaining</th>
+                                        <th class="text-end" style="width:200px;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="pendingTableBody">
@@ -334,18 +345,55 @@
 
                     <div class="card border-0 shadow-sm">
 
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <strong>
-                                    <i class="bi bi-check2-circle me-2"></i>
-                                    Resolved Records — Phase Wise
-                                </strong>
-                                <div class="small text-muted">
-                                    <span id="resolvedItemCount">0</span> record(s) grouped by phase.
+                        <div class="card-header bg-white">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                <div>
+                                    <strong>
+                                        <i class="bi bi-check2-circle me-2"></i>
+                                        Resolved Records — Phase Wise
+                                    </strong>
+                                    <div class="small text-muted">
+                                        <span id="resolvedItemCount">0</span> record(s) grouped by phase.
+                                    </div>
                                 </div>
+
+                                <div class="small text-muted" id="resolvedSummary"></div>
                             </div>
 
-                            <div class="small text-muted" id="resolvedSummary"></div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
+
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <label for="phaseFilter" class="small fw-semibold text-muted mb-0">
+                                        <i class="bi bi-funnel me-1"></i> Filter by Phase
+                                    </label>
+
+                                    <select id="phaseFilter" class="form-select form-select-sm" disabled>
+                                        <option value="">All Phases</option>
+                                    </select>
+
+                                    <span id="phaseFilterBadge" class="filter-active-badge d-none">
+                                        Filtered
+                                    </span>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary d-none"
+                                            id="clearPhaseFilterBtn"
+                                            title="Clear phase filter">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <button class="btn btn-sm btn-danger" id="downloadResolvedPdfBtn" disabled>
+                                        <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-danger" id="downloadPhaseSummaryPdfBtn" disabled>
+                                        <i class="bi bi-file-earmark-bar-graph me-1"></i> Phase Summary PDF
+                                    </button>
+                                </div>
+
+                            </div>
                         </div>
 
                         <div class="table-responsive">
@@ -478,6 +526,11 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- PDF EXPORT LIBRARIES -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+
 <script type="module" src="sidebar/sidebar.js"></script>
 
 <script type="module">
@@ -520,6 +573,9 @@
     let boqFieldMap = {};
     let boqRecords = {};
     let resolvedRecords = {};
+    let unitRates = {};              // pushId -> { unitPrice, unitCosting, updatedAt }
+
+    let selectedPhaseFilter = "";    // "" = All Phases
 
 
     // =====================================================
@@ -546,6 +602,12 @@
     const resolvedCountBadge    = document.getElementById("resolvedCountBadge");
     const resolvedItemCount     = document.getElementById("resolvedItemCount");
     const resolvedSummary       = document.getElementById("resolvedSummary");
+    const downloadResolvedPdfBtn = document.getElementById("downloadResolvedPdfBtn");
+    const downloadPhaseSummaryPdfBtn = document.getElementById("downloadPhaseSummaryPdfBtn");
+
+    const phaseFilter           = document.getElementById("phaseFilter");
+    const phaseFilterBadge      = document.getElementById("phaseFilterBadge");
+    const clearPhaseFilterBtn   = document.getElementById("clearPhaseFilterBtn");
 
     const resolveModalEl        = document.getElementById("resolveModal");
     const resolveModal          = new bootstrap.Modal(resolveModalEl);
@@ -765,6 +827,8 @@
         globalEmpty.classList.remove("d-none");
         refreshBtn.disabled = true;
 
+        resetPhaseFilter();
+
         if (!selectedBusinessId) {
             projectSelect.innerHTML =
                 `<option value="">Select a business first</option>`;
@@ -855,6 +919,8 @@
             ? `${p.projectId || "—"} — ${p.projectName || ""}`
             : "";
 
+        resetPhaseFilter();
+
         if (!selectedProjectId) {
             tabsWrapper.classList.add("d-none");
             globalEmpty.classList.remove("d-none");
@@ -862,7 +928,6 @@
             return;
         }
 
-        // Reset tabs to "Pending" active
         const pendingTabBtn = document.getElementById("pendingTabBtn");
         const pendingTab = document.getElementById("pendingTab");
         const resolvedTabBtn = document.getElementById("resolvedTabBtn");
@@ -882,7 +947,7 @@
 
 
     // =====================================================
-    // LOAD BOQ + RESOLVED
+    // LOAD BOQ + RESOLVED + UNIT RATES
     // =====================================================
 
     async function loadAllData() {
@@ -906,7 +971,8 @@
         await Promise.all([
             loadBoqFieldMap(),
             loadBoqRecords(),
-            loadResolvedRecords()
+            loadResolvedRecords(),
+            loadUnitRates()
         ]);
 
         renderPending();
@@ -978,6 +1044,25 @@
     }
 
 
+    async function loadUnitRates() {
+
+        unitRates = {};
+
+        try {
+            const snap = await get(
+                ref(db, `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/unit-rates`)
+            );
+
+            if (snap.exists()) {
+                unitRates = snap.val() || {};
+            }
+        }
+        catch (err) {
+            console.warn("Could not load unit rates:", err);
+        }
+    }
+
+
     // =====================================================
     // FIELD VALUE HELPERS
     // =====================================================
@@ -998,9 +1083,18 @@
         return total;
     }
 
+    function hasSavedRate(rate) {
+        if (!rate) return false;
+        const p = rate.unitPrice;
+        const c = rate.unitCosting;
+        if (p === undefined || p === null || p === "") return false;
+        if (c === undefined || c === null || c === "") return false;
+        return Number.isFinite(Number(p)) && Number.isFinite(Number(c));
+    }
+
 
     // =====================================================
-    // RENDER — PENDING TABLE
+    // RENDER — PENDING TABLE (with editable rate inputs)
     // =====================================================
 
     function renderPending() {
@@ -1021,11 +1115,10 @@
 
             const rec = boqRecords[pushId] || {};
 
+            // Only fetch Title, Quantity, Unit from BOQ now
             const title = String(getBoqValue(rec, "Title") || "").trim();
             const quantity = Number(getBoqValue(rec, "Quantity")) || 0;
             const unit = String(getBoqValue(rec, "Unit") || "");
-            const amount = Number(getBoqValue(rec, "Amount")) || 0;
-            const costing = Number(getBoqValue(rec, "Costing")) || 0; // NEW: Costing
 
             const resolvedTotal = getResolvedTotalForPushId(pushId);
             const remaining = Math.max(0, quantity - resolvedTotal);
@@ -1037,8 +1130,6 @@
                 title,
                 quantity,
                 unit,
-                amount,
-                costing, // NEW
                 resolvedTotal,
                 remaining
             });
@@ -1071,18 +1162,38 @@
                 tr.classList.add("row-partial-resolved");
             }
 
-            // Build the costing cell (always show, with fallback if 0)
-            const costingCell = r.costing > 0
-                ? `<span class="costing-text">${formatNumber(r.costing)}</span>`
-                : `<span class="text-muted small">—</span>`;
+            const rate = unitRates[r.pushId] || {};
+            const unitPriceVal = (rate.unitPrice !== undefined && rate.unitPrice !== null && rate.unitPrice !== "")
+                ? rate.unitPrice : "";
+            const unitCostingVal = (rate.unitCosting !== undefined && rate.unitCosting !== null && rate.unitCosting !== "")
+                ? rate.unitCosting : "";
 
             tr.innerHTML = `
                 <td class="text-muted">${index + 1}</td>
                 <td class="fw-semibold">${escapeHtml(r.title || "—")}</td>
                 <td class="text-end qty-strong">${formatNumber(r.quantity)}</td>
                 <td>${escapeHtml(r.unit || "—")}</td>
-                <td class="text-end">${formatNumber(r.amount)}</td>
-                <td class="text-end">${costingCell}</td> <!-- COSTING COLUMN -->
+
+                <td>
+                    <input type="number"
+                           step="any"
+                           min="0"
+                           class="form-control form-control-sm rate-input"
+                           data-field="unitPrice"
+                           value="${unitPriceVal}"
+                           placeholder="0.00">
+                </td>
+
+                <td>
+                    <input type="number"
+                           step="any"
+                           min="0"
+                           class="form-control form-control-sm rate-input"
+                           data-field="unitCosting"
+                           value="${unitCostingVal}"
+                           placeholder="0.00">
+                </td>
+
                 <td class="text-end">
                     ${r.resolvedTotal > 0
                         ? `<span class="resolved-badge">
@@ -1090,25 +1201,125 @@
                            </span>`
                         : `<span class="text-muted small">—</span>`}
                 </td>
-                <td class="text-end qty-strong">
-                    ${formatNumber(r.remaining)}
-                </td>
+
+                <td class="text-end qty-strong">${formatNumber(r.remaining)}</td>
+
                 <td class="text-end">
-                    <button type="button"
-                        class="btn btn-sm btn-success resolve-btn"
-                        data-push-id="${escapeHtml(r.pushId)}">
-                        <i class="bi bi-check2-square me-1"></i>
-                        Resolve
-                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button"
+                                class="btn btn-outline-primary save-rate-btn"
+                                title="Save Unit/Price and Unit/Costing">
+                            <i class="bi bi-save"></i> Save
+                        </button>
+                        <button type="button"
+                                class="btn btn-success resolve-btn"
+                                title="Resolve this item">
+                            <i class="bi bi-check2-square"></i> Resolve
+                        </button>
+                    </div>
                 </td>
             `;
 
-            tr.querySelector(".resolve-btn").addEventListener("click", () => {
-                openResolveModal(r.pushId);
-            });
+            // Dirty-state indicator on inputs
+            const priceInput = tr.querySelector('input[data-field="unitPrice"]');
+            const costingInput = tr.querySelector('input[data-field="unitCosting"]');
+
+            const markDirty = () => {
+                const savedPrice = (rate.unitPrice !== undefined && rate.unitPrice !== null && rate.unitPrice !== "")
+                    ? String(rate.unitPrice) : "";
+                const savedCosting = (rate.unitCosting !== undefined && rate.unitCosting !== null && rate.unitCosting !== "")
+                    ? String(rate.unitCosting) : "";
+
+                priceInput.classList.toggle("is-dirty", priceInput.value.trim() !== savedPrice);
+                costingInput.classList.toggle("is-dirty", costingInput.value.trim() !== savedCosting);
+            };
+
+            priceInput.addEventListener("input", markDirty);
+            costingInput.addEventListener("input", markDirty);
+
+            // Save button
+            tr.querySelector(".save-rate-btn")
+                .addEventListener("click", () => saveUnitRate(r.pushId, tr));
+
+            // Resolve button
+            tr.querySelector(".resolve-btn")
+                .addEventListener("click", () => openResolveModal(r.pushId, tr));
 
             pendingTableBody.appendChild(tr);
         });
+    }
+
+
+    // =====================================================
+    // SAVE UNIT RATE (per row)
+    // =====================================================
+
+    async function saveUnitRate(pushId, rowEl) {
+
+        const priceInput   = rowEl.querySelector('input[data-field="unitPrice"]');
+        const costingInput = rowEl.querySelector('input[data-field="unitCosting"]');
+
+        const priceRaw   = priceInput.value.trim();
+        const costingRaw = costingInput.value.trim();
+
+        if (priceRaw === "") {
+            showStatus("Please enter Unit/Price.", "warning");
+            priceInput.focus();
+            return;
+        }
+        if (costingRaw === "") {
+            showStatus("Please enter Unit/Costing.", "warning");
+            costingInput.focus();
+            return;
+        }
+
+        const unitPrice   = Number(priceRaw);
+        const unitCosting = Number(costingRaw);
+
+        if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+            showStatus("Unit/Price must be a valid non-negative number.", "warning");
+            priceInput.focus();
+            return;
+        }
+        if (!Number.isFinite(unitCosting) || unitCosting < 0) {
+            showStatus("Unit/Costing must be a valid non-negative number.", "warning");
+            costingInput.focus();
+            return;
+        }
+
+        const btn = rowEl.querySelector(".save-rate-btn");
+        btn.disabled = true;
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+
+        try {
+
+            const payload = {
+                unitPrice,
+                unitCosting,
+                updatedAt: Date.now()
+            };
+
+            await set(
+                ref(db, `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/unit-rates/${pushId}`),
+                payload
+            );
+
+            unitRates[pushId] = payload;
+
+            priceInput.classList.remove("is-dirty");
+            costingInput.classList.remove("is-dirty");
+
+            showStatus("Unit rates saved.", "success");
+        }
+        catch (err) {
+            console.error("Save unit rate error:", err);
+            showStatus("Failed to save unit rates. Please try again.");
+        }
+        finally {
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+        }
     }
 
 
@@ -1118,7 +1329,7 @@
 
     function groupResolvedByPhaseAndTitle() {
 
-        const phaseMap = new Map(); // phase -> Map(title -> group)
+        const phaseMap = new Map();
 
         Object.entries(resolvedRecords).forEach(([id, r]) => {
 
@@ -1161,7 +1372,6 @@
             }
         });
 
-        // Sort phases: numeric phase numbers first, then alpha
         const phases = Array.from(phaseMap.keys());
 
         phases.sort((a, b) => {
@@ -1171,7 +1381,6 @@
             return String(a).localeCompare(String(b));
         });
 
-        // Build ordered structure
         const ordered = [];
 
         phases.forEach(phase => {
@@ -1193,17 +1402,95 @@
 
 
     // =====================================================
-    // RENDER — RESOLVED TABLE (PHASE WISE GROUPED)
+    // FILTER HELPERS — PHASE
+    // =====================================================
+
+    function resetPhaseFilter() {
+        selectedPhaseFilter = "";
+        phaseFilter.value = "";
+        phaseFilter.innerHTML = `<option value="">All Phases</option>`;
+        phaseFilter.disabled = true;
+        phaseFilterBadge.classList.add("d-none");
+        clearPhaseFilterBtn.classList.add("d-none");
+    }
+
+    function populatePhaseFilterOptions(grouped) {
+
+        const phases = grouped.map(g => g.phase);
+        const previous = selectedPhaseFilter;
+
+        phaseFilter.innerHTML = `<option value="">All Phases</option>`;
+
+        phases.forEach(ph => {
+            const opt = document.createElement("option");
+            opt.value = ph;
+            opt.textContent = ph;
+            phaseFilter.appendChild(opt);
+        });
+
+        if (previous && phases.includes(previous)) {
+            phaseFilter.value = previous;
+            selectedPhaseFilter = previous;
+        }
+        else {
+            phaseFilter.value = "";
+            selectedPhaseFilter = "";
+        }
+
+        phaseFilter.disabled = phases.length === 0;
+
+        updatePhaseFilterUI();
+    }
+
+    function updatePhaseFilterUI() {
+        if (selectedPhaseFilter) {
+            phaseFilterBadge.classList.remove("d-none");
+            clearPhaseFilterBtn.classList.remove("d-none");
+        }
+        else {
+            phaseFilterBadge.classList.add("d-none");
+            clearPhaseFilterBtn.classList.add("d-none");
+        }
+    }
+
+    function getFilteredResolvedGroups() {
+        const grouped = groupResolvedByPhaseAndTitle();
+
+        if (!selectedPhaseFilter) return grouped;
+
+        return grouped
+            .filter(g => g.phase === selectedPhaseFilter)
+            .map(g => ({ ...g }));
+    }
+
+    phaseFilter.addEventListener("change", () => {
+        selectedPhaseFilter = phaseFilter.value;
+        updatePhaseFilterUI();
+        renderResolved();
+    });
+
+    clearPhaseFilterBtn.addEventListener("click", () => {
+        selectedPhaseFilter = "";
+        phaseFilter.value = "";
+        updatePhaseFilterUI();
+        renderResolved();
+    });
+
+
+    // =====================================================
+    // RENDER — RESOLVED TABLE (PHASE WISE GROUPED + FILTERED)
     // =====================================================
 
     function renderResolved() {
 
         resolvedTableBody.innerHTML = "";
 
-        const grouped = groupResolvedByPhaseAndTitle();
+        const allGrouped = groupResolvedByPhaseAndTitle();
 
-        // Counts
-        const totalRecords = Object.keys(resolvedRecords).length;
+        populatePhaseFilterOptions(allGrouped);
+
+        const grouped = getFilteredResolvedGroups();
+
         const totalGroups = grouped.reduce((s, g) => s + g.items.length, 0);
 
         resolvedCountBadge.textContent = totalGroups;
@@ -1219,14 +1506,28 @@
             });
         });
 
+        const filterSuffix = selectedPhaseFilter
+            ? ` (Phase: ${selectedPhaseFilter})`
+            : "";
+
         resolvedSummary.textContent =
             totalGroups > 0
-                ? `Total resolved qty: ${formatNumber(sumQty)} · Amount: ${formatNumber(sumAmt)}`
+                ? `Total resolved qty: ${formatNumber(sumQty)} · Amount: ${formatNumber(sumAmt)}${filterSuffix}`
                 : "";
+
+        downloadResolvedPdfBtn.disabled = totalGroups === 0;
+        downloadPhaseSummaryPdfBtn.disabled = totalGroups === 0;
 
         if (!grouped.length) {
             resolvedTable.classList.add("d-none");
             resolvedEmpty.classList.remove("d-none");
+
+            const emptyText = resolvedEmpty.querySelector("div");
+            if (emptyText) {
+                emptyText.textContent = selectedPhaseFilter
+                    ? `No resolved records for phase "${selectedPhaseFilter}".`
+                    : "No resolved records yet.";
+            }
             return;
         }
 
@@ -1240,7 +1541,6 @@
             const phaseQty = group.items.reduce((s, i) => s + i.resolvedQuantity, 0);
             const phaseAmt = group.items.reduce((s, i) => s + i.resolvedAmount, 0);
 
-            // Phase group header row
             const headerTr = document.createElement("tr");
             headerTr.className = "phase-group-row";
             headerTr.innerHTML = `
@@ -1250,9 +1550,7 @@
                             <i class="bi bi-layers-half me-1"></i>
                             ${escapeHtml(group.phase)}
                         </span>
-                        <span>
-                            ${group.items.length} item(s)
-                        </span>
+                        <span>${group.items.length} item(s)</span>
                         <span class="phase-group-stats">
                             Qty: <strong>${formatNumber(phaseQty)}</strong>
                             · Amount: <strong>${formatNumber(phaseAmt)}</strong>
@@ -1263,13 +1561,11 @@
 
             resolvedTableBody.appendChild(headerTr);
 
-            // Item rows
             group.items.forEach(item => {
 
                 rowIndex += 1;
 
                 const tr = document.createElement("tr");
-
                 const mergedCount = item.recordIds.length;
 
                 tr.innerHTML = `
@@ -1277,9 +1573,7 @@
                     <td class="fw-semibold">
                         ${escapeHtml(item.title)}
                         ${mergedCount > 1
-                            ? `<span class="merged-count">
-                                 (merged from ${mergedCount} entries)
-                               </span>`
+                            ? `<span class="merged-count">(merged from ${mergedCount} entries)</span>`
                             : ``}
                     </td>
                     <td class="text-end qty-strong">${formatNumber(item.resolvedQuantity)}</td>
@@ -1287,11 +1581,7 @@
                     <td class="text-end">${formatNumber(item.resolvedAmount)}</td>
                     <td class="text-end">
                         <button type="button"
-                            class="btn btn-sm btn-outline-danger delete-group-btn"
-                            data-ids="${escapeHtml(item.recordIds.join(","))}"
-                            data-title="${escapeHtml(item.title)}"
-                            data-phase="${escapeHtml(item.phase)}"
-                            data-qty="${item.resolvedQuantity}">
+                            class="btn btn-sm btn-outline-danger delete-group-btn">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -1323,10 +1613,10 @@
 
 
     // =====================================================
-    // OPEN RESOLVE MODAL
+    // OPEN RESOLVE MODAL  (validates unit rates first)
     // =====================================================
 
-    function openResolveModal(boqPushId) {
+    async function openResolveModal(boqPushId, rowEl) {
 
         const rec = boqRecords[boqPushId];
 
@@ -1335,31 +1625,79 @@
             return;
         }
 
-        const title = String(getBoqValue(rec, "Title") || "").trim();
+        // Read current inputs from the row
+        const priceInput   = rowEl.querySelector('input[data-field="unitPrice"]');
+        const costingInput = rowEl.querySelector('input[data-field="unitCosting"]');
+
+        const priceRaw   = priceInput.value.trim();
+        const costingRaw = costingInput.value.trim();
+
+        if (priceRaw === "" || costingRaw === "") {
+            showStatus(
+                "Please enter Unit/Price and Unit/Costing first, then save.",
+                "warning"
+            );
+            (priceRaw === "" ? priceInput : costingInput).focus();
+            return;
+        }
+
+        const unitPrice   = Number(priceRaw);
+        const unitCosting = Number(costingRaw);
+
+        if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+            showStatus("Unit/Price must be a valid non-negative number.", "warning");
+            priceInput.focus();
+            return;
+        }
+        if (!Number.isFinite(unitCosting) || unitCosting < 0) {
+            showStatus("Unit/Costing must be a valid non-negative number.", "warning");
+            costingInput.focus();
+            return;
+        }
+
+        // Auto-save rates if they differ from what's stored
+        const saved = unitRates[boqPushId];
+        const needsSave =
+            !saved ||
+            Number(saved.unitPrice) !== unitPrice ||
+            Number(saved.unitCosting) !== unitCosting;
+
+        if (needsSave) {
+            try {
+                const payload = { unitPrice, unitCosting, updatedAt: Date.now() };
+                await set(
+                    ref(db, `sr_group/businesses/${selectedBusinessId}/projects/${selectedProjectId}/unit-rates/${boqPushId}`),
+                    payload
+                );
+                unitRates[boqPushId] = payload;
+
+                priceInput.classList.remove("is-dirty");
+                costingInput.classList.remove("is-dirty");
+            }
+            catch (err) {
+                console.warn("Auto-save rate failed:", err);
+            }
+        }
+
+        const title    = String(getBoqValue(rec, "Title") || "").trim();
         const quantity = Number(getBoqValue(rec, "Quantity")) || 0;
-        const unit = String(getBoqValue(rec, "Unit") || "");
-        const amount = Number(getBoqValue(rec, "Amount")) || 0;
-        const costing = Number(getBoqValue(rec, "Costing")) || 0; // NEW
+        const unit     = String(getBoqValue(rec, "Unit") || "");
 
         const resolvedTotal = getResolvedTotalForPushId(boqPushId);
         const remaining = Math.max(0, quantity - resolvedTotal);
 
         resolvePushIdInput.value = boqPushId;
 
-        // Include costing in modal info if it exists
-        const costingInfo = costing > 0
-            ? ` · Costing: <strong>${formatNumber(costing)}</strong>`
-            : '';
-
         resolveItemInfo.innerHTML = `
             <div class="d-flex justify-content-between flex-wrap gap-2">
-                <div>
-                    <strong>${escapeHtml(title || "—")}</strong>
-                </div>
+                <div><strong>${escapeHtml(title || "—")}</strong></div>
                 <div class="text-muted">
                     Total: <strong>${formatNumber(quantity)}</strong> ${escapeHtml(unit)}
-                    · Amount: <strong>${formatNumber(amount)}</strong>${costingInfo}
                 </div>
+            </div>
+            <div class="mt-1 text-muted">
+                Unit/Price: <strong>${formatNumber(unitPrice)}</strong>
+                · Unit/Costing: <strong>${formatNumber(unitCosting)}</strong>
             </div>
             <div class="mt-1 text-muted">
                 Already resolved: <strong>${formatNumber(resolvedTotal)}</strong>
@@ -1405,7 +1743,13 @@
             return;
         }
 
-        // Determine phase
+        // Must have a valid saved unit rate
+        const rate = unitRates[boqPushId];
+        if (!hasSavedRate(rate)) {
+            showStatus("Please enter and save Unit/Price and Unit/Costing first.", "warning");
+            return;
+        }
+
         let phase = resolvePhase.value;
 
         if (phase === "__custom__") {
@@ -1418,11 +1762,9 @@
             return;
         }
 
-        const title = String(getBoqValue(rec, "Title") || "").trim();
+        const title    = String(getBoqValue(rec, "Title") || "").trim();
         const quantity = Number(getBoqValue(rec, "Quantity")) || 0;
-        const unit = String(getBoqValue(rec, "Unit") || "");
-        const amount = Number(getBoqValue(rec, "Amount")) || 0;
-        const costing = Number(getBoqValue(rec, "Costing")) || 0; // NEW
+        const unit     = String(getBoqValue(rec, "Unit") || "");
 
         const resolvedTotal = getResolvedTotalForPushId(boqPushId);
         const remaining = Math.max(0, quantity - resolvedTotal);
@@ -1442,15 +1784,14 @@
             return;
         }
 
-        // ✅ Resolved Amount = Amount × Resolved Quantity
-        const resolvedAmount = Number(
-            ((Number(amount) || 0) * (Number(resolvedQuantity) || 0)).toFixed(2)
-        );
+        const unitPrice   = Number(rate.unitPrice) || 0;
+        const unitCosting = Number(rate.unitCosting) || 0;
+
+        const resolvedAmount  = Number((unitPrice   * resolvedQuantity).toFixed(2));
+        const resolvedCosting = Number((unitCosting * resolvedQuantity).toFixed(2));
 
         confirmResolveBtn.disabled = true;
-
         const oldHtml = confirmResolveBtn.innerHTML;
-
         confirmResolveBtn.innerHTML = `
             <span class="spinner-border spinner-border-sm me-1"></span>
             Saving...
@@ -1469,11 +1810,13 @@
                 phase,
 
                 boqQuantity: quantity,
-                boqAmount: amount,
-                boqCosting: costing, // NEW: store costing if needed
+
+                unitPrice,
+                unitCosting,
 
                 resolvedQuantity,
                 resolvedAmount,
+                resolvedCosting,
 
                 createdAt: Date.now()
             });
@@ -1578,6 +1921,364 @@
         resolveCustomPhase.classList.add("d-none");
         resolveCustomPhase.value = "";
     });
+
+
+    // =====================================================
+    // PDF SHARED HELPERS
+    // =====================================================
+
+    function getPdfMeta() {
+        return {
+            businessLabel: selectedBusinessName || selectedBusinessId || "-",
+            businessId:    selectedBusinessId || "-",
+            projectLabel:  selectedProjectLabel || "-",
+            projectId:     selectedProjectId || "-",
+            userName:      currentUserData?.name || currentUser?.email || "-",
+            printedOn:     new Date().toLocaleString("en-IN"),
+            phaseFilter:   selectedPhaseFilter || ""
+        };
+    }
+
+    function pdfReady() {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            alert("PDF library is still loading. Please try again in a moment.");
+            return false;
+        }
+        return true;
+    }
+
+    function drawPdfHeader(doc, title, meta) {
+        const pageW = doc.internal.pageSize.getWidth();
+
+        doc.setFillColor(13, 110, 253);
+        doc.rect(0, 0, pageW, 78, "F");
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(17);
+        doc.text(title, 40, 34);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text(`Business: ${meta.businessLabel}`, 40, 54);
+        doc.text(`Project: ${meta.projectLabel}`, 40, 68);
+    }
+
+    function drawPdfMeta(doc, meta) {
+        doc.setTextColor(70, 70, 70);
+        doc.setFontSize(9);
+
+        let y = 102;
+        doc.text(`Generated by: ${meta.userName}`, 40, y);
+        y += 13;
+        doc.text(`Generated on: ${meta.printedOn}`, 40, y);
+
+        if (meta.phaseFilter) {
+            y += 13;
+            doc.setTextColor(180, 90, 0);
+            doc.setFont("helvetica", "bold");
+            doc.text(`Phase filter: ${meta.phaseFilter}`, 40, y);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(70, 70, 70);
+        }
+
+        return y;
+    }
+
+    function drawPdfFooters(doc, footerLeft) {
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const pages = doc.internal.getNumberOfPages();
+
+        for (let p = 1; p <= pages; p++) {
+            doc.setPage(p);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(130, 130, 130);
+
+            doc.text(footerLeft, 40, pageH - 20);
+            doc.text(
+                `Page ${p} of ${pages}`,
+                pageW - 40,
+                pageH - 20,
+                { align: "right" }
+            );
+        }
+    }
+
+    function pdfFileSuffix() {
+        const stamp = new Date().toISOString().slice(0, 10);
+        const safeBiz = String(selectedBusinessId || "business").replace(/[^a-z0-9\-_]/gi, "_");
+        const safePrj = String(selectedProjectId || "project").replace(/[^a-z0-9\-_]/gi, "_");
+        const safePhase = selectedPhaseFilter
+            ? "-" + String(selectedPhaseFilter).replace(/[^a-z0-9\-_]/gi, "_")
+            : "";
+        return { stamp, safeBiz, safePrj, safePhase };
+    }
+
+
+    // =====================================================
+    // PDF EXPORT — DETAILED (PHASE WISE) — respects filter
+    // =====================================================
+
+    downloadResolvedPdfBtn.addEventListener("click", () => {
+        downloadResolvedPDF();
+    });
+
+    function downloadResolvedPDF() {
+
+        if (!pdfReady()) return;
+
+        const grouped = getFilteredResolvedGroups();
+
+        if (!grouped.length) {
+            alert(
+                selectedPhaseFilter
+                    ? `No resolved records for phase "${selectedPhaseFilter}".`
+                    : "No resolved records to export."
+            );
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const marginX = 40;
+
+        const meta = getPdfMeta();
+
+        const title = selectedPhaseFilter
+            ? `Resolved Records — ${selectedPhaseFilter}`
+            : "Resolved Records — Phase Wise";
+
+        drawPdfHeader(doc, title, meta);
+        const metaY = drawPdfMeta(doc, meta);
+
+        const body = [];
+
+        let grandQty = 0;
+        let grandAmt = 0;
+        let grandItems = 0;
+
+        grouped.forEach(group => {
+
+            const phaseQty = group.items.reduce((s, i) => s + i.resolvedQuantity, 0);
+            const phaseAmt = group.items.reduce((s, i) => s + i.resolvedAmount, 0);
+
+            grandQty += phaseQty;
+            grandAmt += phaseAmt;
+            grandItems += group.items.length;
+
+            body.push([
+                {
+                    content: `${group.phase}  —  ${group.items.length} item(s)   |   Qty: ${formatNumber(phaseQty)}   |   Amount: ${formatNumber(phaseAmt)}`,
+                    colSpan: 5,
+                    styles: {
+                        fillColor: [238, 244, 255],
+                        textColor: [13, 110, 253],
+                        fontStyle: "bold",
+                        fontSize: 10
+                    }
+                }
+            ]);
+
+            group.items.forEach((it, i) => {
+                body.push([
+                    i + 1,
+                    it.title || "—",
+                    formatNumber(it.resolvedQuantity),
+                    it.unit || "—",
+                    formatNumber(it.resolvedAmount)
+                ]);
+            });
+
+            body.push([
+                { content: "Phase total", colSpan: 2, styles: { halign: "right", fontStyle: "bold", fillColor: [248, 249, 250] } },
+                { content: formatNumber(phaseQty), styles: { halign: "right", fontStyle: "bold", fillColor: [248, 249, 250] } },
+                { content: "", styles: { fillColor: [248, 249, 250] } },
+                { content: formatNumber(phaseAmt), styles: { halign: "right", fontStyle: "bold", fillColor: [248, 249, 250] } }
+            ]);
+        });
+
+        body.push([
+            { content: "GRAND TOTAL", colSpan: 2, styles: { halign: "right", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } },
+            { content: formatNumber(grandQty), styles: { halign: "right", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } },
+            { content: "", styles: { fillColor: [13, 110, 253] } },
+            { content: formatNumber(grandAmt), styles: { halign: "right", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } }
+        ]);
+
+        doc.autoTable({
+            startY: metaY + 16,
+            head: [["#", "Title", "Resolved Qty", "Unit", "Resolved Amount"]],
+            body,
+            styles: {
+                fontSize: 9,
+                cellPadding: 6,
+                overflow: "linebreak",
+                valign: "middle"
+            },
+            headStyles: {
+                fillColor: [13, 110, 253],
+                textColor: 255,
+                fontStyle: "bold",
+                fontSize: 9.5
+            },
+            columnStyles: {
+                0: { cellWidth: 32, halign: "center" },
+                1: { cellWidth: "auto" },
+                2: { cellWidth: 100, halign: "right" },
+                3: { cellWidth: 70 },
+                4: { cellWidth: 130, halign: "right" }
+            },
+            margin: { left: marginX, right: marginX, top: 40, bottom: 46 }
+        });
+
+        let endY = doc.lastAutoTable.finalY + 20;
+
+        if (endY > pageH - 60) {
+            doc.addPage();
+            endY = 60;
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.text(
+            `Total phases: ${grouped.length}   |   Total items: ${grandItems}   |   Total resolved qty: ${formatNumber(grandQty)}   |   Total amount: ${formatNumber(grandAmt)}`,
+            marginX,
+            endY
+        );
+
+        drawPdfFooters(doc, "SR Group — Workflow");
+
+        const { stamp, safeBiz, safePrj, safePhase } = pdfFileSuffix();
+        doc.save(`resolved-records-phase-wise-${safeBiz}-${safePrj}${safePhase}-${stamp}.pdf`);
+    }
+
+
+    // =====================================================
+    // PDF EXPORT — PHASE SUMMARY — respects filter
+    // =====================================================
+
+    downloadPhaseSummaryPdfBtn.addEventListener("click", () => {
+        downloadPhaseSummaryPDF();
+    });
+
+    function downloadPhaseSummaryPDF() {
+
+        if (!pdfReady()) return;
+
+        const grouped = getFilteredResolvedGroups();
+
+        if (!grouped.length) {
+            alert(
+                selectedPhaseFilter
+                    ? `No resolved records for phase "${selectedPhaseFilter}".`
+                    : "No resolved records to export."
+            );
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const marginX = 40;
+
+        const meta = getPdfMeta();
+
+        const title = selectedPhaseFilter
+            ? `Phase Summary — ${selectedPhaseFilter}`
+            : "Phase Summary — Resolved Records";
+
+        drawPdfHeader(doc, title, meta);
+        const metaY = drawPdfMeta(doc, meta);
+
+        const body = [];
+
+        let grandItems = 0;
+        let grandQty = 0;
+        let grandAmt = 0;
+
+        grouped.forEach((group, index) => {
+
+            const phaseQty = group.items.reduce((s, i) => s + i.resolvedQuantity, 0);
+            const phaseAmt = group.items.reduce((s, i) => s + i.resolvedAmount, 0);
+
+            grandItems += group.items.length;
+            grandQty += phaseQty;
+            grandAmt += phaseAmt;
+
+            body.push([
+                index + 1,
+                group.phase,
+                group.items.length,
+                formatNumber(phaseQty),
+                formatNumber(phaseAmt)
+            ]);
+        });
+
+        body.push([
+            { content: "", styles: { fillColor: [13, 110, 253] } },
+            { content: "GRAND TOTAL", styles: { halign: "right", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } },
+            { content: grandItems, styles: { halign: "center", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } },
+            { content: formatNumber(grandQty), styles: { halign: "right", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } },
+            { content: formatNumber(grandAmt), styles: { halign: "right", fontStyle: "bold", fillColor: [13, 110, 253], textColor: [255, 255, 255] } }
+        ]);
+
+        doc.autoTable({
+            startY: metaY + 16,
+            head: [["#", "Phase", "Items", "Resolved Qty", "Resolved Amount"]],
+            body,
+            styles: {
+                fontSize: 10,
+                cellPadding: 7,
+                overflow: "linebreak",
+                valign: "middle"
+            },
+            headStyles: {
+                fillColor: [13, 110, 253],
+                textColor: 255,
+                fontStyle: "bold",
+                fontSize: 10
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 250]
+            },
+            columnStyles: {
+                0: { cellWidth: 32, halign: "center" },
+                1: { cellWidth: "auto" },
+                2: { cellWidth: 60, halign: "center" },
+                3: { cellWidth: 100, halign: "right" },
+                4: { cellWidth: 130, halign: "right" }
+            },
+            margin: { left: marginX, right: marginX, top: 40, bottom: 46 }
+        });
+
+        let endY = doc.lastAutoTable.finalY + 20;
+
+        if (endY > pageH - 60) {
+            doc.addPage();
+            endY = 60;
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.text(
+            `Total phases: ${grouped.length}   |   Total items: ${grandItems}   |   Total resolved qty: ${formatNumber(grandQty)}   |   Total amount: ${formatNumber(grandAmt)}`,
+            marginX,
+            endY
+        );
+
+        drawPdfFooters(doc, "SR Group — Phase Summary");
+
+        const { stamp, safeBiz, safePrj, safePhase } = pdfFileSuffix();
+        doc.save(`phase-summary-${safeBiz}-${safePrj}${safePhase}-${stamp}.pdf`);
+    }
 
 </script>
 

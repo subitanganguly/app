@@ -59,7 +59,7 @@
         .items-table td { vertical-align: middle; }
 
         .items-table input,
-        .items-table select { min-width: 70px; }
+        .items-table select { min-width: 60px; }
 
         .totals-box {
             background: #fff;
@@ -87,6 +87,11 @@
             font-weight: 600;
         }
 
+        .totals-row.profit-row {
+            color: #198754;
+            font-weight: 600;
+        }
+
         .segment-header {
             background: #eef2f7;
             padding: 0.5rem 0.75rem;
@@ -103,10 +108,6 @@
             cursor: not-allowed;
         }
 
-        /* =====================================================
-           PRODUCT / SERVICE ROW COLORING
-           ===================================================== */
-
         .items-table tbody tr.row-product > td {
             background-color: rgba(13, 110, 253, 0.12) !important;
             transition: background-color 0.15s ease;
@@ -114,6 +115,11 @@
 
         .items-table tbody tr.row-service > td {
             background-color: rgba(25, 135, 84, 0.12) !important;
+            transition: background-color 0.15s ease;
+        }
+
+        .items-table tbody tr.row-phase > td {
+            background-color: rgba(111, 66, 193, 0.12) !important;
             transition: background-color 0.15s ease;
         }
 
@@ -125,12 +131,12 @@
             background-color: rgba(25, 135, 84, 0.22) !important;
         }
 
-        .items-table tbody tr.row-error > td {
-            background-color: rgba(220, 53, 69, 0.14) !important;
+        .items-table tbody tr.row-phase > td:focus-within {
+            background-color: rgba(111, 66, 193, 0.22) !important;
         }
 
-        .items-table tbody tr.row-error > td:focus-within {
-            background-color: rgba(220, 53, 69, 0.22) !important;
+        .items-table tbody tr.row-error > td {
+            background-color: rgba(220, 53, 69, 0.14) !important;
         }
 
         .row-error-msg {
@@ -157,10 +163,7 @@
 
         .item-tag.product { background: #0d6efd; color: #fff; }
         .item-tag.service { background: #198754; color: #fff; }
-
-        /* =====================================================
-           SEARCHABLE DROPDOWN
-           ===================================================== */
+        .item-tag.phase   { background: #6f42c1; color: #fff; }
 
         .item-search-wrap { position: relative; }
 
@@ -250,10 +253,6 @@
             border: 1px solid #ffe69c;
         }
 
-        /* =====================================================
-           PHASE SELECTOR (WORKFLOW INTEGRATION)
-           ===================================================== */
-
         .phase-selector-wrap {
             display: flex;
             align-items: center;
@@ -277,15 +276,28 @@
             color: #0d6efd;
         }
 
-        .phase-select:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-        }
-
         .phase-hint {
             font-size: 0.75rem;
             color: #6c757d;
         }
+
+        .import-phase-table {
+            font-size: 0.88rem;
+        }
+
+        .import-phase-table th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6c757d;
+        }
+
+        .import-phase-table td {
+            vertical-align: middle;
+        }
+
+        /* Hidden columns — used for calculation / DB only */
+        .hidden-col { display: none !important; }
     </style>
 
 </head>
@@ -298,8 +310,6 @@
     <main id="main-content">
 
         <div class="container-fluid p-0">
-
-            <!-- HEADER -->
 
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
 
@@ -343,12 +353,8 @@
             </div>
 
 
-            <!-- STATUS -->
-
             <div id="statusMessage" class="alert d-none"></div>
 
-
-            <!-- 1. BUSINESS + PROJECT + GST + BILL TYPE -->
 
             <div class="card border-0 shadow-sm mb-4">
 
@@ -375,7 +381,6 @@
                         </div>
 
 
-                        <!-- PROJECT SELECT — only shown for construction businesses -->
                         <div class="col-md-4 d-none" id="projectCol">
 
                             <label class="form-label fw-semibold">
@@ -440,8 +445,6 @@
             </div>
 
 
-            <!-- 2. DYNAMIC SEGMENTS + FIELDS -->
-
             <div id="dynamicBillSections">
 
                 <div class="card border-0 shadow-sm mb-4">
@@ -458,8 +461,6 @@
 
             </div>
 
-
-            <!-- 3. TAX RATES -->
 
             <div class="card border-0 shadow-sm mb-4">
 
@@ -527,8 +528,6 @@
             </div>
 
 
-            <!-- 4. ITEMS -->
-
             <div class="card border-0 shadow-sm mb-4">
 
                 <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -548,21 +547,15 @@
 
                     <div class="phase-selector-wrap">
 
-                        <!-- PHASE SELECTOR — only for construction businesses -->
-                        <div class="d-none align-items-center gap-2" id="phaseWrap">
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm d-none"
+                                id="importPhaseBtn"
+                                title="Import resolved items from a workflow phase">
 
-                            <label for="phaseSelect">
-                                <i class="bi bi-layers-half text-primary me-1"></i>
-                                Phase:
-                            </label>
+                            <i class="bi bi-download me-1"></i>
+                            Import from Phase
 
-                            <select id="phaseSelect" class="form-select form-select-sm phase-select">
-                                <option value="">-- Select Phase --</option>
-                            </select>
-
-                            <span class="phase-hint" id="phaseHint"></span>
-
-                        </div>
+                        </button>
 
                         <button type="button" class="btn btn-primary btn-sm" id="addItemBtn">
                             <i class="bi bi-plus-lg me-1"></i>
@@ -581,11 +574,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 30%;">Item Name</th>
-                                <th style="width: 12%;">Quantity</th>
-                                <th style="width: 13%;">Unit</th>
-                                <th style="width: 15%;">Price/Unit (Rs)</th>
-                                <th style="width: 15%;">Amount (Rs)</th>
-                                <th style="width: 15%;" class="text-end">Action</th>
+                                <th style="width: 12%;">Qty</th>
+                                <th style="width: 10%;">Unit</th>
+                                <th style="width: 16%;">Price/Unit (Rs)</th>
+                                <th style="width: 16%;">Amount (Rs)</th>
+                                <th style="width: 16%;" class="text-end">Action</th>
                             </tr>
                         </thead>
 
@@ -597,8 +590,6 @@
 
             </div>
 
-
-            <!-- TOTALS -->
 
             <div class="row justify-content-end mb-5">
 
@@ -672,6 +663,16 @@
                             <span>Rs <span id="grandTotal">0.00</span></span>
                         </div>
 
+
+                        <!-- Hidden — total profit is calculated and saved but not shown -->
+                        <div class="totals-row profit-row d-none">
+                            <span>
+                                <i class="bi bi-graph-up-arrow me-1"></i>
+                                Total Profit
+                            </span>
+                            <span>Rs <span id="totalProfit">0.00</span></span>
+                        </div>
+
                     </div>
 
                     <div class="d-grid gap-2 mt-3">
@@ -695,6 +696,67 @@
         </div>
 
     </main>
+
+
+    <!-- ===================================================== -->
+    <!-- IMPORT FROM PHASE MODAL -->
+    <!-- ===================================================== -->
+    <div class="modal fade" id="importPhaseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-download me-2"></i>
+                        Import Items from Phase
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label for="importPhaseSelect" class="form-label fw-semibold">
+                            <i class="bi bi-layers-half text-primary me-1"></i>
+                            Select Phase
+                        </label>
+                        <select id="importPhaseSelect" class="form-select">
+                            <option value="">-- Select a Phase --</option>
+                        </select>
+                    </div>
+
+                    <div id="importItemsWrap">
+                        <div class="text-muted text-center py-4 small">
+                            Select a phase above to view its resolved items.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <div class="me-auto small text-muted" id="importSummary"></div>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            id="importToggleAllBtn"
+                            disabled>
+                        <i class="bi bi-check2-square me-1"></i>
+                        Toggle All
+                    </button>
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-success" id="confirmImportBtn" disabled>
+                        <i class="bi bi-check-lg me-1"></i>
+                        Import Selected
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -738,14 +800,10 @@
         let productFieldMap = {};
         let serviceFieldMap = {};
 
-        // =====================================================
-        // WORKFLOW / PHASE STATE
-        // =====================================================
-
-        let availablePhases = [];              // ["Phase 1", "Phase 2", ...]
-        let selectedPhase = "";                // currently selected phase
-        let phaseResolvedItems = {};           // phase -> [ { title, qty, unit, amount } ]
-        let boqFieldMap = {};                  // title -> fieldId (for BOQ)
+        let availablePhases = [];
+        let selectedPhase = "";
+        let phaseResolvedItems = {};
+        let boqFieldMap = {};
 
 
         // =====================================================
@@ -790,6 +848,7 @@
         const outStateRates = document.getElementById("outStateRates");
         const itemsBody = document.getElementById("itemsBody");
         const addItemBtn = document.getElementById("addItemBtn");
+        const importPhaseBtn = document.getElementById("importPhaseBtn");
         const saveBillBtn = document.getElementById("saveBillBtn");
         const saveGenerateBtnBottom = document.getElementById("saveGenerateBtnBottom");
         const resetBtn = document.getElementById("resetBtn");
@@ -798,10 +857,13 @@
         const discountType = document.getElementById("discountType");
         const discountValue = document.getElementById("discountValue");
 
-        // Phase elements
-        const phaseWrap = document.getElementById("phaseWrap");
-        const phaseSelect = document.getElementById("phaseSelect");
-        const phaseHint = document.getElementById("phaseHint");
+        const importPhaseModalEl = document.getElementById("importPhaseModal");
+        const importPhaseModal = new bootstrap.Modal(importPhaseModalEl);
+        const importPhaseSelect = document.getElementById("importPhaseSelect");
+        const importItemsWrap = document.getElementById("importItemsWrap");
+        const importSummary = document.getElementById("importSummary");
+        const importToggleAllBtn = document.getElementById("importToggleAllBtn");
+        const confirmImportBtn = document.getElementById("confirmImportBtn");
 
 
         // =====================================================
@@ -903,38 +965,22 @@
         // PATTERN HELPERS
         // =====================================================
 
-        /**
-         * Build a short abbreviation from a name.
-         *  "Cat Food"                      → "CF"
-         *  "Modern Construction"           → "MC"
-         *  "Siliguri Project"              → "SP"
-         *  "Cat"                           → "CT"
-         *  "ABC"                           → "AB"
-         *  ""                              → ""
-         */
         function makeAbbreviation(name) {
             const raw = String(name || "").trim();
             if (!raw) return "";
 
-            // Split on whitespace, hyphens, underscores, slashes
             const parts = raw.split(/[\s\-_\/]+/).filter(Boolean);
 
             if (parts.length >= 2) {
-                // Multi-word: take the first letter of each word
                 return parts
                     .map(p => p.charAt(0).toUpperCase())
                     .join("")
                     .slice(0, 6);
             }
 
-            // Single word: first 2 letters, uppercased
             return parts[0].slice(0, 2).toUpperCase();
         }
 
-
-        /**
-         * Get the current business abbreviation.
-         */
         function getBusinessAbbr() {
             if (!selectedBusinessId) return "";
 
@@ -944,10 +990,6 @@
             return makeAbbreviation(name);
         }
 
-
-        /**
-         * Get the current project abbreviation (empty if not construction).
-         */
         function getProjectAbbr() {
             if (!selectedBusinessIsConstruction || !selectedProjectId) return "";
 
@@ -960,20 +1002,6 @@
             return makeAbbreviation(projectName);
         }
 
-
-        /**
-         * Apply a pattern to produce the actual invoice number string.
-         * Supports:
-         *   [day]        → 06
-         *   [month]      → 10
-         *   [year]       → 2026
-         *   [number]     → 01, 02, ...
-         *   [business]   → CF
-         *   [project]    → SP
-         *
-         * When [Business][Project] are written back-to-back they
-         * collapse into "MC-SP"; standalone they stay individual.
-         */
         function applyPattern(pattern, seq = 1) {
             const now = new Date();
             const day   = String(now.getDate()).padStart(2, "0");
@@ -983,14 +1011,12 @@
             const bizAbbr  = getBusinessAbbr();
             const projAbbr = getProjectAbbr();
 
-            // Combined "MC-SP" if both exist, otherwise just one
             const combined =
                 bizAbbr && projAbbr
                     ? `${bizAbbr}-${projAbbr}`
                     : (bizAbbr || projAbbr || "");
 
             return String(pattern || "")
-                // Do the combined form first so it isn't eaten by singles
                 .replace(/\[business\]\[project\]/gi, combined)
                 .replace(/\[project\]\[business\]/gi, combined)
                 .replace(/\[day\]/gi,      day)
@@ -1001,19 +1027,10 @@
                 .replace(/\[project\]/gi,  projAbbr);
         }
 
-
-        /**
-         * Build a regex from a pattern, so existing invoice numbers can
-         * be matched to find the highest sequence number.
-         * Only [Number] is captured.
-         */
         function patternToRegex(pattern) {
-            // Escape all regex special chars first
             let escaped = String(pattern || "")
                 .replace(/[.*+?^${}()|\\]/g, "\\$&");
 
-            // Replace placeholders (case-insensitive).
-            // Longest keys first so partial matches don't eat them.
             escaped = escaped
                 .replace(/\[business\]\[project\]/gi, "[A-Za-z0-9\\-]+")
                 .replace(/\[project\]\[business\]/gi, "[A-Za-z0-9\\-]+")
@@ -1026,7 +1043,6 @@
 
             return new RegExp(`^${escaped}$`, "i");
         }
-
 
         function findAutoGenerateField(billTypeData) {
             if (!billTypeData || !billTypeData.segments) return null;
@@ -1054,7 +1070,7 @@
 
 
         // =====================================================
-        // INVOICE NUMBER GENERATOR (PROJECT AWARE)
+        // INVOICE NUMBER GENERATOR
         // =====================================================
 
         async function getNextInvoiceNumber(businessId, billTypeName, billTypeData) {
@@ -1072,8 +1088,6 @@
             }
 
             try {
-                // Project-aware: reads bills from the same node
-                // where the new bill will be saved.
                 const snapshot = await get(ref(db, billsPath(businessId)));
 
                 if (snapshot.exists()) {
@@ -1086,7 +1100,6 @@
                         const match = matcher.exec(num.trim());
                         if (!match) return;
 
-                        // First captured group is always the sequence
                         for (let i = 1; i < match.length; i++) {
                             if (match[i] && /^\d+$/.test(match[i])) {
                                 const n = parseInt(match[i], 10);
@@ -1208,7 +1221,7 @@
 
 
         // =====================================================
-        // PROJECTS (for construction businesses)
+        // PROJECTS
         // =====================================================
 
         async function loadProjectsForBusiness(businessId) {
@@ -1228,7 +1241,6 @@
                 console.warn("Could not load projects:", err);
             }
 
-            // Filter placeholder
             const cleaned = {};
             Object.entries(projects).forEach(([id, p]) => {
                 if (id === "_placeholder") return;
@@ -1236,7 +1248,6 @@
                 cleaned[id] = p;
             });
 
-            // For project-admin: restrict to assigned projects
             let visible = cleaned;
 
             if (isProjectAdmin()) {
@@ -1250,9 +1261,7 @@
                     if (assigned[pushId]) restricted[pushId] = p;
                 });
 
-                // Fallback: build from assigned map if business read empty
                 if (!Object.keys(restricted).length) {
-
                     Object.entries(assigned).forEach(([pushId, p]) => {
                         if (pushId === "_placeholder") return;
                         if (!p || typeof p !== "object") return;
@@ -1430,8 +1439,6 @@
 
             if (!selectedBusinessId) return;
 
-            // For construction businesses, we need a project before
-            // we can show items — items live under the project.
             if (selectedBusinessIsConstruction && !selectedProjectId) {
                 return;
             }
@@ -1445,7 +1452,6 @@
 
                 const records = snap.val() || {};
 
-                // ---------- PRODUCTS ----------
                 const prodRecs = records.products || {};
                 Object.entries(prodRecs).forEach(([id, rec]) => {
                     const name = String(
@@ -1472,7 +1478,6 @@
                     });
                 });
 
-                // ---------- SERVICES ----------
                 const svcRecs = records.services || {};
                 Object.entries(svcRecs).forEach(([id, rec]) => {
                     const name = String(
@@ -1532,11 +1537,10 @@
             boqFieldMap = {};
 
             if (!selectedBusinessId || !selectedProjectId) {
-                renderPhaseSelector();
+                updateImportPhaseButton();
                 return;
             }
 
-            // Load BOQ field map (title -> fieldId)
             try {
                 const snap = await get(
                     ref(db, `sr_group/settings/${selectedBusinessId}/${BOQ_SETTING_KEY}`)
@@ -1555,7 +1559,6 @@
                 console.warn("Could not load BOQ field map:", err);
             }
 
-            // Load resolved records for the project
             let resolved = {};
 
             try {
@@ -1570,7 +1573,6 @@
                 console.warn("Could not load resolved records:", err);
             }
 
-            // Group by phase and title (merged)
             const phaseSet = new Set();
 
             Object.values(resolved).forEach(r => {
@@ -1590,30 +1592,60 @@
                         title,
                         unit: String(r.unit || ""),
                         quantity: 0,
-                        amount: 0,
-                        // NEW: keep the BOQ costing that was stored by
-                        // the Workflow page (if present on the record).
-                        boqCosting: Number(r.boqCosting) || 0
+                        totalSelling: 0,
+                        totalCost: 0,
+                        sellingPrice: 0,
+                        costPrice: 0,
+                        recordIds: []
                     };
                 }
 
                 const item = phaseResolvedItems[phase][title];
 
-                item.quantity += Number(r.resolvedQuantity) || 0;
-                item.amount += Number(r.resolvedAmount) || 0;
+                const qty = Number(r.resolvedQuantity) || 0;
+                const selling = Number(r.resolvedAmount) || 0;
+
+                let cost = Number(r.resolvedCosting);
+
+                if (!Number.isFinite(cost) || cost === 0) {
+                    const uCost = Number(r.unitCosting);
+                    if (Number.isFinite(uCost) && uCost > 0) {
+                        cost = uCost * qty;
+                    }
+                    else {
+                        const bCost = Number(r.boqCosting);
+                        if (Number.isFinite(bCost) && bCost > 0) {
+                            cost = bCost * qty;
+                        }
+                        else {
+                            cost = 0;
+                        }
+                    }
+                }
+
+                item.quantity += qty;
+                item.totalSelling += selling;
+                item.totalCost += cost;
 
                 if (!item.unit && r.unit) {
                     item.unit = String(r.unit);
                 }
 
-                // If BOQ costing wasn't stored per record, keep the first
-                // non-zero one we encounter.
-                if (!item.boqCosting && Number(r.boqCosting)) {
-                    item.boqCosting = Number(r.boqCosting);
-                }
+                item.recordIds.push(r);
             });
 
-            // Sort phases numerically (Phase 1, Phase 2, ...)
+            Object.values(phaseResolvedItems).forEach(itemsMap => {
+                Object.values(itemsMap).forEach(item => {
+                    item.sellingPrice = item.quantity > 0
+                        ? item.totalSelling / item.quantity
+                        : 0;
+
+                    item.costPrice = item.quantity > 0
+                        ? item.totalCost / item.quantity
+                        : 0;
+                });
+            });
+
             availablePhases = Array.from(phaseSet).sort((a, b) => {
                 const na = parseInt(String(a).replace(/\D/g, "")) || 0;
                 const nb = parseInt(String(b).replace(/\D/g, "")) || 0;
@@ -1621,57 +1653,232 @@
                 return String(a).localeCompare(String(b));
             });
 
-            renderPhaseSelector();
+            updateImportPhaseButton();
         }
 
 
-        function renderPhaseSelector() {
-            if (!phaseWrap) return;
+        function updateImportPhaseButton() {
+            if (!importPhaseBtn) return;
 
-            // Only show phase selector for construction businesses with a project
             const shouldShow =
-                selectedBusinessIsConstruction && !!selectedProjectId;
+                selectedBusinessIsConstruction &&
+                !!selectedProjectId &&
+                availablePhases.length > 0;
 
-            phaseWrap.classList.toggle("d-none", !shouldShow);
-            phaseWrap.classList.toggle("d-flex", shouldShow);
+            importPhaseBtn.classList.toggle("d-none", !shouldShow);
+        }
 
-            if (!shouldShow) return;
 
-            phaseSelect.innerHTML = `<option value="">-- Select Phase --</option>`;
+        // =====================================================
+        // IMPORT FROM PHASE MODAL
+        // =====================================================
+
+        importPhaseBtn.addEventListener("click", () => {
 
             if (!availablePhases.length) {
-                phaseHint.textContent = "No resolved phases found for this project.";
-                phaseSelect.disabled = true;
+                showStatus("No resolved phases found for this project.", "warning");
                 return;
             }
 
-            availablePhases.forEach(phase => {
-                const opt = document.createElement("option");
-                opt.value = phase;
+            importPhaseSelect.innerHTML = `<option value="">-- Select a Phase --</option>`;
 
+            availablePhases.forEach(phase => {
                 const items = phaseResolvedItems[phase] || {};
                 const count = Object.keys(items).length;
 
+                const opt = document.createElement("option");
+                opt.value = phase;
                 opt.textContent = `${phase} (${count} item${count === 1 ? "" : "s"})`;
-                phaseSelect.appendChild(opt);
+                importPhaseSelect.appendChild(opt);
             });
 
-            phaseSelect.disabled = false;
-            phaseHint.textContent = "Pick a phase to auto-load resolved items.";
+            importItemsWrap.innerHTML = `
+                <div class="text-muted text-center py-4 small">
+                    Select a phase above to view its resolved items.
+                </div>
+            `;
+            importSummary.textContent = "";
+            confirmImportBtn.disabled = true;
+            importToggleAllBtn.disabled = true;
+
+            importPhaseModal.show();
+        });
+
+
+        importPhaseSelect.addEventListener("change", () => {
+            const phase = importPhaseSelect.value;
+
+            if (!phase) {
+                importItemsWrap.innerHTML = `
+                    <div class="text-muted text-center py-4 small">
+                        Select a phase above to view its resolved items.
+                    </div>
+                `;
+                importSummary.textContent = "";
+                confirmImportBtn.disabled = true;
+                importToggleAllBtn.disabled = true;
+                return;
+            }
+
+            renderImportItemsTable(phase);
+        });
+
+
+        function renderImportItemsTable(phase) {
+            const itemsMap = phaseResolvedItems[phase] || {};
+            const items = Object.values(itemsMap);
+
+            if (!items.length) {
+                importItemsWrap.innerHTML = `
+                    <div class="text-muted text-center py-4 small">
+                        No resolved items found in ${escapeHtml(phase)}.
+                    </div>
+                `;
+                importSummary.textContent = "";
+                confirmImportBtn.disabled = true;
+                importToggleAllBtn.disabled = true;
+                return;
+            }
+
+            // NOTE: Cost/Unit and Profit are intentionally NOT shown here.
+            // They are still carried through the row data on import.
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover import-phase-table mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 36px;">
+                                    <input type="checkbox" class="form-check-input"
+                                           id="importCheckAll">
+                                </th>
+                                <th>Item</th>
+                                <th class="text-end" style="width: 90px;">Qty</th>
+                                <th style="width: 80px;">Unit</th>
+                                <th class="text-end" style="width: 120px;">Selling/Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            items.forEach(item => {
+                html += `
+                    <tr>
+                        <td>
+                            <input type="checkbox"
+                                   class="form-check-input import-item-check"
+                                   data-title="${escapeHtml(item.title)}"
+                                   checked>
+                        </td>
+                        <td class="fw-semibold">${escapeHtml(item.title)}</td>
+                        <td class="text-end">${formatMoney(item.quantity)}</td>
+                        <td>${escapeHtml(item.unit || "—")}</td>
+                        <td class="text-end">${formatMoney(item.sellingPrice)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            importItemsWrap.innerHTML = html;
+
+            const checkAll = document.getElementById("importCheckAll");
+            checkAll.addEventListener("change", () => {
+                importItemsWrap
+                    .querySelectorAll(".import-item-check")
+                    .forEach(cb => { cb.checked = checkAll.checked; });
+                updateImportSummary(phase);
+            });
+
+            importItemsWrap
+                .querySelectorAll(".import-item-check")
+                .forEach(cb => cb.addEventListener("change", () => updateImportSummary(phase)));
+
+            importToggleAllBtn.disabled = false;
+            confirmImportBtn.disabled = false;
+
+            updateImportSummary(phase);
         }
 
 
+        function updateImportSummary(phase) {
+            const checked = Array.from(
+                importItemsWrap.querySelectorAll(".import-item-check")
+            ).filter(cb => cb.checked);
+
+            importSummary.textContent =
+                checked.length +
+                ` item${checked.length === 1 ? "" : "s"} selected`;
+
+            confirmImportBtn.disabled = checked.length === 0;
+        }
+
+
+        importToggleAllBtn.addEventListener("click", () => {
+            const cbs = importItemsWrap.querySelectorAll(".import-item-check");
+            if (!cbs.length) return;
+
+            const anyUnchecked = Array.from(cbs).some(cb => !cb.checked);
+
+            cbs.forEach(cb => { cb.checked = anyUnchecked; });
+
+            const checkAll = document.getElementById("importCheckAll");
+            if (checkAll) checkAll.checked = anyUnchecked;
+
+            const phase = importPhaseSelect.value;
+            if (phase) updateImportSummary(phase);
+        });
+
+
+        confirmImportBtn.addEventListener("click", () => {
+            const phase = importPhaseSelect.value;
+            if (!phase) return;
+
+            const itemsMap = phaseResolvedItems[phase] || {};
+
+            const checked = Array.from(
+                importItemsWrap.querySelectorAll(".import-item-check")
+            ).filter(cb => cb.checked);
+
+            if (!checked.length) return;
+
+            const existingRows = itemsBody.querySelectorAll("tr");
+
+            if (existingRows.length === 1) {
+                const firstRow = existingRows[0];
+                const nameVal = firstRow.querySelector(".item-name")?.value.trim();
+                if (!nameVal) firstRow.remove();
+            }
+
+            let added = 0;
+
+            checked.forEach(cb => {
+                const title = cb.dataset.title;
+                const item = itemsMap[title];
+                if (!item) return;
+
+                const tr = createResolvedItemRow(item, phase);
+                itemsBody.appendChild(tr);
+                added++;
+            });
+
+            importPhaseModal.hide();
+            recalcTotals();
+
+            showStatus(
+                `Imported ${added} item${added === 1 ? "" : "s"} from ${phase}.`,
+                "success"
+            );
+        });
+
+
         // =====================================================
-        // ROBUST CATALOG RESOLVER (NEW)
+        // RESOLVE CATALOG MATCH
         // =====================================================
 
-        /**
-         * Robustly resolve a catalog item for a resolved phase item.
-         * Tries: exact name → trimmed/case-insensitive → loose contains.
-         *
-         * Returns { item, matchedBy } where matchedBy ∈
-         *   "exact" | "ci" | "loose" | "none"
-         */
         function resolveCatalogItemForPhase(resolvedItem) {
             if (!resolvedItem) return { item: null, matchedBy: "none" };
 
@@ -1681,14 +1888,12 @@
             const titleLower = rawTitle.toLowerCase();
             const all = getAllCatalogItems();
 
-            // 1) exact
             const exact =
                 itemCatalog.products.find(p => p.name === rawTitle) ||
                 itemCatalog.services.find(s => s.name === rawTitle) ||
                 null;
             if (exact) return { item: exact, matchedBy: "exact" };
 
-            // 2) case-insensitive / trimmed
             const ci =
                 itemCatalog.products.find(
                     p => p.name.trim().toLowerCase() === titleLower
@@ -1699,7 +1904,6 @@
                 null;
             if (ci) return { item: ci, matchedBy: "ci" };
 
-            // 3) loose contains (title inside catalog name, or vice versa)
             const loose =
                 all.find(it => it.name.toLowerCase().includes(titleLower)) ||
                 all.find(it => titleLower.includes(it.name.toLowerCase())) ||
@@ -1711,53 +1915,14 @@
 
 
         // =====================================================
-        // PHASE CHANGE — AUTO LOAD ITEMS
+        // CREATE RESOLVED ITEM ROW
         // =====================================================
 
-        phaseSelect.addEventListener("change", async () => {
-            selectedPhase = phaseSelect.value;
-
-            if (!selectedPhase) {
-                phaseHint.textContent = "Pick a phase to auto-load resolved items.";
-                return;
-            }
-
-            const itemsMap = phaseResolvedItems[selectedPhase] || {};
-            const items = Object.values(itemsMap);
-
-            if (!items.length) {
-                phaseHint.textContent = `No resolved items in ${selectedPhase}.`;
-                return;
-            }
-
-            // Make sure the catalog is loaded so cost/profit can be resolved.
-            if (!getAllCatalogItems().length) {
-                phaseHint.textContent = "Loading items…";
-                await loadItemCatalog();
-            }
-
-            // Replace items table with resolved items from this phase
-            itemsBody.innerHTML = "";
-
-            items.forEach(it => {
-                const tr = createResolvedItemRow(it);
-                itemsBody.appendChild(tr);
-            });
-
-            recalcTotals();
-
-            phaseHint.textContent =
-                `Loaded ${items.length} item${items.length === 1 ? "" : "s"} from ${selectedPhase}.`;
-        });
-
-
-        // =====================================================
-        // CREATE RESOLVED ITEM ROW (REWRITTEN)
-        // =====================================================
-
-        function createResolvedItemRow(item) {
+        function createResolvedItemRow(item, phase) {
             const tr = document.createElement("tr");
 
+            // Cost/Unit and Profit inputs are HIDDEN (class "hidden-col")
+            // — they still exist so calculation & DB save work.
             tr.innerHTML = `
                 <td>
                     <div class="item-search-wrap">
@@ -1788,6 +1953,14 @@
                     <input type="text" class="form-control form-control-sm item-amount"
                         readonly value="0.00">
                 </td>
+                <td class="hidden-col">
+                    <input type="number" class="form-control form-control-sm item-cost"
+                        min="0" step="0.01" value="0">
+                </td>
+                <td class="hidden-col">
+                    <input type="text" class="form-control form-control-sm item-profit"
+                        readonly value="0.00">
+                </td>
                 <td class="text-end">
                     <button type="button" class="btn btn-sm btn-outline-danger remove-item">
                         <i class="bi bi-trash"></i>
@@ -1795,95 +1968,73 @@
                 </td>
             `;
 
-            // Attach the standard wiring so the row behaves like any other
             wireUpItemRow(tr);
 
             const nameInput  = tr.querySelector(".item-name");
             const qtyInput   = tr.querySelector(".item-qty");
             const unitInput  = tr.querySelector(".item-unit");
             const priceInput = tr.querySelector(".item-price");
+            const costInput  = tr.querySelector(".item-cost");
             const wrap       = tr.querySelector(".item-search-wrap");
 
-            // ---------------------------------------------------------
-            // 1) Try to find a matching catalog item (robust)
-            // ---------------------------------------------------------
+            if (phase) {
+                tr.dataset.itemPhase = phase;
+            }
+
             const { item: matched } = resolveCatalogItemForPhase(item);
 
             if (matched) {
-                // Apply the catalog item (sets name, unit, price, type,
-                // cost, tag, stock validation, etc.)
-                tr.dispatchEvent(new CustomEvent("apply-item", {
-                    detail: { item: matched }
-                }));
+                tr.dataset.itemId = matched.id;
+                tr.dataset.itemType = matched.type;
+                tr.dataset.itemCostLabel = matched.type === "product"
+                    ? PRODUCT_COST_LABEL
+                    : SERVICE_COST_LABEL;
 
-                // Override quantity with the resolved quantity
-                qtyInput.value = item.quantity || 1;
+                tr.classList.add(matched.type === "product" ? "row-product" : "row-service");
 
-                // Fallback unit if catalog didn't set one
-                if (!unitInput.value && item.unit) {
-                    unitInput.value = item.unit;
-                }
+                const tag = document.createElement("span");
+                tag.className = `item-tag ${matched.type}`;
+                tag.textContent = matched.type;
+                wrap.appendChild(tag);
             }
             else {
-                // ---------------------------------------------------------
-                // 2) No catalog match → still populate and set a cost basis
-                //    so profit is calculated instead of silently 0.
-                // ---------------------------------------------------------
-                nameInput.value = item.title || "";
-                unitInput.value = item.unit || "";
-                priceInput.value = 0; // user must enter selling price
-                qtyInput.value = item.quantity || 1;
-
-                const resolvedQty = Number(item.quantity) || 0;
-                const resolvedAmt = Number(item.amount) || 0;
-
-                // Priority 1: explicit BOQ costing stored on the
-                //             resolved record.
-                // Priority 2: inferred from resolved amount / qty.
-                let costPerUnit = 0;
-
-                if (Number(item.boqCosting) > 0) {
-                    costPerUnit = Number(item.boqCosting);
-                }
-                else if (resolvedQty > 0 && resolvedAmt > 0) {
-                    costPerUnit = resolvedAmt / resolvedQty;
-                }
-
-                // Store cost on the row so collectItems() picks it up
-                tr.dataset.itemType = "service"; // neutral (no stock check)
-                tr.dataset.itemCost = String(Number(costPerUnit.toFixed(2)));
+                tr.dataset.itemType = "service";
                 tr.dataset.itemCostLabel = SERVICE_COST_LABEL;
+                tr.classList.add("row-phase");
 
-                // Add a "phase" tag so the user knows where it came from
                 const tag = document.createElement("span");
-                tag.className = "item-tag service";
-                tag.style.background = "#6f42c1"; // distinct purple
+                tag.className = "item-tag phase";
                 tag.textContent = "phase";
                 wrap.appendChild(tag);
-
-                // Add a hint showing the inferred cost basis
-                if (costPerUnit > 0) {
-                    const hint = document.createElement("div");
-                    hint.className = "row-error-msg";
-                    hint.style.color = "#6c757d";
-                    hint.style.fontWeight = "500";
-                    hint.innerHTML = `
-                        <i class="bi bi-info-circle"></i>
-                        <span>Cost inferred from resolved amount (Rs ${formatMoney(costPerUnit)} / unit).</span>
-                    `;
-                    tr.querySelector("td").appendChild(hint);
-                }
             }
 
-            // Recalculate the row's amount
-            recalcRowAmount({ target: qtyInput });
+            if (phase && matched) {
+                const pTag = document.createElement("span");
+                pTag.className = "item-tag phase";
+                pTag.textContent = phase;
+                wrap.appendChild(pTag);
+            }
+
+            nameInput.value = item.title || "";
+            qtyInput.value = item.quantity || 1;
+            unitInput.value = item.unit || "";
+
+            priceInput.value = item.sellingPrice != null
+                ? Number(item.sellingPrice).toFixed(2)
+                : "0.00";
+
+            costInput.value = item.costPrice != null
+                ? Number(item.costPrice).toFixed(2)
+                : "0.00";
+
+            tr.querySelector(".item-qty").dispatchEvent(new Event("input", { bubbles: true }));
 
             return tr;
         }
 
 
         // =====================================================
-        // PREVIOUS BILLS — PROJECT AWARE
+        // PREVIOUS BILLS
         // =====================================================
 
         async function loadPreviousBills() {
@@ -1947,20 +2098,17 @@
         businessSelect.addEventListener("change", async () => {
             selectedBusinessId = businessSelect.value;
 
-            // Reset project state
             selectedProjectId = "";
             selectedProjectLabel = "";
             projectCol.classList.add("d-none");
             projectSelect.innerHTML = `<option value="">-- Select Project --</option>`;
             projectSelect.disabled = true;
 
-            // Reset phase state
             availablePhases = [];
             selectedPhase = "";
             phaseResolvedItems = {};
             boqFieldMap = {};
-            if (phaseWrap) phaseWrap.classList.add("d-none");
-            if (phaseWrap) phaseWrap.classList.remove("d-flex");
+            updateImportPhaseButton();
 
             if (!selectedBusinessId) {
                 resetGstDropdown();
@@ -1980,7 +2128,6 @@
                 return;
             }
 
-            // Detect construction
             const opt =
                 businessSelect.querySelector(
                     `option[value="${CSS.escape(selectedBusinessId)}"]`
@@ -1988,16 +2135,13 @@
             selectedBusinessIsConstruction =
                 opt?.dataset.construction === "true";
 
-            // Populate GST regardless
             populateGstDropdown();
 
-            // Show project picker only for construction businesses
             if (selectedBusinessIsConstruction) {
 
                 projectCol.classList.remove("d-none");
                 await loadProjectsForBusiness(selectedBusinessId);
 
-                // Don't load catalog/bills until project is chosen
                 itemCatalog = { products: [], services: [] };
                 previousBills = [];
                 productFieldMap = {};
@@ -2005,7 +2149,6 @@
 
             } else {
 
-                // Non-construction: load catalog + previous bills directly
                 await loadItemCatalog();
                 await loadPreviousBills();
             }
@@ -2031,37 +2174,30 @@
 
             selectedProjectLabel = opt ? opt.textContent : "";
 
-            // Reset catalog for the new project
             itemCatalog = { products: [], services: [] };
             previousBills = [];
             productFieldMap = {};
             serviceFieldMap = {};
 
-            // Reset phase state
             availablePhases = [];
             selectedPhase = "";
             phaseResolvedItems = {};
             boqFieldMap = {};
 
-            // Clear items table so old items from another project vanish
             itemsBody.innerHTML = "";
             addItemRow();
             recalcTotals();
 
             if (!selectedProjectId) {
-                renderPhaseSelector();
+                updateImportPhaseButton();
                 await refreshAllAutoFields();
                 return;
             }
 
-            // Load catalog + previous bills for this project
             await loadItemCatalog();
             await loadPreviousBills();
-
-            // Load workflow phases for this project
             await loadWorkflowPhases();
 
-            // Re-apply autosuggest lists with the new data
             if (currentBillTypeData) {
                 await renderDynamicSections(currentBillTypeData);
             }
@@ -2487,13 +2623,13 @@
         addItemBtn.addEventListener("click", () => addItemRow());
 
 
-        // Wire-up reusable for both addItemRow() and createResolvedItemRow()
         function wireUpItemRow(tr) {
 
             const nameInput  = tr.querySelector(".item-name");
             const qtyInput   = tr.querySelector(".item-qty");
             const unitInput  = tr.querySelector(".item-unit");
             const priceInput = tr.querySelector(".item-price");
+            const costInput  = tr.querySelector(".item-cost");
             const wrap       = tr.querySelector(".item-search-wrap");
             const errorBox   = tr.querySelector(".row-error-msg");
             const errorText  = tr.querySelector(".error-text");
@@ -2533,14 +2669,13 @@
             }
 
             function applyItem(item) {
-                tr.classList.remove("row-product", "row-service", "row-error");
+                tr.classList.remove("row-product", "row-service", "row-phase", "row-error");
                 delete tr.dataset.itemId;
                 delete tr.dataset.itemType;
-                delete tr.dataset.itemCost;
                 delete tr.dataset.itemCostLabel;
 
-                const existingTag = tr.querySelector(".item-tag");
-                if (existingTag) existingTag.remove();
+                const existingTags = tr.querySelectorAll(".item-tag");
+                existingTags.forEach(t => t.remove());
 
                 errorBox.classList.add("d-none");
 
@@ -2548,8 +2683,6 @@
 
                 tr.dataset.itemId = item.id;
                 tr.dataset.itemType = item.type;
-
-                tr.dataset.itemCost = String(Number(item.cost) || 0);
                 tr.dataset.itemCostLabel = item.type === "product"
                     ? PRODUCT_COST_LABEL
                     : SERVICE_COST_LABEL;
@@ -2559,6 +2692,14 @@
                 nameInput.value = item.name;
                 if (item.unit) unitInput.value = item.unit;
                 if (Number.isFinite(item.price)) priceInput.value = item.price;
+                if (Number.isFinite(item.cost)) costInput.value = item.cost;
+
+                if (tr.dataset.itemPhase) {
+                    const pTag = document.createElement("span");
+                    pTag.className = "item-tag phase";
+                    pTag.textContent = tr.dataset.itemPhase;
+                    wrap.appendChild(pTag);
+                }
 
                 const tag = document.createElement("span");
                 tag.className = `item-tag ${item.type}`;
@@ -2569,7 +2710,6 @@
                 recalcRowAmount({ target: qtyInput });
             }
 
-            // Allow external apply
             tr.addEventListener("apply-item", ev => {
                 if (ev.detail && ev.detail.item) applyItem(ev.detail.item);
             });
@@ -2681,6 +2821,10 @@
 
             priceInput.addEventListener("input", recalcRowAmount);
 
+            if (costInput) {
+                costInput.addEventListener("input", recalcRowAmount);
+            }
+
             tr.querySelector(".remove-item").addEventListener("click", () => {
                 tr.remove();
                 recalcTotals();
@@ -2691,6 +2835,7 @@
         function addItemRow() {
             const tr = document.createElement("tr");
 
+            // Cost/Unit and Profit inputs are HIDDEN — calculations still happen.
             tr.innerHTML = `
                 <td>
                     <div class="item-search-wrap">
@@ -2721,6 +2866,14 @@
                     <input type="text" class="form-control form-control-sm item-amount"
                         readonly value="0.00">
                 </td>
+                <td class="hidden-col">
+                    <input type="number" class="form-control form-control-sm item-cost"
+                        min="0" step="0.01" value="0">
+                </td>
+                <td class="hidden-col">
+                    <input type="text" class="form-control form-control-sm item-profit"
+                        readonly value="0.00">
+                </td>
                 <td class="text-end">
                     <button type="button" class="btn btn-sm btn-outline-danger remove-item">
                         <i class="bi bi-trash"></i>
@@ -2734,15 +2887,27 @@
         }
 
 
+        // =====================================================
+        // ROW AMOUNT + PROFIT (still calculated even if hidden)
+        // =====================================================
+
         function recalcRowAmount(event) {
             const row = event.target.closest("tr");
             if (!row) return;
 
             const qty = Number(row.querySelector(".item-qty").value) || 0;
             const price = Number(row.querySelector(".item-price").value) || 0;
+            const cost = Number(row.querySelector(".item-cost")?.value) || 0;
+
             const amount = qty * price;
+            const profit = amount - (qty * cost);
 
             row.querySelector(".item-amount").value = formatMoney(amount);
+
+            const profitInput = row.querySelector(".item-profit");
+            if (profitInput) {
+                profitInput.value = formatMoney(profit);
+            }
 
             recalcTotals();
         }
@@ -2766,6 +2931,24 @@
             });
 
             return subtotal;
+        }
+
+
+        function getTotalProfit() {
+            let totalProfit = 0;
+
+            itemsBody.querySelectorAll("tr").forEach(row => {
+                const name = row.querySelector(".item-name")?.value.trim();
+                if (!name) return;
+
+                const qty = Number(row.querySelector(".item-qty")?.value) || 0;
+                const price = Number(row.querySelector(".item-price")?.value) || 0;
+                const cost = Number(row.querySelector(".item-cost")?.value) || 0;
+
+                totalProfit += (price - cost) * qty;
+            });
+
+            return totalProfit;
         }
 
 
@@ -2805,6 +2988,13 @@
 
             const grand = taxable + cgstAmt + sgstAmt + igstAmt;
             document.getElementById("grandTotal").textContent = formatMoney(grand);
+
+            // Still compute and store total profit (hidden in UI).
+            const totalProfit = getTotalProfit();
+            const totalProfitEl = document.getElementById("totalProfit");
+            if (totalProfitEl) {
+                totalProfitEl.textContent = formatMoney(totalProfit);
+            }
         }
 
 
@@ -2891,11 +3081,16 @@
                 };
             }
 
+            const phases = Array.from(new Set(
+                items.map(it => it.phase).filter(Boolean)
+            ));
+
             return {
                 billType: currentBillTypeData?.name || billTypeSelect.value || "",
                 businessId: selectedBusinessId,
                 project: projectPayload,
-                phase: selectedPhase || "",
+                phase: phases.length === 1 ? phases[0] : "",
+                phases,
                 gstId: gstSelect.value,
                 invoicenumber:
                     document.getElementById("invoiceNumber")?.value.trim() || "",
@@ -2924,7 +3119,7 @@
 
 
         // =====================================================
-        // COLLECT ITEMS
+        // COLLECT ITEMS (still captures cost & profit for DB)
         // =====================================================
 
         function collectItems() {
@@ -2935,42 +3130,39 @@
                 const qty = Number(row.querySelector(".item-qty").value) || 0;
                 const unit = row.querySelector(".item-unit").value.trim();
                 const price = Number(row.querySelector(".item-price").value) || 0;
+                const cost = Number(row.querySelector(".item-cost")?.value) || 0;
+
                 const amount = qty * price;
+                const costTotal = qty * cost;
+                const profit = amount - costTotal;
 
                 if (name && qty > 0) {
-                    const item = { name, quantity: qty, unit, price, amount };
+                    const item = {
+                        name,
+                        quantity: qty,
+                        unit,
+                        price,
+                        amount,
+                        cost,
+                        costTotal: Number(costTotal.toFixed(2)),
+                        profit: Number(profit.toFixed(2))
+                    };
 
                     if (row.dataset.itemId) {
                         item.itemId = row.dataset.itemId;
                         item.itemType = row.dataset.itemType;
-
-                        const cost = Number(row.dataset.itemCost) || 0;
-                        const costLabel = row.dataset.itemCostLabel;
-
-                        if (cost > 0 && costLabel) {
-                            item[costLabel] = cost;
-                        }
-
-                        const costTotal = cost * qty;
-                        item.profit = Number((amount - costTotal).toFixed(2));
                     }
-                    else if (row.dataset.itemCost) {
-                        // Phase-sourced rows without catalog match:
-                        // cost is set directly on the row.
-                        item.itemType = row.dataset.itemType || "service";
-
-                        const cost = Number(row.dataset.itemCost) || 0;
-                        const costLabel = row.dataset.itemCostLabel || SERVICE_COST_LABEL;
-
-                        if (cost > 0) {
-                            item[costLabel] = cost;
-                        }
-
-                        const costTotal = cost * qty;
-                        item.profit = Number((amount - costTotal).toFixed(2));
+                    else if (row.dataset.itemType) {
+                        item.itemType = row.dataset.itemType;
                     }
-                    else {
-                        item.profit = 0;
+
+                    if (row.dataset.itemCostLabel) {
+                        item.costLabel = row.dataset.itemCostLabel;
+                        item[row.dataset.itemCostLabel] = cost;
+                    }
+
+                    if (row.dataset.itemPhase) {
+                        item.phase = row.dataset.itemPhase;
                     }
 
                     items.push(item);
@@ -3125,7 +3317,7 @@
 
 
         // =====================================================
-        // SAVE BILL (top) + SAVE & GENERATE (bottom)
+        // SAVE BILL + SAVE & GENERATE
         // =====================================================
 
         saveBillBtn.addEventListener("click", async () => { await saveBill(); });
@@ -3167,18 +3359,11 @@
             productFieldMap = {};
             serviceFieldMap = {};
 
-            // Reset phase state
             availablePhases = [];
             selectedPhase = "";
             phaseResolvedItems = {};
             boqFieldMap = {};
-            if (phaseWrap) {
-                phaseWrap.classList.add("d-none");
-                phaseWrap.classList.remove("d-flex");
-            }
-            phaseSelect.innerHTML = `<option value="">-- Select Phase --</option>`;
-            phaseSelect.disabled = true;
-            phaseHint.textContent = "";
+            updateImportPhaseButton();
 
             billTypeSelect.value = "";
             currentBillTypeData = null;

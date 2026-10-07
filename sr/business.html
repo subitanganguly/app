@@ -399,7 +399,7 @@
                             { value: "Monthly", color: "secondary" }
                         ]
                     },
-                    { title: "Amount", type: "number", filter: true, displaySum: false }
+                    { title: "Amount", type: "number", filter: true, displaySum: false, editable: false }
                 ]
             },
 
@@ -407,7 +407,7 @@
                 name: "Products",
                 fields: [
                     { title: "Product Name", type: "text", filter: true, displaySum: false },
-                    { title: "Total Quantity", type: "number", filter: true, displaySum: true },
+                    { title: "Total Quantity", type: "number", filter: true, displaySum: true, editable: false},
                     {
                         title: "Unit", type: "select", filter: true, displaySum: false,
                         options: [
@@ -422,8 +422,8 @@
                             { value: "Nos",   color: "none" }
                         ]
                     },
-                    { title: "Purchase Price", type: "number", filter: true, displaySum: false },
-                    { title: "Selling Price", type: "text", filter: true, displaySum: false },
+                    { title: "Purchase Price", type: "number", filter: true, displaySum: false, editable: false  },
+                    { title: "Selling Price", type: "text", filter: true, displaySum: false, editable: false  },
                     { title: "Remarks", type: "textarea", filter: false, displaySum: false }
                 ]
             },
@@ -431,9 +431,9 @@
             services: {
                 name: "Services",
                 fields: [
-                    { title: "Title", type: "text", filter: true, displaySum: false },
-                    { title: "Costing", type: "number", filter: true, displaySum: false },
-                    { title: "Selling Price", type: "number", filter: true, displaySum: false },
+                    { title: "Title", type: "text", filter: true, displaySum: false, editable: false  },
+                    { title: "Costing", type: "number", filter: true, displaySum: false, editable: false  },
+                    { title: "Selling Price", type: "number", filter: true, displaySum: false, editable: false  },
                     {
                         title: "Unit", type: "select", filter: true, displaySum: false,
                         options: [
@@ -457,7 +457,7 @@
                 fields: [
                     { title: "Title", type: "text", filter: true, displaySum: false },
                     { title: "Date", type: "date", filter: true, displaySum: false },
-                    { title: "Amount", type: "number", filter: true, displaySum: true },
+                    { title: "Amount", type: "number", filter: true, displaySum: true, editable: false },
                     {
                         title: "Content type", type: "select", filter: true, displaySum: false,
                         options: [
@@ -480,8 +480,8 @@
             "bill-of-quantity": {
                 name: "Bill of Quantity",
                 fields: [
-                    { title: "Title",    type: "text",   filter: false, displaySum: false },
-                    { title: "Quantity", type: "number", filter: false, displaySum: false },
+                    { title: "Title",    type: "text",   filter: false, displaySum: false, editable: false },
+                    { title: "Quantity", type: "number", filter: false, displaySum: false, editable: false  },
                     {
                         title: "Unit", type: "select", filter: true, displaySum: false,
                         options: [
@@ -491,9 +491,8 @@
                             { value: "Sq.ft", color: "none" },
                             { value: "rmt",   color: "none" }
                         ]
-                    },
-                    { title: "Amount", type: "number", filter: true, displaySum: false },
-                    { title: "Costing", type: "number", filter: true, displaySum: false }
+                    }
+                   
                 ]
             }
 
@@ -628,6 +627,12 @@
                     // ✅ Numeric order based on declaration position
                     order: Number(index + 1)
                 };
+
+                // ✅ Persist the "editable" flag so the Settings page can lock fields.
+                //    When not provided, the field is treated as editable.
+                if (fieldDef.editable !== undefined) {
+                    fieldNode.editable = fieldDef.editable;
+                }
 
                 if (fieldDef.type === "auto-generate" && fieldDef.autoPattern) {
                     fieldNode.autoPattern = fieldDef.autoPattern;

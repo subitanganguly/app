@@ -26,7 +26,8 @@ import {
 
 const ADMIN_ROLES = [
     "main-admin",
-    "dev-admin"
+    "dev-admin",
+    "owner"
 ];
 
 
